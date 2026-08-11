@@ -340,4 +340,10 @@ The landing-page images are stored locally in `src/assets/images` and sourced fr
 - Open-Meteo weather and geocoding are subject to Open-Meteo's terms.
 - Landing imagery is subject to the Pexels license.
 
-No project-level software license has been added. Add one before distributing the project as open-source software.
+## License
+
+HomeIntel's original source code is available under the [MIT License](LICENSE).
+
+The MIT License applies to the project software only. Zillow, Census, FEMA,
+OpenStreetMap, Open-Meteo, Pexels, and other third-party data or assets remain
+subject to their respective licenses, attribution requirements, and terms.
