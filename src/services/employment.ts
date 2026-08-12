@@ -20,7 +20,7 @@ const industryVariables = [
   ['Information', 'DP03_0039PE'],
   ['Finance & real estate', 'DP03_0040PE'],
   ['Technology & professional services', 'DP03_0041PE'],
-  ['Education & health care', 'DP03_0042PE'],
+  ['Education, health care & social assistance', 'DP03_0042PE'],
   ['Arts, hospitality & food', 'DP03_0043PE'],
   ['Other services', 'DP03_0044PE'],
   ['Public administration', 'DP03_0045PE'],
@@ -70,16 +70,65 @@ export async function fetchEmploymentData(city: City, signal: AbortSignal) {
     )
   if (!place) throw new Error('No Census place matched this city.')
   const value = (variable: string) => place[headers.indexOf(variable)]
+  const placeCode = place[headers.indexOf('place')]
   const laborForce = estimate(value('DP03_0003E'))
   const employed = estimate(value('DP03_0004E'))
+
+  let separateIndustries: { name: string; percent: number }[] = []
+  try {
+    const detailedIndustryResponse = await fetch(
+      `https://api.census.gov/data/2024/acs/acs5?get=NAME,B24030_001E,B24030_091E,B24030_092E,B24030_193E,B24030_194E&for=place:${placeCode}&in=state:${state[1]}${key}`,
+      { signal },
+    )
+    if (detailedIndustryResponse.ok) {
+      const detailedRows =
+        (await detailedIndustryResponse.json()) as CensusRow[]
+      const detailedHeaders = detailedRows[0]
+      const detailedPlace = detailedRows[1]
+      const detailedValue = (variable: string) =>
+        estimate(detailedPlace?.[detailedHeaders.indexOf(variable)])
+      const detailedEmployed = detailedValue('B24030_001E')
+      const educationWorkers =
+        detailedValue('B24030_091E') + detailedValue('B24030_193E')
+      const healthCareWorkers =
+        detailedValue('B24030_092E') + detailedValue('B24030_194E')
+
+      if (detailedEmployed > 0) {
+        separateIndustries = [
+          {
+            name: 'Educational services',
+            percent: (educationWorkers / detailedEmployed) * 100,
+          },
+          {
+            name: 'Health care & social assistance',
+            percent: (healthCareWorkers / detailedEmployed) * 100,
+          },
+        ]
+      }
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError')
+      throw error
+  }
+
+  const profileIndustries = industryVariables
+    .filter(
+      ([name]) =>
+        separateIndustries.length === 0 ||
+        name !== 'Education, health care & social assistance',
+    )
+    .map(([name, variable]) => ({
+      name,
+      percent: estimate(value(variable)),
+    }))
 
   return {
     employmentRate: laborForce > 0 ? (employed / laborForce) * 100 : 0,
     laborForce,
     medianWorkerEarnings: estimate(value('DP03_0092E')),
-    industries: industryVariables
-      .map(([name, variable]) => ({ name, percent: estimate(value(variable)) }))
-      .sort((a, b) => b.percent - a.percent),
+    industries: [...profileIndustries, ...separateIndustries].sort(
+      (a, b) => b.percent - a.percent,
+    ),
     sourceName: place[0],
   } satisfies EmploymentData
 }

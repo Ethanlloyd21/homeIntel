@@ -31,6 +31,8 @@ import { useWeatherQuery } from '../hooks/useWeatherQuery'
 import { compact, fmt, money } from '../utils/formatters'
 import AnimatedValue from '../components/AnimatedValue'
 import HousingMetricCard from '../components/HousingMetricCard'
+import NearbyColleges from '../components/NearbyColleges'
+import { useNearbyCollegesQuery } from '../hooks/useNearbyCollegesQuery'
 
 const ZHVI_SOURCE =
   'https://files.zillowstatic.com/research/public_csvs/zhvi/City_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv'
@@ -52,6 +54,8 @@ const ACS_HOUSEHOLD_SIZE_SOURCE =
   'https://api.census.gov/data/2024/acs/acs5/groups/B25010.html'
 const ACS_EMPLOYMENT_SOURCE =
   'https://api.census.gov/data/2024/acs/acs5/profile/groups/DP03.html'
+const ACS_DETAILED_INDUSTRY_SOURCE =
+  'https://api.census.gov/data/2024/acs/acs5/groups/B24030.html'
 const FEMA_NRI_SOURCE = 'https://hazards.fema.gov/nri/data-resources'
 const OPEN_METEO_SOURCE = 'https://open-meteo.com/en/docs'
 
@@ -86,6 +90,7 @@ export default function CategoryPage({
     'Unavailable'
   ) : null
   const weatherQuery = useWeatherQuery(city, type === 'Environment')
+  const collegesQuery = useNearbyCollegesQuery(city, type === 'People')
   const weather = weatherQuery.data
   const weatherStatus = weatherQuery.isPending ? (
     <LoadingSpinner label="Loading live weather" />
@@ -474,6 +479,10 @@ export default function CategoryPage({
         label: 'Census ACS profile DP03 — economic characteristics',
         href: ACS_EMPLOYMENT_SOURCE,
       },
+      {
+        label: 'Census ACS table B24030 — detailed industries',
+        href: ACS_DETAILED_INDUSTRY_SOURCE,
+      },
     ],
   }))
   const riskDetails = [
@@ -687,6 +696,14 @@ export default function CategoryPage({
           ))}
         </aside>
       </div>
+      {type === 'People' && (
+        <NearbyColleges
+          cityName={city.name}
+          colleges={collegesQuery.data ?? []}
+          isLoading={collegesQuery.isPending}
+          isError={collegesQuery.isError}
+        />
+      )}
     </div>
   )
 }
