@@ -14,6 +14,26 @@ type AppState = {
   setTheme: (theme: 'light' | 'dark') => void
 }
 
+const viewPaths: Record<string, string> = {
+  Overview: '/overview',
+  Housing: '/housing',
+  People: '/people',
+  Employment: '/employment',
+  Risk: '/risk',
+  Environment: '/environment',
+  Compare: '/compare-cities',
+}
+
+export function viewFromPath(pathname: string) {
+  const entry = Object.entries(viewPaths).find(([, path]) => path === pathname)
+  return entry?.[0] ?? 'Overview'
+}
+
+function updatePath(view: string) {
+  const path = viewPaths[view] ?? '/overview'
+  if (window.location.pathname !== path) window.history.pushState({}, '', path)
+}
+
 const savedTheme = localStorage.getItem('homeintel-theme')
 const initialTheme =
   savedTheme === 'light' || savedTheme === 'dark'
@@ -26,17 +46,20 @@ document.documentElement.dataset.theme = initialTheme
 document.documentElement.style.colorScheme = initialTheme
 
 export const useAppStore = create<AppState>((set) => ({
-  view: 'Overview',
+  view: viewFromPath(window.location.pathname),
   city: null,
   comparisonCity: null,
   mobileNavOpen: false,
   theme: initialTheme,
-  setView: (view) => set({ view }),
+  setView: (view) => {
+    updatePath(view)
+    set({ view })
+  },
   selectCity: (city) =>
-    set((state) => ({
-      city,
-      comparisonCity: state.comparisonCity ?? city,
-    })),
+    set((state) => {
+      updatePath(state.view)
+      return { city }
+    }),
   setComparisonCity: (comparisonCity) => set({ comparisonCity }),
   setMobileNavOpen: (mobileNavOpen) => set({ mobileNavOpen }),
   setTheme: (theme) => {

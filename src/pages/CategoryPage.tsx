@@ -1,11 +1,22 @@
 import {
   Building2,
+  BriefcaseBusiness,
   ChevronDown,
   CloudSun,
+  Database,
+  DollarSign,
+  GraduationCap,
   Home,
+  Landmark,
+  Mountain,
+  PersonStanding,
   ShieldAlert,
   Sparkles,
+  ThermometerSun,
   Users,
+  UsersRound,
+  Waves,
+  Wind,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import LoadingSpinner from '../components/LoadingSpinner'
@@ -16,9 +27,33 @@ import { useEmploymentQuery } from '../hooks/useEmploymentQuery'
 import { useDemographicsQuery } from '../hooks/useDemographicsQuery'
 import { useHousingQuery } from '../hooks/useHousingQuery'
 import { useRiskQuery } from '../hooks/useRiskQuery'
+import { useWeatherQuery } from '../hooks/useWeatherQuery'
 import { compact, fmt, money } from '../utils/formatters'
-import MiniTrend from '../components/MiniTrend'
 import AnimatedValue from '../components/AnimatedValue'
+import HousingMetricCard from '../components/HousingMetricCard'
+
+const ZHVI_SOURCE =
+  'https://files.zillowstatic.com/research/public_csvs/zhvi/City_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv'
+const ZORI_SOURCE =
+  'https://files.zillowstatic.com/research/public_csvs/zori/City_zori_uc_sfrcondomfr_sm_month.csv'
+const ACS_HOME_VALUE_SOURCE =
+  'https://api.census.gov/data/2024/acs/acs5/groups/B25077.html'
+const ACS_RENT_SOURCE =
+  'https://api.census.gov/data/2024/acs/acs5/groups/B25064.html'
+const ACS_TENURE_SOURCE =
+  'https://api.census.gov/data/2024/acs/acs5/groups/B25003.html'
+const CENSUS_POPULATION_SOURCE =
+  'https://www.census.gov/programs-surveys/popest/data/data-sets.html'
+const ACS_AGE_SOURCE =
+  'https://api.census.gov/data/2024/acs/acs5/groups/B01002.html'
+const ACS_EDUCATION_SOURCE =
+  'https://api.census.gov/data/2024/acs/acs5/groups/B15003.html'
+const ACS_HOUSEHOLD_SIZE_SOURCE =
+  'https://api.census.gov/data/2024/acs/acs5/groups/B25010.html'
+const ACS_EMPLOYMENT_SOURCE =
+  'https://api.census.gov/data/2024/acs/acs5/profile/groups/DP03.html'
+const FEMA_NRI_SOURCE = 'https://hazards.fema.gov/nri/data-resources'
+const OPEN_METEO_SOURCE = 'https://open-meteo.com/en/docs'
 
 export default function CategoryPage({
   type,
@@ -48,6 +83,13 @@ export default function CategoryPage({
   const riskStatus = riskQuery.isPending ? (
     <LoadingSpinner label="Loading FEMA risk data" />
   ) : riskQuery.isError ? (
+    'Unavailable'
+  ) : null
+  const weatherQuery = useWeatherQuery(city, type === 'Environment')
+  const weather = weatherQuery.data
+  const weatherStatus = weatherQuery.isPending ? (
+    <LoadingSpinner label="Loading live weather" />
+  ) : weatherQuery.isError ? (
     'Unavailable'
   ) : null
   const housingStatus = housingQuery.isPending ? (
@@ -108,7 +150,7 @@ export default function CategoryPage({
         ? [
             {
               title: 'City population trend.',
-              detail: `The official 2024–2025 city growth rate was ${demographics.annualPopulationGrowthPercent >= 0 ? '+' : ''}${demographics.annualPopulationGrowthPercent.toFixed(1)}%. Applying that rate once to 2025 produces the ${demographics.estimateYear} calculated estimate.`,
+              detail: `The average annual city growth rate across 2023→2024 and 2024→2025 was ${demographics.annualPopulationGrowthPercent >= 0 ? '+' : ''}${demographics.annualPopulationGrowthPercent.toFixed(1)}%. HomeIntel averages those two numeric population changes and adds the result to 2025 for the ${demographics.estimateYear} calculated estimate.`,
             },
             {
               title: 'Age profile.',
@@ -193,9 +235,7 @@ export default function CategoryPage({
           'Population',
           demographicsStatus ??
             fmt.format(demographics?.estimatedCurrentPopulation ?? 0),
-          demographics
-            ? demographics.currentPopulationNote
-            : 'Calculated from Census growth',
+          'Average Census estimate',
         ],
         [
           'Median age',
@@ -249,15 +289,16 @@ export default function CategoryPage({
     Risk: {
       icon: ShieldAlert,
       title: 'Risk & resilience',
-      intro: 'Natural hazard exposure from trusted federal datasets.',
+      intro:
+        'Relative natural-hazard loss potential for the selected Census tract, using FEMA data.',
       stats: [
         [
-          'Overall risk',
+          'Loss potential',
           riskStatus ?? risk?.rating ?? 'Unavailable',
-          risk ? `${risk.score} / 100` : 'FEMA National Risk Index',
+          risk ? `${risk.score} / 100` : 'FEMA Expected Annual Loss',
         ],
         [
-          'Top exposure',
+          'Highest-loss hazard',
           riskStatus ?? risk?.hazards[0]?.label ?? 'Unavailable',
           risk?.hazards[0] ? `${risk.hazards[0].score} / 100` : 'No data',
         ],
@@ -267,7 +308,7 @@ export default function CategoryPage({
             risk?.hazards.find((hazard) => hazard.label === 'Inland flooding')
               ?.score ??
             'No data',
-          risk ? 'score out of 100' : 'FEMA index',
+          risk ? 'expected annual loss score' : 'FEMA index',
         ],
         [
           'Resilience',
@@ -283,17 +324,227 @@ export default function CategoryPage({
       title: 'Environment & climate',
       intro: 'Weather, air quality and climate extremes in context.',
       stats: [
-        ['Current weather', 'Live', 'see the Overview page'],
+        [
+          'Humidity',
+          weatherStatus ?? `${weather?.current.relative_humidity_2m}%`,
+          'current relative humidity',
+        ],
+        [
+          'High / low',
+          weatherStatus ??
+            `${Math.round(weather?.daily.temperature_2m_max[0] ?? 0)}° / ${Math.round(weather?.daily.temperature_2m_min[0] ?? 0)}°`,
+          'today’s forecast',
+        ],
+        [
+          'Wind',
+          weatherStatus ??
+            `${Math.round(weather?.current.wind_speed_10m ?? 0)} mph`,
+          'current speed at 10 meters',
+        ],
         ['Forecast source', 'Open-Meteo', 'updated automatically'],
-        ['Annual rainfall', '12.1 in', '30-year normal'],
-        ['Sunny days', '266', 'per year'],
       ],
     },
   }
   const c = configs[type] ?? configs.Housing
   const Icon = c.icon
+  const housingDetails = [
+    {
+      detail: housing?.homeValueNote.startsWith('ZHVI')
+        ? 'Zillow Home Value Index (ZHVI) represents the typical value of homes in the middle tier of the city market. It is a modeled market index, not a median sale price or appraisal.'
+        : 'The Census ACS estimate is the median respondent-reported value of owner-occupied housing units in the selected Census place.',
+      sources: housing?.homeValueNote.startsWith('ZHVI')
+        ? [{ label: 'Zillow Research — city ZHVI dataset', href: ZHVI_SOURCE }]
+        : [
+            {
+              label: 'Census ACS table B25077 — median home value',
+              href: ACS_HOME_VALUE_SOURCE,
+            },
+          ],
+    },
+    {
+      detail: housing?.rentNote.startsWith('ZORI')
+        ? 'Zillow Observed Rent Index (ZORI) estimates typical asking rent across the local rental market. It reflects listed market rents rather than what every existing tenant currently pays.'
+        : 'The Census ACS estimate is median gross rent, which includes contract rent plus estimated tenant-paid utilities for occupied rental units.',
+      sources: housing?.rentNote.startsWith('ZORI')
+        ? [{ label: 'Zillow Research — city ZORI dataset', href: ZORI_SOURCE }]
+        : [
+            {
+              label: 'Census ACS table B25064 — median gross rent',
+              href: ACS_RENT_SOURCE,
+            },
+          ],
+    },
+    {
+      detail:
+        'Owner occupied is the share of occupied housing units whose occupants own the home. HomeIntel divides owner-occupied units by all owner- and renter-occupied units for the selected Census place.',
+      sources: [
+        {
+          label: 'Census ACS table B25003 — housing tenure',
+          href: ACS_TENURE_SOURCE,
+        },
+      ],
+    },
+    {
+      detail:
+        'HomeIntel matches the selected Census place to locally stored Zillow Research city series when available. Census ACS 2020–2024 five-year estimates provide housing tenure and serve as the fallback for value or rent.',
+      sources: [
+        {
+          label: 'Zillow Research housing data',
+          href: 'https://www.zillow.com/research/data/',
+        },
+        {
+          label: 'Census ACS 2024 five-year API',
+          href: 'https://api.census.gov/data/2024/acs/acs5.html',
+        },
+      ],
+    },
+  ]
+  const peopleDetails = [
+    {
+      icon: UsersRound,
+      detail: demographics
+        ? `${demographics.currentPopulationNote}. HomeIntel averages the official 2023→2024 and 2024→2025 numeric changes, then adds that average to 2025 for ${demographics.estimateYear}.`
+        : 'Population uses official Census city estimates and the latest available annual growth rate.',
+      sources: [
+        {
+          label: 'U.S. Census Population Estimates datasets',
+          href: CENSUS_POPULATION_SOURCE,
+        },
+      ],
+    },
+    {
+      icon: PersonStanding,
+      detail:
+        'Median age is the age that divides the population into two equally sized groups: half of residents are younger and half are older. It is a 2020–2024 ACS five-year place estimate.',
+      sources: [
+        {
+          label: 'Census ACS table B01002 — median age',
+          href: ACS_AGE_SOURCE,
+        },
+      ],
+    },
+    {
+      icon: GraduationCap,
+      detail:
+        "College educated is the share of residents age 25 and older whose highest attainment is a bachelor's, master's, professional, or doctoral degree.",
+      sources: [
+        {
+          label: 'Census ACS table B15003 — educational attainment',
+          href: ACS_EDUCATION_SOURCE,
+        },
+      ],
+    },
+    {
+      icon: Users,
+      detail:
+        'Average household size is the average number of people living in occupied housing units. People living in group quarters, such as dormitories or institutions, are not included.',
+      sources: [
+        {
+          label: 'Census ACS table B25010 — average household size',
+          href: ACS_HOUSEHOLD_SIZE_SOURCE,
+        },
+      ],
+    },
+  ]
+  const employmentDetails = [
+    {
+      icon: BriefcaseBusiness,
+      detail:
+        'Employment rate is the share of people in the civilian labor force who are employed. It excludes residents who are not participating in the labor force.',
+    },
+    {
+      icon: DollarSign,
+      detail:
+        'Median worker earnings divides workers into two equal groups, with half earning more and half earning less. The ACS value is reported in inflation-adjusted dollars.',
+    },
+    {
+      icon: UsersRound,
+      detail:
+        'Civilian labor force counts employed residents plus unemployed residents who are actively seeking work. It does not represent the number of jobs located inside the city.',
+    },
+    {
+      icon: Building2,
+      detail:
+        'Top sector is the industry group employing the largest share of the city’s civilian employed population, based on Census ACS industry categories.',
+    },
+  ].map((item) => ({
+    ...item,
+    sources: [
+      {
+        label: 'Census ACS profile DP03 — economic characteristics',
+        href: ACS_EMPLOYMENT_SOURCE,
+      },
+    ],
+  }))
+  const riskDetails = [
+    {
+      icon: ShieldAlert,
+      detail:
+        'Loss potential is FEMA Expected Annual Loss for the selected Census tract. It combines modeled hazard frequency, exposure, and historic loss estimates; it is not the probability of a disaster at a specific property.',
+    },
+    {
+      icon: Mountain,
+      detail:
+        'Highest-loss hazard is the natural hazard with the largest FEMA Expected Annual Loss score among the hazards available for the selected tract.',
+    },
+    {
+      icon: Waves,
+      detail:
+        'Inland flooding reflects modeled riverine flooding loss potential. Property-level flood zones and insurance requirements require a separate address-level review.',
+    },
+    {
+      icon: Landmark,
+      detail:
+        'Community resilience estimates the ability of a community to prepare for, adapt to, and recover from natural hazards. A higher score indicates greater modeled resilience.',
+    },
+  ].map((item) => ({
+    ...item,
+    sources: [
+      {
+        label: 'FEMA National Risk Index data resources',
+        href: FEMA_NRI_SOURCE,
+      },
+    ],
+  }))
+  const environmentDetails = [
+    {
+      icon: CloudSun,
+      detail:
+        'Relative humidity describes how much moisture the air currently contains compared with the maximum it could hold at the same temperature.',
+    },
+    {
+      icon: ThermometerSun,
+      detail:
+        'High and low are today’s modeled maximum and minimum air temperatures for the coordinates of the selected city.',
+    },
+    {
+      icon: Wind,
+      detail:
+        'Wind speed is the current modeled speed at 10 meters above ground. Local terrain, buildings, and observation stations can produce different readings.',
+    },
+    {
+      icon: Database,
+      detail:
+        'Open-Meteo combines weather models from national weather services. Values are coordinate-based forecasts and may differ from a nearby physical station.',
+    },
+  ].map((item) => ({
+    ...item,
+    sources: [
+      {
+        label: 'Open-Meteo forecast API documentation',
+        href: OPEN_METEO_SOURCE,
+      },
+    ],
+  }))
+  const detailSets = {
+    Housing: housingDetails,
+    People: peopleDetails,
+    Employment: employmentDetails,
+    Risk: riskDetails,
+    Environment: environmentDetails,
+  }
   return (
-    <div className="category-page">
+    <div className={`category-page category-${type.toLowerCase()}`}>
       <div className="category-hero">
         <div className="category-icon">
           <Icon size={25} />
@@ -307,16 +558,29 @@ export default function CategoryPage({
         </div>
       </div>
       <div className="category-stats">
-        {c.stats.map(([label, value, note]) => (
-          <article className="card" key={label}>
-            <p>{label}</p>
-            <strong>
-              <AnimatedValue value={value} />
-            </strong>
-            <small>{note}</small>
-            <MiniTrend color={city.color} />
-          </article>
-        ))}
+        {c.stats.map(([label, value, note], index) => {
+          const details = detailSets[type as keyof typeof detailSets]
+          return details ? (
+            <HousingMetricCard
+              key={label}
+              label={label}
+              value={value}
+              note={note}
+              detail={details[index].detail}
+              sources={details[index].sources}
+              color={city.color}
+              icon={'icon' in details[index] ? details[index].icon : undefined}
+            />
+          ) : (
+            <article className="card" key={label}>
+              <p>{label}</p>
+              <strong>
+                <AnimatedValue value={value} />
+              </strong>
+              <small>{note}</small>
+            </article>
+          )
+        })}
       </div>
       <div className="category-content">
         {type === 'Housing' ? (

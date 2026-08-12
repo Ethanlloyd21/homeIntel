@@ -26,10 +26,10 @@ export default function MetricCard({
       <article className="metric-card card group relative transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl focus-within:ring-2 focus-within:ring-violet-400/50">
         <div className="metric-head">
           <span style={{ background: `${color}14`, color }}>
-            <Icon size={18} />
+            <Icon size={18} aria-hidden="true" />
           </span>
+          <p>{label}</p>
         </div>
-        <p>{label}</p>
         <div className="metric-value">
           <strong>
             <AnimatedValue value={value} />

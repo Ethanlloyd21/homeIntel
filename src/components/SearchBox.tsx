@@ -7,12 +7,17 @@ import { useLocationSearchQuery } from '../hooks/useLocationSearchQuery'
 export default function SearchBox({
   onSelect,
   compact = false,
+  placeholder = 'Enter a city or ZIP code',
+  initialValue = '',
 }: {
   onSelect: (city: City) => void
   compact?: boolean
+  placeholder?: string
+  initialValue?: string
 }) {
-  const [value, setValue] = useState('')
-  const deferredValue = useDeferredValue(value.trim())
+  const [value, setValue] = useState(initialValue)
+  const [editing, setEditing] = useState(false)
+  const deferredValue = useDeferredValue(editing ? value.trim() : '')
   const locationQuery = useLocationSearchQuery(deferredValue)
 
   const results = locationQuery.data ?? []
@@ -25,8 +30,14 @@ export default function SearchBox({
       <input
         value={value}
         aria-label="Search for a city"
-        placeholder="Enter a city or ZIP code"
-        onChange={(event) => setValue(event.target.value)}
+        placeholder={placeholder}
+        onChange={(event) => {
+          setValue(event.target.value)
+          setEditing(true)
+        }}
+        onFocus={(event) => {
+          if (initialValue && !editing) event.currentTarget.select()
+        }}
       />
       {locationQuery.isFetching && (
         <LoadingSpinner size={18} label="Searching for locations" />
@@ -41,7 +52,10 @@ export default function SearchBox({
                 key={result.id}
                 onClick={() => {
                   onSelect(cityFromGeocoding(result))
-                  setValue('')
+                  setValue(
+                    [result.name, result.admin1].filter(Boolean).join(', '),
+                  )
+                  setEditing(false)
                 }}
               >
                 <Map size={16} />

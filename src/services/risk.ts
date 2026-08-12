@@ -12,6 +12,7 @@ export type RiskData = {
   rating: string
   statePercentile: number
   county: string
+  tract: string
   resilienceScore: number | null
   resilienceRating: string | null
   version: string
@@ -55,14 +56,20 @@ function tone(score: number): HazardRisk['tone'] {
   return 'low'
 }
 
+function finiteScore(value: string | number | null) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.round(Math.min(100, Math.max(0, value)))
+    : null
+}
+
 export async function fetchRiskData(city: City, signal: AbortSignal) {
   if (city.country !== 'United States') {
     throw new Error('FEMA risk data is available for U.S. locations only.')
   }
 
   const hazardFields = hazards.flatMap(([, code]) => [
-    `${code}_RISKS`,
-    `${code}_RISKR`,
+    `${code}_EALS`,
+    `${code}_EALR`,
   ])
   const params = new URLSearchParams({
     f: 'json',
@@ -73,9 +80,10 @@ export async function fetchRiskData(city: City, signal: AbortSignal) {
     spatialRel: 'esriSpatialRelIntersects',
     outFields: [
       'COUNTY',
-      'RISK_SCORE',
-      'RISK_RATNG',
-      'RISK_SPCTL',
+      'TRACT',
+      'EAL_SCORE',
+      'EAL_RATNG',
+      'EAL_SPCTL',
       'RESL_SCORE',
       'RESL_RATNG',
       'NRI_VER',
@@ -94,23 +102,30 @@ export async function fetchRiskData(city: City, signal: AbortSignal) {
 
   const hazardRisks = hazards
     .reduce<HazardRisk[]>((results, [label, code]) => {
-      const score = attributes[`${code}_RISKS`]
-      if (typeof score !== 'number') return results
+      const score = attributes[`${code}_EALS`]
+      const normalizedScore = finiteScore(score)
+      if (normalizedScore === null) return results
       results.push({
         label,
-        score: Math.round(score),
-        rating: String(attributes[`${code}_RISKR`] ?? 'Not rated'),
-        tone: tone(score),
+        score: normalizedScore,
+        rating: String(attributes[`${code}_EALR`] ?? 'Not rated'),
+        tone: tone(normalizedScore),
       })
       return results
     }, [])
     .sort((a, b) => b.score - a.score)
 
+  const score = finiteScore(attributes.EAL_SCORE)
+  if (score === null) {
+    throw new Error('FEMA did not provide a valid loss score for this tract.')
+  }
+
   return {
-    score: Math.round(Number(attributes.RISK_SCORE)),
-    rating: String(attributes.RISK_RATNG ?? 'Not rated'),
-    statePercentile: Math.round(Number(attributes.RISK_SPCTL)),
+    score,
+    rating: String(attributes.EAL_RATNG ?? 'Not rated'),
+    statePercentile: finiteScore(attributes.EAL_SPCTL) ?? 0,
     county: String(attributes.COUNTY ?? ''),
+    tract: String(attributes.TRACT ?? ''),
     resilienceScore:
       typeof attributes.RESL_SCORE === 'number'
         ? Math.round(attributes.RESL_SCORE)

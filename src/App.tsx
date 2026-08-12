@@ -1,16 +1,15 @@
 import { BarChart3, Compass } from 'lucide-react'
 import { Tabs } from 'radix-ui'
 import { useEffect } from 'react'
-import suburbanNeighborhood from './assets/images/suburban-neighborhood.jpg'
-import urbanNeighborhood from './assets/images/urban-neighborhood.jpg'
 import Brand from './components/Brand'
 import Header from './components/Header'
+import LandingGallery from './components/LandingGallery'
 import SearchBox from './components/SearchBox'
 import Sidebar from './components/Sidebar'
 import CategoryPage from './pages/CategoryPage'
 import ComparePage from './pages/ComparePage'
 import OverviewPage from './pages/OverviewPage'
-import { useAppStore } from './store/useAppStore'
+import { useAppStore, viewFromPath } from './store/useAppStore'
 
 export default function App() {
   const view = useAppStore((state) => state.view)
@@ -29,6 +28,14 @@ export default function App() {
     document.documentElement.style.colorScheme = theme
   }, [theme])
 
+  useEffect(() => {
+    const handlePopState = () => {
+      useAppStore.setState({ view: viewFromPath(window.location.pathname) })
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   if (!city) {
     return (
       <div className="app-shell location-entry">
@@ -41,41 +48,63 @@ export default function App() {
           <div className="page-content landing-page">
             <section className="landing-hero">
               <div className="landing-copy">
-                <p className="eyebrow">EXPLORE WITH CONFIDENCE</p>
-                <h2>Find the place that feels right.</h2>
+                <p className="eyebrow">MOVE WITH CONFIDENCE</p>
+                <h2>Compare cities. Choose where to call home.</h2>
                 <span>
-                  Explore live maps, current weather, and useful local context
-                  for cities around the world.
+                  Research the places you are considering, compare what daily
+                  life could cost, and understand each city before you move.
                 </span>
+                <label className="landing-search-label">
+                  Start by researching a city
+                </label>
                 <SearchBox onSelect={selectCity} />
                 <div className="landing-features">
-                  <span>Live weather</span>
-                  <span>Interactive maps</span>
-                  <span>Worldwide search</span>
+                  <span>Housing costs</span>
+                  <span>People &amp; jobs</span>
+                  <span>Risk &amp; climate</span>
+                  <span>Side-by-side comparison</span>
                 </div>
+                <p className="landing-next-step">
+                  Search one city to open its full profile, then add another to
+                  compare them side by side.
+                </p>
               </div>
-              <div className="landing-gallery" aria-label="Neighborhood views">
-                <figure className="landing-photo landing-photo-main">
-                  <img
-                    src={urbanNeighborhood}
-                    alt="Aerial view of a colorful urban neighborhood"
-                  />
-                  <figcaption>Understand the whole neighborhood</figcaption>
-                </figure>
-                <figure className="landing-photo landing-photo-secondary">
-                  <img
-                    src={suburbanNeighborhood}
-                    alt="Aerial view of a suburban neighborhood and winding roads"
-                  />
-                  <figcaption>See how places connect</figcaption>
-                </figure>
-              </div>
+              <LandingGallery theme={theme} />
             </section>
             <p className="photo-credit">
-              Photos by Kelly and Pavel Danilyuk on{' '}
-              <a href="https://www.pexels.com" target="_blank" rel="noreferrer">
-                Pexels
+              Light photos by{' '}
+              <a
+                href="https://www.pexels.com/photo/charming-suburban-home-in-spring-setting-32153568/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Elena Golovchenko
+              </a>{' '}
+              and{' '}
+              <a
+                href="https://www.pexels.com/photo/modern-cozy-living-room-interior-with-natural-light-30580637/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Karolina K
               </a>
+              . Dark photos by{' '}
+              <a
+                href="https://www.pexels.com/photo/residential-buildings-on-the-hill-after-dusk-16811460/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                David Brown
+              </a>{' '}
+              and{' '}
+              <a
+                href="https://www.pexels.com/photo/modern-cozy-living-room-with-warm-lighting-29532546/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Clément Proust
+              </a>{' '}
+              on Pexels
             </p>
           </div>
         </main>
@@ -127,7 +156,7 @@ export default function App() {
           ) : view === 'Compare' ? (
             <ComparePage
               left={city}
-              right={comparisonCity ?? city}
+              right={comparisonCity}
               setLeft={selectCity}
               setRight={setComparisonCity}
             />

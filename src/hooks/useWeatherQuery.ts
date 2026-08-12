@@ -7,6 +7,7 @@ export type ForecastResponse = {
     apparent_temperature: number
     relative_humidity_2m: number
     wind_speed_10m: number
+    precipitation: number
     weather_code: number
     time: string
   }
@@ -21,7 +22,7 @@ async function fetchWeather(city: City, signal: AbortSignal) {
     latitude: String(city.latitude),
     longitude: String(city.longitude),
     current:
-      'temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m',
+      'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m',
     daily: 'temperature_2m_max,temperature_2m_min',
     temperature_unit: 'fahrenheit',
     wind_speed_unit: 'mph',
@@ -36,10 +37,11 @@ async function fetchWeather(city: City, signal: AbortSignal) {
   return (await response.json()) as ForecastResponse
 }
 
-export function useWeatherQuery(city: City) {
+export function useWeatherQuery(city: City, enabled = true) {
   return useQuery({
     queryKey: ['weather', city.latitude, city.longitude],
     queryFn: ({ signal }) => fetchWeather(city, signal),
+    enabled,
     staleTime: 10 * 60 * 1000,
   })
 }

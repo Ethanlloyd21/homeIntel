@@ -1,6 +1,6 @@
 # HomeIntel
 
-HomeIntel is a React and TypeScript location-intelligence dashboard. Users search for a city and receive housing, population, employment, weather, mapping, and natural-hazard information from public data sources.
+HomeIntel is a React and TypeScript city-research and relocation-comparison dashboard. It helps users investigate cities they may move to, understand housing, population, employment, weather, mapping, and natural-hazard conditions, and compare shortlisted cities before making a decision.
 
 The application does not start with a hard-coded city. The selected and comparison cities are stored in Zustand, while remote data is loaded and cached through TanStack Query.
 
@@ -8,11 +8,13 @@ The application does not start with a hard-coded city. The selected and comparis
 
 - Worldwide city and ZIP-code search through Open-Meteo
 - Interactive Leaflet map with OpenStreetMap tiles
-- Live weather, daily high/low, humidity, and wind
+- Compact live weather summary on Overview, with daily high/low, humidity, and wind details on Environment
+- Outdoor comfort estimate based on feels-like temperature, humidity, wind, precipitation, and storm conditions
 - Zillow ZHVI typical home values and ZORI market rents
+- Expandable Housing metric details with direct Zillow and Census source citations
 - Census ACS housing, demographic, education, and employment indicators
 - Census Vintage 2025 city population estimates
-- Calculated current-year population based on the official 2024–2025 city growth rate
+- Calculated current-year population based on the average official 2023–2025 annual city change
 - FEMA National Risk Index profile and individual hazard scores
 - Housing, People, Employment, Risk, and Environment pages
 - Housing and demographic visualizations
@@ -52,13 +54,14 @@ The application does not start with a hard-coded city. The selected and comparis
 npm install
 ```
 
-Copy `.env.example` to `.env` and provide the Census key:
+Copy `.env.example` to `.env` and provide the Census and Data.gov keys:
 
 ```env
 VITE_CENSUS_API_KEY=your_census_api_key
+DATA_GOV_API_KEY=your_data_gov_api_key
 ```
 
-Request a key at <https://api.census.gov/data/key_signup.html>.
+Request a Census key at <https://api.census.gov/data/key_signup.html> and a Data.gov key at <https://api.data.gov/signup/>.
 
 Start the application:
 
@@ -147,17 +150,17 @@ Employment industries and median worker earnings come from the ACS DP03 Selected
 
 ### Census Vintage 2025 population estimates
 
-The official Census Vintage 2025 incorporated-place table supplies point estimates for 2024 and 2025. The normalized local lookup contains approximately 19,500 incorporated places:
+The official Census Vintage 2025 incorporated-place table supplies point estimates for 2023, 2024, and 2025. The normalized local lookup contains approximately 19,500 incorporated places:
 
 ```text
 public/data/census-population-2025.json
 ```
 
-HomeIntel calculates the current-year value by measuring the official 2024–2025 one-year rate and applying it once to 2025:
+HomeIntel calculates the current-year value by averaging the two latest official annual numeric changes and adding that average to 2025:
 
 ```text
-annual rate = (population 2025 - population 2024) / population 2024
-population 2026 = population 2025 * (1 + annual rate)
+average change = ((population 2024 - population 2023) + (population 2025 - population 2024)) / 2
+population 2026 = population 2025 + average change
 ```
 
 The 2026 result is a HomeIntel calculation, not an official Census estimate. The interface labels it accordingly. If the selected location does not match an incorporated place in the Vintage 2025 table, the application keeps the 2024 ACS value and explains that the 2025 city estimate was unavailable.
@@ -170,12 +173,12 @@ Source: <https://www.census.gov/newsroom/press-kits/2026/vintage-2025-city-town-
 
 The Risk Profile uses FEMA's December 2025 National Risk Index Census-tract layer. The selected city's longitude and latitude identify the containing tract. HomeIntel displays:
 
-- Composite risk score and rating
-- Highest individual natural-hazard scores
-- Inland-flooding score
+- Composite Expected Annual Loss score and rating
+- Highest individual natural-hazard Expected Annual Loss scores
+- Inland-flooding Expected Annual Loss score
 - Community-resilience score and rating
 
-Risk Index values are relative screening measures, not property-level forecasts or insurance determinations. FEMA risk data is available only for U.S. locations.
+Expected Annual Loss combines modeled hazard frequency, exposure, and estimated consequences. Scores are normalized from 0 to 100 relative to other Census tracts; they are not disaster probabilities, citywide averages, property-level forecasts, dollar-loss predictions, or insurance determinations. The interface identifies the selected Census tract to make this geographic limitation explicit. FEMA risk data is available only for U.S. locations.
 
 Source: <https://hazards.fema.gov/nri/>
 
@@ -301,7 +304,7 @@ homeIntel/
 
 ## Data limitations
 
-- The calculated current-year population assumes the 2024–2025 city rate repeats for one year.
+- The calculated current-year population assumes the average numeric annual change observed from 2023 through 2025 continues for one year.
 - The 2019 People-chart value is an ACS estimate, while 2024 and 2025 come from the Population Estimates Program.
 - ACS five-year values are survey estimates and currently omit margins of error in the UI.
 - Census place, Zillow city, FEMA tract, and map geographies are not identical.
@@ -313,9 +316,9 @@ homeIntel/
 
 ## Environment and security
 
-`.env` is ignored by Git. Never commit the Census key.
+`.env` is ignored by Git. Never commit Census or Data.gov keys.
 
-Variables prefixed with `VITE_` are included in browser code. For a public deployment, proxy Census requests through a server or serverless function so the key is not exposed to browser users.
+Variables prefixed with `VITE_` are included in browser code. FBI requests use a same-origin server proxy and the `DATA_GOV_API_KEY` server-only variable. For a static public deployment, implement the equivalent endpoint as a serverless function. Census requests still need a production proxy so that key is not exposed to browser users.
 
 Zillow, Open-Meteo, OpenStreetMap, and FEMA requests used here do not require private application keys.
 
@@ -359,7 +362,7 @@ npm audit
 
 ## Photo credits
 
-The landing-page images are stored locally in `src/assets/images` and sourced from Pexels. Keep the visible Pexels attribution when reusing them.
+The landing-page images are stored locally in `src/assets/images` and sourced from Pexels. Light mode uses a sunny suburban home by Elena Golovchenko and a daylight living room by Karolina K. Dark mode uses residential homes at dusk by David Brown and a warmly lit living room by Clément Proust. Exact source-page links remain visible beneath the gallery. Keep those attributions when reusing the images.
 
 ## Attribution
 

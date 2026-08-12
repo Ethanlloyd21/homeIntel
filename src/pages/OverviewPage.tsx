@@ -71,7 +71,10 @@ export default function OverviewPage({ city, setView }: OverviewPageProps) {
           </span>
         </div>
         <div className="overview-weather">
-          <WeatherCard city={city} />
+          <WeatherCard
+            city={city}
+            onViewEnvironment={() => setView('Environment')}
+          />
         </div>
       </div>
 
@@ -197,8 +200,8 @@ export default function OverviewPage({ city, setView }: OverviewPageProps) {
         <section className="card risk-panel">
           <div className="section-heading">
             <div>
-              <small>RISK PROFILE</small>
-              <h3>Natural hazard exposure</h3>
+              <small>FEMA LOSS PROFILE</small>
+              <h3>Natural hazard loss potential</h3>
             </div>
             <button onClick={() => setView('Risk')}>
               Explore risk <ArrowRight size={14} />
@@ -233,8 +236,10 @@ export default function OverviewPage({ city, setView }: OverviewPageProps) {
             )}
           </div>
           <p className="risk-note">
-            <Info size={14} /> FEMA National Risk Index
-            {risk ? ` (${risk.county} County, ${risk.version})` : ''}
+            <Info size={14} /> FEMA Expected Annual Loss score (0–100)
+            {risk
+              ? ` · ${risk.county} County, Census tract ${risk.tract} · ${risk.version}`
+              : ''}
           </p>
         </section>
 

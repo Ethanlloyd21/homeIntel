@@ -13,7 +13,22 @@ function RecenterMap({ city }: { city: City }) {
   const map = useMap()
 
   useEffect(() => {
-    map.setView([city.latitude, city.longitude], 11)
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
+    const frame = requestAnimationFrame(() => {
+      if (reducedMotion) {
+        map.setView([city.latitude, city.longitude], 13)
+      } else {
+        map.flyTo([city.latitude, city.longitude], 13, {
+          animate: true,
+          duration: 2.4,
+          easeLinearity: 0.2,
+        })
+      }
+    })
+
+    return () => cancelAnimationFrame(frame)
   }, [city, map])
 
   return null
@@ -27,13 +42,20 @@ export default function CityMap({ city }: { city: City }) {
           <span className="live-dot" />
           Live map
         </div>
-        <span>OpenStreetMap</span>
+        <span className="map-interaction-hint">
+          Drag to explore · Scroll to zoom
+        </span>
       </div>
       <div className="map-visual">
         <MapContainer
           center={[city.latitude, city.longitude]}
-          zoom={11}
+          zoom={9}
           scrollWheelZoom
+          doubleClickZoom
+          keyboard
+          zoomControl
+          minZoom={3}
+          maxZoom={18}
           style={{ height: '100%', width: '100%' }}
         >
           <RecenterMap city={city} />

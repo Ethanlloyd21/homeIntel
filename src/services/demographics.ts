@@ -6,6 +6,7 @@ type PopulationEstimateDataset = {
   places: {
     place: string
     state: string
+    population2023: number
     population2024: number
     population2025: number
   }[]
@@ -27,6 +28,36 @@ export type DemographicsData = {
   averageHouseholdSize: number
   foreignBornPercent: number
   sourceName: string
+}
+
+export type PopulationTrend = {
+  population: number
+  change: number
+  percentChange: number
+}
+
+export function calculatePopulationFromAnchors(
+  startPopulation: number,
+  startYear: number,
+  endPopulation: number,
+  endYear: number,
+  targetYear: number,
+): PopulationTrend {
+  if (startPopulation <= 0 || endPopulation <= 0 || endYear <= startYear) {
+    return { population: 0, change: 0, percentChange: 0 }
+  }
+
+  const annualChange = (endPopulation - startPopulation) / (endYear - startYear)
+  const population = Math.round(
+    startPopulation + annualChange * (targetYear - startYear),
+  )
+  const change = population - startPopulation
+
+  return {
+    population,
+    change,
+    percentChange: (change / startPopulation) * 100,
+  }
 }
 
 const variables = [
@@ -52,20 +83,23 @@ function estimate(value: string) {
 }
 
 export function calculateCurrentPopulationEstimate(
+  population2023: number,
   population2024: number,
   population2025: number,
   targetYear = new Date().getFullYear(),
 ) {
-  if (population2024 <= 0 || population2025 <= 0 || targetYear <= 2025) {
+  if (population2025 <= 0 || targetYear <= 2025) {
     return Math.round(population2025)
   }
 
-  const annualGrowthRate = population2025 / population2024 - 1
-  const elapsedYears = targetYear - 2025
+  const change2024 =
+    population2023 > 0 && population2024 > 0
+      ? population2024 - population2023
+      : population2025 - population2024
+  const change2025 = population2025 - population2024
+  const averageAnnualChange = (change2024 + change2025) / 2
 
-  return Math.round(
-    population2025 * Math.pow(1 + annualGrowthRate, elapsedYears),
-  )
+  return Math.round(population2025 + averageAnnualChange * (targetYear - 2025))
 }
 
 function normalizePlace(value: string) {
@@ -109,14 +143,14 @@ export async function fetchDemographics(city: City, signal: AbortSignal) {
   const placeCode = place[headers.indexOf('place')]
 
   const previousResponse = await fetch(
-    `https://api.census.gov/data/2019/acs/acs5?get=B01003_001E&for=place:${placeCode}&in=state:${state[1]}${key}`,
+    `https://api.census.gov/data/2019/pep/population?get=POP&for=place:${placeCode}&in=state:${state[1]}&DATE_CODE=12${key}`,
     { signal },
   )
   const previousRows = previousResponse.ok
     ? ((await previousResponse.json()) as CensusRow[])
     : []
   const currentPopulation = estimate(value('B01003_001E'))
-  const previousPopulation = estimate(previousRows[1]?.[0] ?? '0')
+  const official2019Population = estimate(previousRows[1]?.[0] ?? '0')
   const populationResponse = await fetch(
     `${import.meta.env.BASE_URL}data/census-population-2025.json`,
     { signal },
@@ -129,10 +163,14 @@ export async function fetchDemographics(city: City, signal: AbortSignal) {
       item.state === city.state &&
       normalizePlace(item.place) === normalizePlace(city.name),
   )
+  const population2023 = placeEstimate?.population2023 ?? currentPopulation
   const population2024 = placeEstimate?.population2024 ?? currentPopulation
   const population2025 = placeEstimate?.population2025 ?? currentPopulation
+  const previousPopulation =
+    official2019Population > 0 ? official2019Population : currentPopulation
   const estimateYear = new Date().getFullYear()
   const estimatedCurrentPopulation = calculateCurrentPopulationEstimate(
+    population2023,
     population2024,
     population2025,
     estimateYear,
@@ -169,12 +207,15 @@ export async function fetchDemographics(city: City, signal: AbortSignal) {
           100
         : 0,
     annualPopulationGrowthPercent:
-      population2024 > 0
-        ? ((population2025 - population2024) / population2024) * 100
+      population2023 > 0 && population2024 > 0
+        ? (((population2024 - population2023) / population2023 +
+            (population2025 - population2024) / population2024) /
+            2) *
+          100
         : 0,
     estimateYear,
     currentPopulationNote: placeEstimate
-      ? `${estimateYear} calculated from Census 2024–2025 growth`
+      ? `${estimateYear} calculated from average Census 2023–2025 annual change`
       : '2024 ACS estimate; 2025 city estimate unavailable',
     averageHouseholdSize: estimate(value('B25010_001E')),
     foreignBornPercent:

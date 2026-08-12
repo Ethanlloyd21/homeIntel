@@ -84,6 +84,7 @@ export default function PeopleProfileChart({
             <strong>
               <AnimatedValue value={demographics.medianAge.toFixed(1)} />
             </strong>
+            <small>years old</small>
           </div>
           <div>
             <span>Household size</span>
@@ -92,6 +93,7 @@ export default function PeopleProfileChart({
                 value={demographics.averageHouseholdSize.toFixed(2)}
               />
             </strong>
+            <small>people per occupied household</small>
           </div>
           <div>
             <span>Foreign born</span>
@@ -100,13 +102,15 @@ export default function PeopleProfileChart({
                 value={`${demographics.foreignBornPercent.toFixed(1)}%`}
               />
             </strong>
+            <small>share of the city population</small>
           </div>
         </div>
       </div>
       <p className="people-chart-note">
-        The {demographics.estimateYear} value applies the official 2024–2025
-        Census city growth rate to 2025 once more. The resulting value is a
-        calculation, not an official Census estimate.
+        The 2019 value is an annual Census Population Estimate, not an ACS
+        survey estimate. The {demographics.estimateYear} value adds the average
+        numeric change from 2023→2024 and 2024→2025 to the official 2025 Census
+        estimate. It is calculated, not an official Census estimate.
       </p>
     </section>
   )
