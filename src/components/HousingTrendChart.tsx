@@ -1,6 +1,8 @@
 import { useId, useMemo, useState } from 'react'
 import { TrendingDown, TrendingUp } from 'lucide-react'
+import { ToggleGroup } from 'radix-ui'
 import type { HousingData, MarketPoint } from '../services/housing'
+import AnimatedValue from './AnimatedValue'
 
 type Metric = 'homeValue' | 'rent'
 
@@ -96,24 +98,26 @@ export default function HousingTrendChart({
               : 'Typical market rent'}
           </h3>
         </div>
-        <div className="housing-chart-toggle" aria-label="Housing chart metric">
-          <button
-            className={metric === 'homeValue' ? 'active' : ''}
-            onClick={() => setMetric('homeValue')}
-          >
+        <ToggleGroup.Root
+          className="housing-chart-toggle"
+          type="single"
+          value={metric}
+          onValueChange={(value) => value && setMetric(value as Metric)}
+          aria-label="Housing chart metric"
+        >
+          <ToggleGroup.Item value="homeValue" aria-label="Show home values">
             Home value
-          </button>
-          <button
-            className={metric === 'rent' ? 'active' : ''}
-            onClick={() => setMetric('rent')}
-          >
+          </ToggleGroup.Item>
+          <ToggleGroup.Item value="rent" aria-label="Show rents">
             Rent
-          </button>
-        </div>
+          </ToggleGroup.Item>
+        </ToggleGroup.Root>
       </div>
 
       <div className="housing-chart-summary">
-        <strong>{currency.format(latest)}</strong>
+        <strong>
+          <AnimatedValue value={currency.format(latest)} />
+        </strong>
         <span className={positive ? 'positive' : 'negative'}>
           <TrendIcon size={15} /> {Math.abs(change).toFixed(1)}%
         </span>
@@ -129,6 +133,7 @@ export default function HousingTrendChart({
           <span>{compactCurrency.format(geometry.min)}</span>
         </div>
         <svg
+          key={metric}
           viewBox={`0 0 ${geometry.width} ${geometry.height}`}
           role="img"
           aria-label={`${metric === 'homeValue' ? 'Home value' : 'Rent'} history from ${monthLabel(series[0].date)} to ${monthLabel(series.at(-1)?.date ?? series[0].date)}`}
@@ -153,8 +158,13 @@ export default function HousingTrendChart({
               className="housing-grid-line"
             />
           ))}
-          <path d={geometry.area} fill={`url(#${gradientId})`} />
+          <path
+            className="chart-area-enter"
+            d={geometry.area}
+            fill={`url(#${gradientId})`}
+          />
           <polyline
+            className="chart-line-enter"
             points={geometry.line}
             fill="none"
             stroke={color}
@@ -164,6 +174,7 @@ export default function HousingTrendChart({
           />
           {geometry.points.map((point, index) => (
             <circle
+              className="chart-point"
               key={series[index].date}
               cx={point.x}
               cy={point.y}
@@ -171,6 +182,8 @@ export default function HousingTrendChart({
               fill="#fff"
               stroke={color}
               strokeWidth={index === geometry.points.length - 1 ? 4 : 2}
+              tabIndex={0}
+              aria-label={`${monthLabel(series[index].date)}: ${currency.format(series[index].value)}`}
             >
               <title>
                 {monthLabel(series[index].date)}:{' '}

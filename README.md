@@ -19,6 +19,8 @@ The application does not start with a hard-coded city. The selected and comparis
 - Data-driven HomeIntel Briefs for Housing and People
 - Side-by-side city comparison interface
 - Responsive desktop and mobile layouts
+- Animated, hover-responsive charts with reduced-motion support
+- Persistent light and dark appearance modes
 - Material UI loading indicators
 - ESLint and Prettier integration
 
@@ -30,6 +32,8 @@ The application does not start with a hard-coded city. The selected and comparis
 - Zustand
 - TanStack Query
 - Material UI
+- Radix UI Primitives
+- Tailwind CSS 4 with the official Vite plugin
 - React Leaflet and Leaflet
 - Lucide React
 - ESLint and Prettier
@@ -202,6 +206,32 @@ All React Query configuration is centralized in `src/hooks`:
 The hooks own query keys, cancellation signals, enabling conditions, and stale times. UI components consume the hooks without containing direct `useQuery` or API `fetch` calls.
 
 The shared `QueryClient` is configured in `src/main.tsx`.
+
+### Radix UI
+
+HomeIntel uses unstyled Radix primitives for accessible interactive controls
+while retaining the project's custom visual design. The Explore/Compare
+navigation uses Radix Tabs, and the Housing chart's Home value/Rent selector
+uses Radix Toggle Group. Radix supplies keyboard navigation, ARIA behavior, and
+interaction state through `data-state` attributes.
+
+The header theme control uses Radix Switch. The selected light or dark mode is
+saved in `localStorage`; on a first visit, HomeIntel follows the operating
+system's `prefers-color-scheme` setting. Dark mode uses a dedicated AI-dashboard
+theme with blue-black surfaces, violet/cyan accents, translucent cards, and
+subtle ambient glow while preserving accessible contrast.
+
+### Tailwind CSS
+
+Tailwind CSS is integrated through `@tailwindcss/vite` and imported by
+`src/styles.css`. New and refactored component interactions use Tailwind
+utilities for transitions, hover elevation, keyboard focus rings, responsive
+behavior, and state-driven animation. The existing dashboard stylesheet remains
+in place while components are migrated incrementally to avoid a risky visual
+rewrite.
+
+Overview metric cards use Radix Collapsible with Tailwind animation utilities,
+allowing readers to reveal supporting context with a mouse, keyboard, or touch.
 
 ## Project structure
 

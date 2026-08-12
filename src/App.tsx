@@ -1,4 +1,6 @@
 import { BarChart3, Compass } from 'lucide-react'
+import { Tabs } from 'radix-ui'
+import { useEffect } from 'react'
 import suburbanNeighborhood from './assets/images/suburban-neighborhood.jpg'
 import urbanNeighborhood from './assets/images/urban-neighborhood.jpg'
 import Brand from './components/Brand'
@@ -15,16 +17,27 @@ export default function App() {
   const city = useAppStore((state) => state.city)
   const comparisonCity = useAppStore((state) => state.comparisonCity)
   const mobileNavOpen = useAppStore((state) => state.mobileNavOpen)
+  const theme = useAppStore((state) => state.theme)
   const setView = useAppStore((state) => state.setView)
   const selectCity = useAppStore((state) => state.selectCity)
   const setComparisonCity = useAppStore((state) => state.setComparisonCity)
   const setMobileNavOpen = useAppStore((state) => state.setMobileNavOpen)
+  const setTheme = useAppStore((state) => state.setTheme)
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    document.documentElement.style.colorScheme = theme
+  }, [theme])
 
   if (!city) {
     return (
       <div className="app-shell location-entry">
         <main>
-          <Header onMenu={() => undefined} />
+          <Header
+            onMenu={() => undefined}
+            theme={theme}
+            onThemeChange={setTheme}
+          />
           <div className="page-content landing-page">
             <section className="landing-hero">
               <div className="landing-copy">
@@ -79,20 +92,26 @@ export default function App() {
         close={() => setMobileNavOpen(false)}
       />
       <main>
-        <Header onMenu={() => setMobileNavOpen(true)} />
-        <div className="top-tabs">
-          <button
-            className={view !== 'Compare' ? 'active' : ''}
-            onClick={() => setView('Overview')}
-          >
-            <Compass size={15} /> Explore
-          </button>
-          <button
-            className={view === 'Compare' ? 'active' : ''}
-            onClick={() => setView('Compare')}
-          >
-            <BarChart3 size={15} /> Compare cities
-          </button>
+        <Header
+          onMenu={() => setMobileNavOpen(true)}
+          theme={theme}
+          onThemeChange={setTheme}
+        />
+        <Tabs.Root
+          className="top-tabs"
+          value={view === 'Compare' ? 'compare' : 'explore'}
+          onValueChange={(value) =>
+            setView(value === 'compare' ? 'Compare' : 'Overview')
+          }
+        >
+          <Tabs.List className="top-tabs-list" aria-label="Workspace view">
+            <Tabs.Trigger value="explore">
+              <Compass size={15} /> Explore
+            </Tabs.Trigger>
+            <Tabs.Trigger value="compare">
+              <BarChart3 size={15} /> Compare cities
+            </Tabs.Trigger>
+          </Tabs.List>
           <span />
           <div className="selected-location">
             <i style={{ background: city.color }} />
@@ -101,7 +120,7 @@ export default function App() {
             </span>
             <SearchBox onSelect={selectCity} />
           </div>
-        </div>
+        </Tabs.Root>
         <div className="page-content">
           {view === 'Overview' ? (
             <OverviewPage city={city} setView={setView} />

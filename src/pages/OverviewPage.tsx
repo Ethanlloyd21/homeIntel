@@ -218,7 +218,10 @@ export default function OverviewPage({ city, setView }: OverviewPageProps) {
                         {hazard.label}
                       </span>
                       <div>
-                        <i style={{ width: `${hazard.score}%` }} />
+                        <i
+                          className="progress-fill-enter"
+                          style={{ width: `${hazard.score}%` }}
+                        />
                       </div>
                       <b>{hazard.score}</b>
                     </div>
@@ -254,6 +257,7 @@ export default function OverviewPage({ city, setView }: OverviewPageProps) {
                   <span>{industry.name}</span>
                   <div>
                     <i
+                      className="progress-fill-enter"
                       style={{
                         width: `${industry.percent}%`,
                         background:

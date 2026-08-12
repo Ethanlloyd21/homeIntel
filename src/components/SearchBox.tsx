@@ -18,7 +18,9 @@ export default function SearchBox({
   const results = locationQuery.data ?? []
 
   return (
-    <div className={`search-wrap ${compact ? 'search-compact' : ''}`}>
+    <div
+      className={`search-wrap ${compact ? 'search-compact' : ''} transition-all duration-200 focus-within:ring-2 focus-within:ring-violet-400/40`}
+    >
       <Search size={20} />
       <input
         value={value}

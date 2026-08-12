@@ -34,7 +34,11 @@ export default function Sidebar({
     <aside className={`sidebar ${open ? 'open' : ''}`}>
       <div className="sidebar-top">
         <Brand />
-        <button className="mobile-close" onClick={close}>
+        <button
+          className="mobile-close min-h-11 min-w-11 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+          onClick={close}
+          aria-label="Close navigation"
+        >
           <X size={20} />
         </button>
       </div>
@@ -42,7 +46,7 @@ export default function Sidebar({
         {nav.map(([label, Icon]) => (
           <button
             key={label}
-            className={active === label ? 'active' : ''}
+            className={`${active === label ? 'active' : ''} min-h-11 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70`}
             onClick={() => {
               setActive(label)
               close()

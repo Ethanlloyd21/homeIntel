@@ -1,5 +1,6 @@
 import type { DemographicsData } from '../services/demographics'
 import { fmt } from '../utils/formatters'
+import AnimatedValue from './AnimatedValue'
 
 export default function PeopleProfileChart({
   demographics,
@@ -31,9 +32,14 @@ export default function PeopleProfileChart({
       <div className="people-chart-layout">
         <div className="population-bars">
           <div className="population-bar-item">
-            <strong>{fmt.format(demographics.previousPopulation)}</strong>
+            <strong>
+              <AnimatedValue
+                value={fmt.format(demographics.previousPopulation)}
+              />
+            </strong>
             <div className="population-bar-track">
               <i
+                className="population-bar-fill"
                 style={{
                   height: `${barHeight(demographics.previousPopulation)}%`,
                   background: '#aebbb5',
@@ -44,10 +50,13 @@ export default function PeopleProfileChart({
           </div>
           <div className="population-bar-item">
             <strong>
-              {fmt.format(demographics.estimatedCurrentPopulation)}
+              <AnimatedValue
+                value={fmt.format(demographics.estimatedCurrentPopulation)}
+              />
             </strong>
             <div className="population-bar-track">
               <i
+                className="population-bar-fill"
                 style={{
                   height: `${barHeight(demographics.estimatedCurrentPopulation)}%`,
                   background: color,
@@ -61,8 +70,9 @@ export default function PeopleProfileChart({
           <div>
             <span>Population change</span>
             <strong>
-              {demographics.estimatedCurrentGrowthPercent >= 0 ? '+' : ''}
-              {demographics.estimatedCurrentGrowthPercent.toFixed(1)}%
+              <AnimatedValue
+                value={`${demographics.estimatedCurrentGrowthPercent >= 0 ? '+' : ''}${demographics.estimatedCurrentGrowthPercent.toFixed(1)}%`}
+              />
             </strong>
             <small>
               {populationDifference >= 0 ? '+' : ''}
@@ -71,15 +81,25 @@ export default function PeopleProfileChart({
           </div>
           <div>
             <span>Median age</span>
-            <strong>{demographics.medianAge.toFixed(1)}</strong>
+            <strong>
+              <AnimatedValue value={demographics.medianAge.toFixed(1)} />
+            </strong>
           </div>
           <div>
             <span>Household size</span>
-            <strong>{demographics.averageHouseholdSize.toFixed(2)}</strong>
+            <strong>
+              <AnimatedValue
+                value={demographics.averageHouseholdSize.toFixed(2)}
+              />
+            </strong>
           </div>
           <div>
             <span>Foreign born</span>
-            <strong>{demographics.foreignBornPercent.toFixed(1)}%</strong>
+            <strong>
+              <AnimatedValue
+                value={`${demographics.foreignBornPercent.toFixed(1)}%`}
+              />
+            </strong>
           </div>
         </div>
       </div>

@@ -74,12 +74,14 @@ export default function ComparePage({
         </div>
         <div className="comparison-bars">
           <div
+            className="comparison-bar-enter"
             style={{
               height: `${Math.max(28, (left.home / Math.max(left.home, right.home)) * 100)}%`,
               background: left.color,
             }}
           />
           <div
+            className="comparison-bar-enter"
             style={{
               height: `${Math.max(28, (right.home / Math.max(left.home, right.home)) * 100)}%`,
               background: right.color,
@@ -156,12 +158,14 @@ export default function ComparePage({
                 )
               })}
               <polygon
+                className="radar-shape-enter"
                 points="0,-45 58,-19 29,40 -37,51 -67,-22"
                 fill={`${left.color}24`}
                 stroke={left.color}
                 strokeWidth="2"
               />
               <polygon
+                className="radar-shape-enter radar-shape-delay"
                 points="0,-70 43,-14 44,61 -28,39 -50,-16"
                 fill={`${right.color}1f`}
                 stroke={right.color}
@@ -202,12 +206,14 @@ export default function ComparePage({
                 <line x1="0" y1="150" x2="500" y2="150" />
               </g>
               <polyline
+                className="chart-line-enter"
                 points="0,78 45,76 91,71 136,63 182,56 227,48 273,43 318,45 364,51 409,59 455,69 500,76"
                 fill="none"
                 stroke={left.color}
                 strokeWidth="3"
               />
               <polyline
+                className="chart-line-enter chart-line-delay"
                 points="0,106 45,93 91,72 136,51 182,34 227,20 273,17 318,22 364,37 409,57 455,80 500,99"
                 fill="none"
                 stroke={right.color}

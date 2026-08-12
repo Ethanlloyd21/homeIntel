@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import AnimatedValue from './AnimatedValue'
 
 export default function ScoreRing({
   score,
@@ -18,7 +19,9 @@ export default function ScoreRing({
       }
     >
       <div>
-        <strong>{score}</strong>
+        <strong>
+          <AnimatedValue value={score} />
+        </strong>
         <small>/ 100</small>
       </div>
     </div>

@@ -18,6 +18,7 @@ import { useHousingQuery } from '../hooks/useHousingQuery'
 import { useRiskQuery } from '../hooks/useRiskQuery'
 import { compact, fmt, money } from '../utils/formatters'
 import MiniTrend from '../components/MiniTrend'
+import AnimatedValue from '../components/AnimatedValue'
 
 export default function CategoryPage({
   type,
@@ -309,7 +310,9 @@ export default function CategoryPage({
         {c.stats.map(([label, value, note]) => (
           <article className="card" key={label}>
             <p>{label}</p>
-            <strong>{value}</strong>
+            <strong>
+              <AnimatedValue value={value} />
+            </strong>
             <small>{note}</small>
             <MiniTrend color={city.color} />
           </article>
@@ -378,10 +381,12 @@ export default function CategoryPage({
                 <line x1="0" y1="230" x2="800" y2="230" />
               </g>
               <path
+                className="chart-area-enter"
                 d="M0 212 C80 205,110 190,165 194 S270 148,335 157 S430 126,500 133 S600 82,665 100 S745 58,800 52 L800 270 L0 270Z"
                 fill="url(#area)"
               />
               <path
+                className="chart-line-enter"
                 d="M0 212 C80 205,110 190,165 194 S270 148,335 157 S430 126,500 133 S600 82,665 100 S745 58,800 52"
                 fill="none"
                 stroke={city.color}
