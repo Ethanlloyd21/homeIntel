@@ -21,7 +21,31 @@ export default function EconomicGrowthChart({
     (item): item is typeof item & { changePercent: number } =>
       item.changePercent !== null,
   )
-  const growth = lausGrowth.length > 0 ? lausGrowth : historicalGrowth
+  const reportedGrowth = lausGrowth.length > 0 ? lausGrowth : historicalGrowth
+  const growth = reportedGrowth.map((item) => ({
+    ...item,
+    monthsReported:
+      'monthsReported' in item && typeof item.monthsReported === 'number'
+        ? item.monthsReported
+        : 12,
+    estimated: false,
+  }))
+  const projectionRate =
+    current?.qcew?.employmentGrowthPercent ?? growth.at(-1)?.changePercent ?? 0
+  const currentYear = new Date().getFullYear()
+  while (
+    growth.length > 0 &&
+    (growth.at(-1)?.year ?? currentYear) < currentYear
+  ) {
+    const previous = growth.at(-1)!
+    growth.push({
+      year: previous.year + 1,
+      employed: Math.round(previous.employed * (1 + projectionRate / 100)),
+      changePercent: projectionRate,
+      monthsReported: 0,
+      estimated: true,
+    })
+  }
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const activeIndex = Math.max(
     selectedYear === null
@@ -87,11 +111,13 @@ export default function EconomicGrowthChart({
                 </div>
                 <strong>
                   {item.year}
-                  {'monthsReported' in item &&
-                  typeof item.monthsReported === 'number' &&
-                  item.monthsReported < 12
-                    ? ' YTD'
-                    : ''}
+                  {item.estimated
+                    ? ' est.'
+                    : 'monthsReported' in item &&
+                        typeof item.monthsReported === 'number' &&
+                        item.monthsReported < 12
+                      ? ' YTD'
+                      : ''}
                 </strong>
                 <small>{fmt.format(item.employed)} employed</small>
               </button>
@@ -107,8 +133,9 @@ export default function EconomicGrowthChart({
       <p className="sector-source-note">
         Source: U.S. Bureau of Labor Statistics Local Area Unemployment
         Statistics (LAUS). Annual values are monthly city-employment averages;
-        {new Date().getFullYear()} is a year-to-date average through the latest
-        available month. This is resident employment growth, not GDP growth.
+        Current-year estimates extend the latest reported employment using the
+        most recent BLS QCEW covered-job growth rate and are marked “est.” This
+        is resident employment growth, not GDP growth.
       </p>
       <div className="current-economy-grid">
         {isCurrentLoading ? (

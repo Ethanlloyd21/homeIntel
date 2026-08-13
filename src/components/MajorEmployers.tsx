@@ -113,6 +113,9 @@ export default function MajorEmployers({
         <Tabs.Root
           className="employer-tabs"
           defaultValue={sectorGroups[0].sector}
+          onValueChange={(sector) =>
+            setSectorPages((current) => ({ ...current, [sector]: 1 }))
+          }
         >
           <Tabs.List
             className="employer-tab-list"

@@ -200,6 +200,21 @@ function collegeScorecardProxy(apiKey: string): Plugin {
   }
 }
 
+let lausFlatDataPromise: Promise<string> | null = null
+
+function getLausFlatData() {
+  lausFlatDataPromise ??= Promise.all(
+    ['CurrentU15-19', 'CurrentU20-24', 'CurrentU25-29'].map(async (period) => {
+      const response = await fetch(
+        `https://download.bls.gov/pub/time.series/la/la.data.0.${period}`,
+      )
+      if (!response.ok) throw new Error(`BLS LAUS ${period} is unavailable.`)
+      return response.text()
+    }),
+  ).then((files) => files.join('\n'))
+  return lausFlatDataPromise
+}
+
 function currentEconomyProxy(censusKey: string, beaKey: string): Plugin {
   const numberValue = (value: unknown) => {
     const parsed = Number(String(value ?? '').replaceAll(',', ''))
@@ -260,7 +275,17 @@ function currentEconomyProxy(censusKey: string, beaKey: string): Plugin {
         const seriesIds = ['05', '04', '03', '06'].map(
           (measure) => `LAU${row[1]}${measure}`,
         )
-        const bls = (await (
+        type BlsSeries = {
+          seriesID: string
+          data: {
+            year: string
+            period: string
+            periodName: string
+            value: string
+            latest?: string
+          }[]
+        }
+        let bls = (await (
           await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -272,21 +297,50 @@ function currentEconomyProxy(censusKey: string, beaKey: string): Plugin {
           })
         ).json()) as {
           Results?: {
-            series?: {
-              seriesID: string
-              data: {
-                year: string
-                period: string
-                periodName: string
-                value: string
-                latest?: string
-              }[]
-            }[]
+            series?: BlsSeries[]
+          }
+        }
+        if (!bls.Results?.series?.some((series) => series.data.length > 0)) {
+          const currentData = await getLausFlatData()
+          const seriesMap = new Map(
+            seriesIds.map((seriesID) => [seriesID, [] as BlsSeries['data']]),
+          )
+          for (const line of currentData.split(/\r?\n/)) {
+            const [rawSeriesId, year, period, rawValue] = line.split('\t')
+            const seriesID = rawSeriesId?.trim()
+            const target = seriesMap.get(seriesID)
+            if (!target || Number(year) < 2019 || !/^M\d{2}$/.test(period))
+              continue
+            target.push({
+              year,
+              period,
+              periodName:
+                period === 'M13'
+                  ? 'Annual average'
+                  : new Date(2000, Number(period.slice(1)) - 1).toLocaleString(
+                      'en-US',
+                      { month: 'long' },
+                    ),
+              value: rawValue.trim(),
+            })
+          }
+          bls = {
+            Results: {
+              series: [...seriesMap].map(([seriesID, data]) => ({
+                seriesID,
+                data: data.sort(
+                  (a, b) =>
+                    Number(b.year) - Number(a.year) ||
+                    Number(b.period.slice(1)) - Number(a.period.slice(1)),
+                ),
+              })),
+            },
           }
         }
         const latest = (id: string) =>
-          bls.Results?.series?.find((series) => series.seriesID === id)
-            ?.data?.[0]
+          bls.Results?.series
+            ?.find((series) => series.seriesID === id)
+            ?.data?.find((item) => /^M(0[1-9]|1[0-2])$/.test(item.period))
         const employment = latest(seriesIds[0])
         const unemployment = latest(seriesIds[1])
         const rate = latest(seriesIds[2])

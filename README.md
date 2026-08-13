@@ -13,8 +13,10 @@ The application does not start with a hard-coded city. The selected and comparis
 - Zillow ZHVI typical home values and ZORI market rents
 - Expandable Housing metric details with direct Zillow and Census source citations
 - Census ACS housing, demographic, education, and employment indicators
-- Current BLS LAUS city labor conditions and county QCEW employment and wages
+- Current BLS LAUS city labor conditions with downloadable-file fallback
+- Annual employment momentum from 2019 through 2026, using reported monthly data when available and clearly marked QCEW-based estimates otherwise
 - Census QWI county workforce flows and optional BEA county GDP growth
+- Regional employment landscape with sector tabs, company links, pagination, federal contractors, nearby headquarters, and major hospitals
 - Census Vintage 2025 city population estimates
 - Calculated current-year population based on the average official 2023–2025 annual city change
 - FEMA National Risk Index profile and individual hazard scores
@@ -184,7 +186,140 @@ Expected Annual Loss combines modeled hazard frequency, exposure, and estimated 
 
 Source: <https://hazards.fema.gov/nri/>
 
+### Current employment and annual economic momentum
+
+The Employment page combines several public labor and economic sources:
+
+- BLS Local Area Unemployment Statistics (LAUS) for city employment and unemployment
+- BLS Quarterly Census of Employment and Wages (QCEW) for county employment growth and wages
+- Census Quarterly Workforce Indicators (QWI) for county hires and separations
+- BEA Regional data for county real GDP when `BEA_API_KEY` is configured
+
+The server first requests LAUS through the BLS Public Data API. That unauthenticated API has a daily request quota. If the API is unavailable, rate-limited, or returns empty series, HomeIntel resolves the selected city's LAUS area code dynamically and reads the official BLS five-year downloadable files:
+
+```text
+la.data.0.CurrentU15-19
+la.data.0.CurrentU20-24
+la.data.0.CurrentU25-29
+```
+
+These files are downloaded once per server process and cached in memory. The fallback is not tied to San Diego or Dallas; it works for any U.S. city represented in the BLS LAUS area file. The chart uses monthly annual averages and marks an incomplete current year as `YTD`. If reported LAUS data does not yet reach the current year, the chart extends the latest employment value using the newest available QCEW covered-job growth rate and marks the result `est.`.
+
+The Current unemployment card always displays the observation period and geography. A value such as June 2026 is a reported monthly LAUS rate, not a HomeIntel forecast.
+
+### Regional employment landscape
+
+The Regional Employment Landscape is assembled dynamically for the selected U.S. city:
+
+- **USAspending:** federal contract recipients with recent contract work performed in surrounding counties. Totals cover the latest three years and represent contract obligations, not local employee counts.
+- **Wikidata:** strategic companies whose headquarters coordinates are within 85 kilometers (about 53 miles) of the selected city center. Headquarters distance is calculated from the returned geospatial distance.
+- **U.S. Hospitals HIFLD feature service:** open hospital facilities within a 50-mile radius. Major facilities are ranked using reported beds, staff, and distance. Hospital websites appear only when supplied by the source.
+
+Companies are classified into sectors such as Defense & government, Technology, Health & life sciences, Advanced manufacturing, Finance, Energy, and Transportation. The four strongest available sector groups are shown, and Health & life sciences is retained whenever qualifying health organizations or hospitals are found. Each tab displays six cards per page; switching tabs resets the destination tab to page 1.
+
+Federal contract place-of-performance data is county-based, so its geography is an approximate surrounding region rather than an exact 50-mile circle. A contractor card does not show distance because USAspending does not consistently provide an office coordinate. Hospital and Wikidata-headquarters cards show distance because those sources provide facility coordinates.
+
+Official company descriptions and websites are enriched from Wikidata when a confident match is available. A small curated profile layer supplies verified official domains for recognizable large contractors when upstream recipient metadata does not include a website. USAspending still determines whether those contractors qualify for the selected region; companies are not inserted solely because they are well known.
+
 ## State and API architecture
+
+### Architecture overview
+
+HomeIntel uses a client-first React architecture with a small server-side integration layer supplied by Vite during development and preview. Components do not call third-party APIs directly when a same-origin proxy is required.
+
+![HomeIntel architecture diagram](docs/homeintel-architecture.svg)
+
+The diagram can be edited in diagrams.net using [`docs/homeintel-architecture.drawio`](docs/homeintel-architecture.drawio). The SVG is committed separately so GitHub can render the architecture without requiring draw.io.
+
+```text
+User interface
+  React pages and components
+        |
+        +-- Zustand ------------------------------------+
+        |   Selected city, comparison city, route/UI    |
+        |                                               |
+        +-- TanStack Query hooks                        |
+                Query keys, caching, retries, signals   |
+                        |                               |
+                  Service modules                       |
+                Parsing and normalization               |
+                        |                               |
+          +-------------+------------------+            |
+          |                                |            |
+    Browser-safe APIs              Same-origin /api/*   |
+    and local JSON files           Vite server proxies  |
+          |                                |            |
+    Open-Meteo, Census,             BLS, BEA, FBI,      |
+    FEMA, Zillow snapshots          USAspending,        |
+                                   Wikidata, HIFLD      |
+```
+
+The major layers are:
+
+1. **Pages and components (`src/pages`, `src/components`)** render the dashboard, charts, cards, maps, sector tabs, pagination, and responsive navigation.
+2. **Zustand (`src/store/useAppStore.ts`)** stores application state that belongs to the user session, such as the selected city, comparison city, active page, and mobile-navigation state.
+3. **TanStack Query hooks (`src/hooks`)** own asynchronous server state. Hooks define cache keys, stale times, cancellation, and query-enabling conditions.
+4. **Services (`src/services`)** build request parameters, call local or remote endpoints, validate response shapes, normalize records, calculate derived values, and return UI-ready data.
+5. **Vite integration proxies (`vite.config.ts`)** protect server-only keys, avoid browser CORS restrictions, combine upstream sources, and implement fallbacks. These endpoints run in Vite development and preview servers.
+6. **Local normalized datasets (`public/data`)** provide Zillow market history and Census population estimates without repeatedly downloading large source files in the browser.
+
+### API and data flow
+
+| Domain                   | Source                                      | Access path                                  | Key              | Geography                            | Fallback or transformation                                         |
+| ------------------------ | ------------------------------------------- | -------------------------------------------- | ---------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| City search              | Open-Meteo Geocoding                        | Browser service                              | No               | Worldwide place/ZIP results          | Selected coordinates are stored in Zustand                         |
+| Weather                  | Open-Meteo Forecast                         | Browser service                              | No               | Selected coordinates                 | Comfort score is calculated locally from weather conditions        |
+| Map                      | OpenStreetMap tiles                         | React Leaflet                                | No               | Selected coordinates                 | Map attribution remains visible                                    |
+| Housing market           | Zillow Research                             | Local normalized JSON                        | No               | Zillow city/region                   | ACS housing values are used when Zillow has no match               |
+| Demographics and housing | Census ACS five-year                        | Browser service                              | Census key       | U.S. place                           | Variables are normalized into snapshot cards and charts            |
+| Population               | Census Vintage 2025                         | Local normalized JSON                        | No               | U.S. incorporated place              | Current-year value uses the documented average-change calculation  |
+| Current labor market     | BLS LAUS                                    | `/api/current-economy`                       | No               | U.S. city area                       | BLS API first; official five-year flat files on quota/failure      |
+| County jobs and wages    | BLS QCEW                                    | `/api/current-economy`                       | No               | Selected city’s county               | Tries the newest available quarter in descending order             |
+| Workforce flows          | Census QWI                                  | `/api/current-economy`                       | Census key       | Selected city’s county               | Tries recent quarters until data is available                      |
+| Real GDP                 | BEA Regional API                            | `/api/current-economy`                       | Optional BEA key | Selected city’s county               | Card remains unavailable when no key or observations exist         |
+| Federal contractors      | USAspending                                 | `/api/federal-contractors`                   | No               | Counties around selected coordinates | Merges duplicate recipients and ranks recent obligations           |
+| Nearby headquarters      | Wikidata Query Service                      | `/api/major-employers`                       | No               | 85 km around city center             | Filters to strategic sectors and organizations with reported scale |
+| Company metadata         | Wikidata API plus curated verified profiles | `/api/federal-contractors` and service layer | No               | Company entity                       | Adds descriptions and official websites when confidently matched   |
+| Major hospitals          | U.S. Hospitals HIFLD ArcGIS feature service | `/api/major-hospitals`                       | No               | Exact 50-mile radius                 | Filters open facilities and ranks by beds, staff, then distance    |
+| Crime                    | FBI Crime Data API                          | Same-origin proxy                            | Data.gov key     | U.S. state/city coverage             | Proxy prevents exposing the key and avoids browser CORS errors     |
+| Natural hazards          | FEMA National Risk Index                    | Browser service                              | No               | Containing U.S. Census tract         | Converts relative hazard scores into the documented risk profile   |
+| Universities             | College Scorecard                           | Same-origin proxy                            | Data.gov key     | Radius around selected coordinates   | Ranks nearby colleges and enriches displayed institution details   |
+
+### Server proxy endpoints
+
+The Vite configuration currently exposes these application-facing endpoints:
+
+| Endpoint                         | Purpose                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| `/api/current-economy`           | Resolves county geography and combines LAUS, QCEW, QWI, and optional BEA data  |
+| `/api/major-employers`           | Queries nearby strategic headquarters from Wikidata                            |
+| `/api/federal-contractors`       | Finds regional federal contract recipients and enriches major-company metadata |
+| `/api/major-hospitals`           | Queries open hospital facilities within 50 miles                               |
+| FBI crime proxy endpoint         | Keeps the Data.gov key server-side and handles CORS                            |
+| College Scorecard proxy endpoint | Keeps the Data.gov key server-side and returns nearby universities             |
+
+These Vite middleware functions are appropriate for local development and preview. A production static host does not execute `vite.config.ts` middleware. Production deployment must recreate the `/api/*` handlers as serverless functions, edge functions, or routes in a Node server and keep their response contracts unchanged.
+
+### Caching and failure behavior
+
+- TanStack Query caches API results by selected city and dataset version.
+- `AbortSignal` cancels obsolete requests when the selected city changes.
+- Query keys include version labels when a response format or fallback strategy changes, preventing stale incompatible data from being reused.
+- The LAUS downloadable files are fetched once per server process and cached in memory.
+- The economic proxy tries recent QCEW and QWI periods from newest to oldest because federal datasets are released on different schedules.
+- Regional employer loading can continue when either Wikidata or USAspending fails; it throws only when both core company sources fail.
+- Missing optional fields, such as hospital beds or company websites, are omitted rather than invented.
+
+### Derived data versus reported data
+
+HomeIntel distinguishes source observations from application calculations:
+
+- `YTD` identifies a reported annual average based on fewer than 12 published months.
+- `est.` identifies a current-year employment value extended with the latest available QCEW growth rate.
+- Current-year population is calculated from the documented recent Census annual-change method.
+- Weather comfort is a HomeIntel scale derived from several Open-Meteo variables.
+- FEMA scores are normalized comparative risk indicators, not probabilities.
+- Federal contract obligations describe regional contract activity and are not local payroll or employee estimates.
 
 ### Zustand
 
@@ -206,6 +341,8 @@ All React Query configuration is centralized in `src/hooks`:
 - `useHousingQuery.ts`
 - `useDemographicsQuery.ts`
 - `useEmploymentQuery.ts`
+- `useCurrentEconomyQuery.ts`
+- `useMajorEmployersQuery.ts`
 - `useRiskQuery.ts`
 
 The hooks own query keys, cancellation signals, enabling conditions, and stale times. UI components consume the hooks without containing direct `useQuery` or API `fetch` calls.
@@ -310,6 +447,10 @@ homeIntel/
 - The 2019 People-chart value is an ACS estimate, while 2024 and 2025 come from the Population Estimates Program.
 - ACS five-year values are survey estimates and currently omit margins of error in the UI.
 - Census place, Zillow city, FEMA tract, and map geographies are not identical.
+- LAUS city, QCEW county, QWI county, USAspending county, headquarters-radius, and hospital-radius geographies are not identical.
+- USAspending contractor totals indicate regional federal work and do not prove that a company has an office or a specific employee count within 50 miles.
+- Wikidata company records are community maintained and may omit branch offices, employee counts, or official websites.
+- The HIFLD hospital feature service may have older or incomplete facility metadata; beds, staff, trauma status, and websites are shown only when reported.
 - Zillow indices do not represent every individual property or lease.
 - FEMA scores are relative community-screening measures, not parcel-level risk assessments.
 - Weather is model based and can differ from a nearby station.
@@ -323,6 +464,8 @@ homeIntel/
 Variables prefixed with `VITE_` are included in browser code. FBI requests use a same-origin server proxy and the `DATA_GOV_API_KEY` server-only variable. For a static public deployment, implement the equivalent endpoint as a serverless function. Census requests still need a production proxy so that key is not exposed to browser users.
 
 Zillow, Open-Meteo, OpenStreetMap, and FEMA requests used here do not require private application keys.
+
+BLS LAUS/QCEW, Census QWI, USAspending, Wikidata, and the HIFLD hospital feature service do not require private application keys. `BEA_API_KEY` is optional and enables county real-GDP data.
 
 ## Troubleshooting
 
@@ -351,6 +494,19 @@ npm run data:update
 - Confirm the browser can access `open-meteo.com`.
 - Check the browser network panel for blocked or rate-limited requests.
 
+### Current unemployment says unavailable
+
+- Restart Vite after changes to `vite.config.ts`; the current-economy proxy runs on the Vite server.
+- Confirm the selected location is a U.S. city represented by BLS LAUS.
+- The proxy automatically falls back from the BLS API to the official downloadable LAUS files when the API quota is exhausted.
+
+### Hospitals or regional employers are missing
+
+- Restart Vite after proxy changes.
+- Confirm the selected location is in the United States.
+- Hospital results require qualifying open facilities within 50 miles and are limited to major facilities after bed/staff filtering.
+- Ordinary company branch offices are not inferred. A company appears through qualifying federal contract activity or a nearby headquarters record.
+
 ## Quality checks
 
 Run before committing:
@@ -372,6 +528,10 @@ The landing-page images are stored locally in `src/assets/images` and sourced fr
 - OpenStreetMap requires contributor attribution.
 - Census data is provided by the U.S. Census Bureau.
 - FEMA National Risk Index data is provided by FEMA.
+- Employment and wage data is provided by the U.S. Bureau of Labor Statistics.
+- Federal contract data is provided by USAspending.gov.
+- Company metadata is provided by Wikidata under CC0.
+- Hospital facility records are provided by the U.S. Hospitals HIFLD feature service.
 - Open-Meteo weather and geocoding are subject to Open-Meteo's terms.
 - Landing imagery is subject to the Pexels license.
 
