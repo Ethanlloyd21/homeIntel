@@ -37,6 +37,25 @@
   <g transform="translate(1205 405)"><rect class="box" width="150" height="82" stroke="#25a77a"/><text x="18" y="29" class="h">College Scorecard</text><text x="18" y="55" class="p">Data.gov key</text></g>
   <g transform="translate(1380 405)"><rect class="box" width="150" height="82" stroke="#25a77a"/><text x="18" y="29" class="h">FCC geography</text><text x="18" y="55" class="p">County/FIPS lookup</text></g>
   <g transform="translate(1030 555)"><rect class="box" width="500" height="105" stroke="#25a77a" fill="#e9fff8"/><text x="22" y="31" class="h">Data integrity rules</text><text x="22" y="57" class="p">Missing optional fields are omitted, not invented.</text><text x="22" y="80" class="p">Estimates are labeled; exact distance requires coordinates.</text></g>
-  <path d="M265 230 V250 H370 V265" class="line" stroke="#7c6cff"/><path d="M370 365 V405" class="line" stroke="#25a77a" marker-end="url(#arrow-green)"/><path d="M460 450 H530 V190 H555" class="line" stroke="#7c6cff"/><path d="M935 319 H1005 V184 H1030" class="line" stroke="#7c6cff"/><path d="M935 319 H985 V310 H1030" class="line" stroke="#7c6cff"/><path d="M935 449 H1360 V310 H1380" class="line" stroke="#7c6cff"/><path d="M645 363 V530 H745 V545" fill="none" stroke="#d35d91" stroke-width="2" stroke-dasharray="8 7" marker-end="url(#arrow-purple)"/>
+  <!-- Browser flow: connectors stay in the whitespace between cards. -->
+  <path d="M185 230 V247 H160 V265" class="line" stroke="#7c6cff"/>
+  <path d="M345 230 V247 H370 V265" class="line" stroke="#7c6cff"/>
+  <path d="M370 365 V385 H265 V405" class="line" stroke="#25a77a" marker-end="url(#arrow-green)"/>
+  <path d="M190 493 V520 H160 V545" class="line" stroke="#e5a43a"/>
+  <path d="M340 493 V520 H370 V545" class="line" stroke="#e5a43a"/>
+
+  <!-- Cross-boundary request lane runs only through the 35px column gutter. -->
+  <path d="M460 449 H507 V189 H555" class="line" stroke="#7c6cff"/>
+
+  <!-- Provider connectors use dedicated horizontal lanes above, between, or below cards. -->
+  <path d="M620 363 V515 H985 V184 H1030" class="line" stroke="#7c6cff"/>
+  <path d="M935 310 H1030" class="line" stroke="#7c6cff"/>
+  <path d="M845 275 V245 H1280 V265" class="line" stroke="#7c6cff"/>
+  <path d="M735 449 V515 H1365 V310 H1380" class="line" stroke="#7c6cff"/>
+  <path d="M935 449 H982 V446 H1030" class="line" stroke="#7c6cff"/>
+  <path d="M845 493 V520 H1280 V487" class="line" stroke="#7c6cff"/>
+
+  <!-- Dashed fallback stays inside the Vite column and avoids both endpoint cards. -->
+  <path d="M670 363 V520 H745 V545" fill="none" stroke="#d35d91" stroke-width="2" stroke-dasharray="8 7" marker-end="url(#arrow-purple)"/>
   <text x="42" y="920" class="small">Editable source: docs/homeintel-architecture.drawio · GitHub preview: docs/homeintel-architecture.svg</text>
 </svg>
