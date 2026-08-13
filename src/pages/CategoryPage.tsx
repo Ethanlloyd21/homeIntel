@@ -33,6 +33,11 @@ import AnimatedValue from '../components/AnimatedValue'
 import HousingMetricCard from '../components/HousingMetricCard'
 import NearbyColleges from '../components/NearbyColleges'
 import { useNearbyCollegesQuery } from '../hooks/useNearbyCollegesQuery'
+import EmploymentSectorChart from '../components/EmploymentSectorChart'
+import EconomicGrowthChart from '../components/EconomicGrowthChart'
+import { useCurrentEconomyQuery } from '../hooks/useCurrentEconomyQuery'
+import MajorEmployers from '../components/MajorEmployers'
+import { useMajorEmployersQuery } from '../hooks/useMajorEmployersQuery'
 
 const ZHVI_SOURCE =
   'https://files.zillowstatic.com/research/public_csvs/zhvi/City_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv'
@@ -55,7 +60,7 @@ const ACS_HOUSEHOLD_SIZE_SOURCE =
 const ACS_EMPLOYMENT_SOURCE =
   'https://api.census.gov/data/2024/acs/acs5/profile/groups/DP03.html'
 const ACS_DETAILED_INDUSTRY_SOURCE =
-  'https://api.census.gov/data/2024/acs/acs5/groups/B24030.html'
+  'https://api.census.gov/data/2024/acs/acs5/groups/C24030.html'
 const FEMA_NRI_SOURCE = 'https://hazards.fema.gov/nri/data-resources'
 const OPEN_METEO_SOURCE = 'https://open-meteo.com/en/docs'
 
@@ -76,6 +81,14 @@ export default function CategoryPage({
     'Unavailable'
   ) : null
   const employmentQuery = useEmploymentQuery(city, type === 'Employment')
+  const currentEconomyQuery = useCurrentEconomyQuery(
+    city,
+    type === 'Employment',
+  )
+  const majorEmployersQuery = useMajorEmployersQuery(
+    city,
+    type === 'Employment',
+  )
   const employment = employmentQuery.data
   const employmentStatus = employmentQuery.isPending ? (
     <LoadingSpinner label="Loading Census employment data" />
@@ -480,7 +493,7 @@ export default function CategoryPage({
         href: ACS_EMPLOYMENT_SOURCE,
       },
       {
-        label: 'Census ACS table B24030 — detailed industries',
+        label: 'Census ACS table C24030 — detailed industries',
         href: ACS_DETAILED_INDUSTRY_SOURCE,
       },
     ],
@@ -629,6 +642,23 @@ export default function CategoryPage({
               </div>
             </section>
           )
+        ) : type === 'Employment' ? (
+          employment ? (
+            <EmploymentSectorChart employment={employment} />
+          ) : (
+            <section className="card wide-chart housing-trend-empty">
+              <div className="loading-panel">
+                {employmentQuery.isPending ? (
+                  <LoadingSpinner
+                    size={34}
+                    label="Loading employment sectors"
+                  />
+                ) : (
+                  <p>Employment sector data is unavailable for this city.</p>
+                )}
+              </div>
+            </section>
+          )
         ) : (
           <section className="card wide-chart">
             <div className="section-heading">
@@ -702,6 +732,21 @@ export default function CategoryPage({
           colleges={collegesQuery.data ?? []}
           isLoading={collegesQuery.isPending}
           isError={collegesQuery.isError}
+        />
+      )}
+      {type === 'Employment' && employment && (
+        <EconomicGrowthChart
+          employment={employment}
+          current={currentEconomyQuery.data}
+          isCurrentLoading={currentEconomyQuery.isPending}
+        />
+      )}
+      {type === 'Employment' && (
+        <MajorEmployers
+          cityName={city.name}
+          employers={majorEmployersQuery.data ?? []}
+          isLoading={majorEmployersQuery.isPending}
+          isError={majorEmployersQuery.isError}
         />
       )}
     </div>

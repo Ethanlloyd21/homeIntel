@@ -7,6 +7,11 @@ export type EmploymentData = {
   laborForce: number
   medianWorkerEarnings: number
   industries: { name: string; percent: number }[]
+  annualGrowth: {
+    year: number
+    employed: number
+    changePercent: number | null
+  }[]
   sourceName: string
 }
 
@@ -77,7 +82,7 @@ export async function fetchEmploymentData(city: City, signal: AbortSignal) {
   let separateIndustries: { name: string; percent: number }[] = []
   try {
     const detailedIndustryResponse = await fetch(
-      `https://api.census.gov/data/2024/acs/acs5?get=NAME,B24030_001E,B24030_091E,B24030_092E,B24030_193E,B24030_194E&for=place:${placeCode}&in=state:${state[1]}${key}`,
+      `https://api.census.gov/data/2024/acs/acs5?get=NAME,C24030_001E,C24030_022E,C24030_023E,C24030_049E,C24030_050E&for=place:${placeCode}&in=state:${state[1]}${key}`,
       { signal },
     )
     if (detailedIndustryResponse.ok) {
@@ -87,11 +92,11 @@ export async function fetchEmploymentData(city: City, signal: AbortSignal) {
       const detailedPlace = detailedRows[1]
       const detailedValue = (variable: string) =>
         estimate(detailedPlace?.[detailedHeaders.indexOf(variable)])
-      const detailedEmployed = detailedValue('B24030_001E')
+      const detailedEmployed = detailedValue('C24030_001E')
       const educationWorkers =
-        detailedValue('B24030_091E') + detailedValue('B24030_193E')
+        detailedValue('C24030_022E') + detailedValue('C24030_049E')
       const healthCareWorkers =
-        detailedValue('B24030_092E') + detailedValue('B24030_194E')
+        detailedValue('C24030_023E') + detailedValue('C24030_050E')
 
       if (detailedEmployed > 0) {
         separateIndustries = [
@@ -122,6 +127,29 @@ export async function fetchEmploymentData(city: City, signal: AbortSignal) {
       percent: estimate(value(variable)),
     }))
 
+  const annualGrowth = (
+    await Promise.all(
+      [2019, 2020, 2021, 2022, 2023, 2024].map(async (year) => {
+        try {
+          const response = await fetch(
+            `https://api.census.gov/data/${year}/acs/acs5/profile?get=DP03_0004E&for=place:${placeCode}&in=state:${state[1]}${key}`,
+            { signal },
+          )
+          if (!response.ok) return null
+          const annualRows = (await response.json()) as CensusRow[]
+          const employedPopulation = estimate(annualRows[1]?.[0])
+          return employedPopulation > 0
+            ? { year, employed: employedPopulation }
+            : null
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError')
+            throw error
+          return null
+        }
+      }),
+    )
+  ).filter((item): item is { year: number; employed: number } => item !== null)
+
   return {
     employmentRate: laborForce > 0 ? (employed / laborForce) * 100 : 0,
     laborForce,
@@ -129,6 +157,15 @@ export async function fetchEmploymentData(city: City, signal: AbortSignal) {
     industries: [...profileIndustries, ...separateIndustries].sort(
       (a, b) => b.percent - a.percent,
     ),
+    annualGrowth: annualGrowth.map((item, index) => ({
+      ...item,
+      changePercent:
+        index === 0
+          ? null
+          : ((item.employed - annualGrowth[index - 1].employed) /
+              annualGrowth[index - 1].employed) *
+            100,
+    })),
     sourceName: place[0],
   } satisfies EmploymentData
 }

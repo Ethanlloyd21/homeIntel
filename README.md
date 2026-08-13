@@ -13,6 +13,8 @@ The application does not start with a hard-coded city. The selected and comparis
 - Zillow ZHVI typical home values and ZORI market rents
 - Expandable Housing metric details with direct Zillow and Census source citations
 - Census ACS housing, demographic, education, and employment indicators
+- Current BLS LAUS city labor conditions and county QCEW employment and wages
+- Census QWI county workforce flows and optional BEA county GDP growth
 - Census Vintage 2025 city population estimates
 - Calculated current-year population based on the average official 2023–2025 annual city change
 - FEMA National Risk Index profile and individual hazard scores
