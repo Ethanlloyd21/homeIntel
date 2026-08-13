@@ -168,7 +168,7 @@ export default function CategoryPage({
         ? [
             {
               title: 'City population trend.',
-              detail: `The average annual city growth rate across 2023→2024 and 2024→2025 was ${demographics.annualPopulationGrowthPercent >= 0 ? '+' : ''}${demographics.annualPopulationGrowthPercent.toFixed(1)}%. HomeIntel averages those two numeric population changes and adds the result to 2025 for the ${demographics.estimateYear} calculated estimate.`,
+              detail: `The average annual city growth rate across 2023 to 2024 and 2024 to 2025 was ${demographics.annualPopulationGrowthPercent >= 0 ? '+' : ''}${demographics.annualPopulationGrowthPercent.toFixed(1)}%. HomeIntel fits a least-squares linear trend to the official 2023, 2024, and 2025 estimates to calculate the ${demographics.estimateYear} value.`,
             },
             {
               title: 'Age profile.',
@@ -421,7 +421,7 @@ export default function CategoryPage({
     {
       icon: UsersRound,
       detail: demographics
-        ? `${demographics.currentPopulationNote}. HomeIntel averages the official 2023→2024 and 2024→2025 numeric changes, then adds that average to 2025 for ${demographics.estimateYear}.`
+        ? `${demographics.currentPopulationNote}. The trend uses all three official annual population levels and reduces the influence of a single unusual yearly change.`
         : 'Population uses official Census city estimates and the latest available annual growth rate.',
       sources: [
         {

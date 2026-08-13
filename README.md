@@ -13,12 +13,13 @@ The application does not start with a hard-coded city. The selected and comparis
 - Zillow ZHVI typical home values and ZORI market rents
 - Expandable Housing metric details with direct Zillow and Census source citations
 - Census ACS housing, demographic, education, and employment indicators
+- Census ACS race and ethnicity composition using mutually exclusive B03002 categories
 - Current BLS LAUS city labor conditions with downloadable-file fallback
 - Annual employment momentum from 2019 through 2026, using reported monthly data when available and clearly marked QCEW-based estimates otherwise
 - Census QWI county workforce flows and optional BEA county GDP growth
 - Regional employment landscape with sector tabs, company links, pagination, federal contractors, nearby headquarters, and major hospitals
 - Census Vintage 2025 city population estimates
-- Calculated current-year population based on the average official 2023–2025 annual city change
+- Calculated current-year population based on a linear trend fitted to official 2023–2025 city estimates
 - FEMA National Risk Index profile and individual hazard scores
 - Housing, People, Employment, Risk, and Environment pages
 - Housing and demographic visualizations
@@ -146,6 +147,7 @@ Important variables include:
 | `B15003_*`    | Educational attainment               |
 | `B25010_001E` | Average household size               |
 | `B05002_*`    | Nativity and foreign-born population |
+| `B03002_*`    | Hispanic or Latino origin by race    |
 | `B25003_002E` | Owner-occupied housing units         |
 | `B25003_003E` | Renter-occupied housing units        |
 | `B25077_001E` | Median owner-occupied home value     |
@@ -161,11 +163,13 @@ The official Census Vintage 2025 incorporated-place table supplies point estimat
 public/data/census-population-2025.json
 ```
 
-HomeIntel calculates the current-year value by averaging the two latest official annual numeric changes and adding that average to 2025:
+HomeIntel calculates the current-year value with an ordinary least-squares linear trend fitted to all three official annual population levels:
 
 ```text
-average change = ((population 2024 - population 2023) + (population 2025 - population 2024)) / 2
-population 2026 = population 2025 + average change
+mean year = average(2023, 2024, 2025)
+mean population = average(population 2023, population 2024, population 2025)
+slope = sum((year - mean year) * (population - mean population)) / sum((year - mean year)^2)
+population 2026 = mean population + slope * (2026 - mean year)
 ```
 
 The 2026 result is a HomeIntel calculation, not an official Census estimate. The interface labels it accordingly. If the selected location does not match an incorporated place in the Vintage 2025 table, the application keeps the 2024 ACS value and explains that the 2025 city estimate was unavailable.
@@ -444,7 +448,7 @@ homeIntel/
 
 ## Data limitations
 
-- The calculated current-year population assumes the average numeric annual change observed from 2023 through 2025 continues for one year.
+- The calculated current-year population assumes the linear trend fitted to the official 2023–2025 population levels continues through the current year.
 - The 2019 People-chart value is an ACS estimate, while 2024 and 2025 come from the Population Estimates Program.
 - ACS five-year values are survey estimates and currently omit margins of error in the UI.
 - Census place, Zillow city, FEMA tract, and map geographies are not identical.

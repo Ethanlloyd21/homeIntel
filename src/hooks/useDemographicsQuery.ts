@@ -4,7 +4,7 @@ import { fetchDemographics } from '../services/demographics'
 
 export function useDemographicsQuery(city: City, enabled = true) {
   return useQuery({
-    queryKey: ['demographics', city.id],
+    queryKey: ['demographics', 'education-comparison-v1', city.id],
     queryFn: ({ signal }) => fetchDemographics(city, signal),
     enabled,
     staleTime: 24 * 60 * 60 * 1000,

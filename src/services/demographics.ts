@@ -28,6 +28,23 @@ export type DemographicsData = {
   averageHouseholdSize: number
   foreignBornPercent: number
   sourceName: string
+  populationSeries: {
+    year: number
+    population: number
+    calculated: boolean
+  }[]
+  raceDistribution: {
+    label: string
+    population: number
+    percent: number
+  }[]
+  educationHouseholdComparison: {
+    geography: string
+    bachelorsPercent: number
+    graduatePercent: number
+    bachelorsOrHigherPercent: number
+    averageHouseholdSize: number
+  }[]
 }
 
 export type PopulationTrend = {
@@ -75,6 +92,15 @@ const variables = [
   'B25010_001E',
   'B05002_001E',
   'B05002_013E',
+  'B03002_001E',
+  'B03002_003E',
+  'B03002_004E',
+  'B03002_005E',
+  'B03002_006E',
+  'B03002_007E',
+  'B03002_008E',
+  'B03002_009E',
+  'B03002_012E',
 ].join(',')
 
 function estimate(value: string) {
@@ -92,14 +118,47 @@ export function calculateCurrentPopulationEstimate(
     return Math.round(population2025)
   }
 
-  const change2024 =
-    population2023 > 0 && population2024 > 0
-      ? population2024 - population2023
-      : population2025 - population2024
-  const change2025 = population2025 - population2024
-  const averageAnnualChange = (change2024 + change2025) / 2
+  return calculatePopulationRegression(
+    [
+      { year: 2023, population: population2023 },
+      { year: 2024, population: population2024 },
+      { year: 2025, population: population2025 },
+    ],
+    targetYear,
+  )
+}
 
-  return Math.round(population2025 + averageAnnualChange * (targetYear - 2025))
+export function calculatePopulationRegression(
+  observations: { year: number; population: number }[],
+  targetYear: number,
+) {
+  const valid = observations.filter(
+    ({ year, population }) =>
+      Number.isFinite(year) && Number.isFinite(population) && population > 0,
+  )
+  if (valid.length === 0) return 0
+  if (valid.length === 1) return Math.round(valid[0].population)
+
+  const meanYear =
+    valid.reduce((sum, item) => sum + item.year, 0) / valid.length
+  const meanPopulation =
+    valid.reduce((sum, item) => sum + item.population, 0) / valid.length
+  const yearVariance = valid.reduce(
+    (sum, item) => sum + (item.year - meanYear) ** 2,
+    0,
+  )
+  if (yearVariance === 0) return Math.round(meanPopulation)
+
+  const covariance = valid.reduce(
+    (sum, item) =>
+      sum + (item.year - meanYear) * (item.population - meanPopulation),
+    0,
+  )
+  const annualTrend = covariance / yearVariance
+  return Math.max(
+    0,
+    Math.round(meanPopulation + annualTrend * (targetYear - meanYear)),
+  )
 }
 
 function normalizePlace(value: string) {
@@ -142,6 +201,73 @@ export async function fetchDemographics(city: City, signal: AbortSignal) {
   const value = (variable: string) => place[headers.indexOf(variable)]
   const placeCode = place[headers.indexOf('place')]
 
+  const comparisonVariables = [
+    'NAME',
+    'B15003_001E',
+    'B15003_022E',
+    'B15003_023E',
+    'B15003_024E',
+    'B15003_025E',
+    'B25010_001E',
+  ].join(',')
+  const [stateComparisonResponse, nationalComparisonResponse] =
+    await Promise.all([
+      fetch(
+        `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=state:${state[1]}${key}`,
+        { signal },
+      ),
+      fetch(
+        `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=us:*${key}`,
+        { signal },
+      ),
+    ])
+  const comparisonFromRow = (
+    geography: string,
+    row: CensusRow,
+    comparisonHeaders: CensusRow,
+  ) => {
+    const comparisonValue = (variable: string) =>
+      estimate(row[comparisonHeaders.indexOf(variable)] ?? '0')
+    const adults = comparisonValue('B15003_001E')
+    const bachelors = comparisonValue('B15003_022E')
+    const graduate =
+      comparisonValue('B15003_023E') +
+      comparisonValue('B15003_024E') +
+      comparisonValue('B15003_025E')
+    return {
+      geography,
+      bachelorsPercent: adults > 0 ? (bachelors / adults) * 100 : 0,
+      graduatePercent: adults > 0 ? (graduate / adults) * 100 : 0,
+      bachelorsOrHigherPercent:
+        adults > 0 ? ((bachelors + graduate) / adults) * 100 : 0,
+      averageHouseholdSize: comparisonValue('B25010_001E'),
+    }
+  }
+  const comparisonRows: {
+    geography: string
+    row: CensusRow
+    headers: CensusRow
+  }[] = []
+  if (stateComparisonResponse.ok) {
+    const stateRows = (await stateComparisonResponse.json()) as CensusRow[]
+    if (stateRows[1])
+      comparisonRows.push({
+        geography: city.state,
+        row: stateRows[1],
+        headers: stateRows[0],
+      })
+  }
+  if (nationalComparisonResponse.ok) {
+    const nationalRows =
+      (await nationalComparisonResponse.json()) as CensusRow[]
+    if (nationalRows[1])
+      comparisonRows.push({
+        geography: 'United States',
+        row: nationalRows[1],
+        headers: nationalRows[0],
+      })
+  }
+
   const previousResponse = await fetch(
     `https://api.census.gov/data/2019/pep/population?get=POP&for=place:${placeCode}&in=state:${state[1]}&DATE_CODE=12${key}`,
     { signal },
@@ -175,6 +301,28 @@ export async function fetchDemographics(city: City, signal: AbortSignal) {
     population2025,
     estimateYear,
   )
+  const populationObservations = [
+    { year: 2023, population: population2023 },
+    { year: 2024, population: population2024 },
+    { year: 2025, population: population2025 },
+  ]
+  const firstSeriesYear = estimateYear - 4
+  const populationByYear = new Map<number, number>([
+    [2023, population2023],
+    [2024, population2024],
+    [2025, population2025],
+  ])
+  const populationSeries = Array.from({ length: 5 }, (_, index) => {
+    const year = firstSeriesYear + index
+    const officialPopulation = populationByYear.get(year)
+    return {
+      year,
+      population:
+        officialPopulation ??
+        calculatePopulationRegression(populationObservations, year),
+      calculated: officialPopulation === undefined,
+    }
+  })
 
   const laborForce = estimate(value('B23025_003E'))
   const employed = estimate(value('B23025_004E'))
@@ -186,6 +334,61 @@ export async function fetchDemographics(city: City, signal: AbortSignal) {
     estimate(value('B15003_025E'))
   const nativityPopulation = estimate(value('B05002_001E'))
   const foreignBorn = estimate(value('B05002_013E'))
+  const bachelors = estimate(value('B15003_022E'))
+  const graduate =
+    estimate(value('B15003_023E')) +
+    estimate(value('B15003_024E')) +
+    estimate(value('B15003_025E'))
+  const educationHouseholdComparison = [
+    {
+      geography: city.name,
+      bachelorsPercent:
+        adults25AndOlder > 0 ? (bachelors / adults25AndOlder) * 100 : 0,
+      graduatePercent:
+        adults25AndOlder > 0 ? (graduate / adults25AndOlder) * 100 : 0,
+      bachelorsOrHigherPercent:
+        adults25AndOlder > 0
+          ? ((bachelors + graduate) / adults25AndOlder) * 100
+          : 0,
+      averageHouseholdSize: estimate(value('B25010_001E')),
+    },
+    ...comparisonRows.map(({ geography, row, headers }) =>
+      comparisonFromRow(geography, row, headers),
+    ),
+  ]
+  const raceTotal = estimate(value('B03002_001E'))
+  const raceCounts = [
+    {
+      label: 'White, non-Hispanic',
+      population: estimate(value('B03002_003E')),
+    },
+    { label: 'Hispanic or Latino', population: estimate(value('B03002_012E')) },
+    {
+      label: 'Black, non-Hispanic',
+      population: estimate(value('B03002_004E')),
+    },
+    {
+      label: 'Asian, non-Hispanic',
+      population: estimate(value('B03002_006E')),
+    },
+    {
+      label: 'Multiracial, non-Hispanic',
+      population: estimate(value('B03002_009E')),
+    },
+    {
+      label: 'Other, non-Hispanic',
+      population:
+        estimate(value('B03002_005E')) +
+        estimate(value('B03002_007E')) +
+        estimate(value('B03002_008E')),
+    },
+  ]
+  const raceDistribution = raceCounts
+    .filter(({ population }) => population > 0)
+    .map((item) => ({
+      ...item,
+      percent: raceTotal > 0 ? (item.population / raceTotal) * 100 : 0,
+    }))
 
   return {
     population: currentPopulation,
@@ -215,11 +418,14 @@ export async function fetchDemographics(city: City, signal: AbortSignal) {
         : 0,
     estimateYear,
     currentPopulationNote: placeEstimate
-      ? `${estimateYear} calculated from average Census 2023–2025 annual change`
+      ? `${estimateYear} calculated from a linear trend fitted to official Census 2023–2025 estimates`
       : '2024 ACS estimate; 2025 city estimate unavailable',
     averageHouseholdSize: estimate(value('B25010_001E')),
     foreignBornPercent:
       nativityPopulation > 0 ? (foreignBorn / nativityPopulation) * 100 : 0,
     sourceName: place[0],
+    populationSeries,
+    raceDistribution,
+    educationHouseholdComparison,
   } satisfies DemographicsData
 }

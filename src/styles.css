@@ -3164,7 +3164,7 @@ footer > span {
 }
 .people-chart-layout {
   display: grid;
-  grid-template-columns: minmax(210px, 0.8fr) 1.4fr;
+  grid-template-columns: minmax(430px, 1.35fr) 1fr;
   gap: 30px;
   margin-top: 24px;
 }
@@ -3173,7 +3173,7 @@ footer > span {
   display: flex;
   align-items: end;
   justify-content: center;
-  gap: 30px;
+  gap: 12px;
   padding: 15px 18px 0;
   border-bottom: 1px solid var(--line);
   background: linear-gradient(to top, #f5f7f5, transparent);
@@ -3181,7 +3181,9 @@ footer > span {
 }
 .population-bar-item {
   height: 100%;
-  width: 105px;
+  min-width: 58px;
+  max-width: 92px;
+  flex: 1;
   display: grid;
   grid-template-rows: 24px 1fr 25px;
   gap: 6px;
@@ -3190,7 +3192,7 @@ footer > span {
 }
 .population-bar-item strong {
   font-family: 'Manrope';
-  font-size: 12px;
+  font-size: 11px;
 }
 .population-bar-item span {
   color: #737e79;
@@ -3209,6 +3211,247 @@ footer > span {
   width: 100%;
   display: block;
   border-radius: 8px 8px 0 0;
+}
+.race-profile-section {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.race-profile-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.race-profile-heading small {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.race-profile-heading h4 {
+  margin: 5px 0 0;
+  font-family: 'Manrope';
+  font-size: 20px;
+}
+.race-profile-heading > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.race-profile-content {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.65fr) 1.35fr;
+  align-items: center;
+  gap: 34px;
+}
+.race-pie-wrap {
+  position: relative;
+  width: min(100%, 230px);
+  margin: auto;
+}
+.race-pie {
+  display: block;
+  width: 100%;
+  transform: rotate(-90deg);
+  filter: drop-shadow(0 12px 22px rgb(20 35 55 / 12%));
+}
+.race-pie-background {
+  fill: transparent;
+  stroke: var(--soft);
+  stroke-width: 8;
+}
+.race-pie-segment {
+  stroke-width: 8;
+  transition:
+    stroke-width 220ms ease,
+    filter 220ms ease,
+    opacity 220ms ease;
+  cursor: pointer;
+  outline: none;
+}
+.race-pie-segment:hover,
+.race-pie-segment:focus,
+.race-pie-segment.active {
+  stroke-width: 9.5;
+  filter: brightness(1.12) drop-shadow(0 0 2px currentColor);
+}
+.race-pie-segment.muted {
+  opacity: 0.28;
+}
+.race-pie-center {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  display: grid;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  width: 42%;
+}
+.race-pie-center strong {
+  font-family: 'Manrope';
+  font-size: 28px;
+}
+.race-pie-center span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.race-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+}
+.race-legend > button {
+  display: grid;
+  grid-template-columns: 11px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+.race-legend > button:hover,
+.race-legend > button:focus-visible,
+.race-legend > button.active {
+  background: color-mix(in srgb, var(--green) 9%, transparent);
+  transform: translateX(4px);
+  outline: none;
+}
+.race-legend > button.muted {
+  opacity: 0.42;
+}
+.race-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.race-legend span {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+.race-legend strong {
+  font-family: 'Manrope';
+  font-size: 14px;
+}
+.race-legend small {
+  grid-column: 2 / 4;
+  color: var(--muted);
+  font-size: 11px;
+}
+.race-profile-section > p {
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.education-household-section {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.comparison-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin-bottom: 18px;
+}
+.comparison-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.comparison-key i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.education-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.education-comparison-grid article {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper) 94%, var(--soft));
+}
+.education-comparison-grid h5 {
+  margin: 0 0 16px;
+  font-family: 'Manrope';
+  font-size: 15px;
+}
+.comparison-bar-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.8fr) minmax(100px, 1.4fr) 48px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.comparison-bar-row > span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comparison-bar-row > div {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--soft);
+}
+.comparison-bar-row > div i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transform-origin: left;
+  animation: comparison-bar-reveal 2.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.comparison-bar-row strong {
+  font-family: 'Manrope';
+  font-size: 13px;
+  text-align: right;
+}
+.household-comparison-card > small {
+  display: block;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.education-household-section > p {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+@keyframes comparison-bar-reveal {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 .people-highlight-grid {
   display: grid;
@@ -4319,8 +4562,31 @@ footer > span {
   }
   .population-bars {
     height: 205px;
-    gap: 18px;
+    gap: 8px;
     padding-inline: 8px;
+  }
+  .population-bar-item {
+    min-width: 52px;
+  }
+  .population-bar-item strong,
+  .population-bar-item span {
+    font-size: 10px;
+  }
+  .race-profile-heading,
+  .race-profile-content {
+    grid-template-columns: 1fr;
+  }
+  .race-profile-heading {
+    display: grid;
+  }
+  .race-legend {
+    grid-template-columns: 1fr;
+  }
+  .education-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+  .comparison-bar-row {
+    grid-template-columns: minmax(84px, 0.8fr) minmax(80px, 1.2fr) 44px;
   }
   .compare-selectors {
     flex-direction: column;
