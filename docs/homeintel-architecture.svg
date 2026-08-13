@@ -48,10 +48,10 @@
   <path d="M460 449 H507 V189 H555" class="line" stroke="#7c6cff"/>
 
   <!-- Provider connectors use dedicated horizontal lanes above, between, or below cards. -->
-  <path d="M620 363 V515 H985 V184 H1030" class="line" stroke="#7c6cff"/>
+  <path d="M645 275 V245 H1105 V223" class="line" stroke="#7c6cff"/>
   <path d="M935 310 H1030" class="line" stroke="#7c6cff"/>
   <path d="M845 275 V245 H1280 V265" class="line" stroke="#7c6cff"/>
-  <path d="M735 449 V515 H1365 V310 H1380" class="line" stroke="#7c6cff"/>
+  <path d="M645 493 V525 H1545 V310 H1530" class="line" stroke="#7c6cff"/>
   <path d="M935 449 H982 V446 H1030" class="line" stroke="#7c6cff"/>
   <path d="M845 493 V520 H1280 V487" class="line" stroke="#7c6cff"/>
 

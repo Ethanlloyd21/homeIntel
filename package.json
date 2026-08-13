@@ -12,7 +12,9 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "data:update": "node scripts/update-zillow-data.mjs",
-    "build:with-data": "npm run data:update && npm run build"
+    "build:with-data": "npm run data:update && npm run build",
+    "validate": "node scripts/validate-homeintel.mjs",
+    "validate:with-data": "node scripts/validate-homeintel.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

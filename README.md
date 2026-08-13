@@ -77,17 +77,18 @@ Vite normally serves the application at `http://localhost:5173`. Restart the dev
 
 ## Commands
 
-| Command                   | Purpose                                           |
-| ------------------------- | ------------------------------------------------- |
-| `npm run dev`             | Start the Vite development server                 |
-| `npm run build`           | Type-check and create a production build          |
-| `npm run preview`         | Preview the production build                      |
-| `npm run lint`            | Run ESLint                                        |
-| `npm run lint:fix`        | Fix supported ESLint issues                       |
-| `npm run format`          | Format the repository with Prettier               |
-| `npm run format:check`    | Check formatting without editing files            |
-| `npm run data:update`     | Refresh the normalized Zillow Research dataset    |
-| `npm run build:with-data` | Refresh Zillow data and create a production build |
+| Command                      | Purpose                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `npm run dev`                | Start the Vite development server                                          |
+| `npm run build`              | Type-check and create a production build                                   |
+| `npm run preview`            | Preview the production build                                               |
+| `npm run lint`               | Run ESLint                                                                 |
+| `npm run lint:fix`           | Fix supported ESLint issues                                                |
+| `npm run format`             | Format the repository with Prettier                                        |
+| `npm run format:check`       | Check formatting without editing files                                     |
+| `npm run data:update`        | Refresh the normalized Zillow Research dataset                             |
+| `npm run build:with-data`    | Refresh Zillow data and create a production build                          |
+| `npm run validate homeintel` | Refresh Zillow data, check formatting, lint, build, and audit dependencies |
 
 ## Data sources
 
@@ -512,11 +513,17 @@ npm run data:update
 Run before committing:
 
 ```bash
-npm run format:check
-npm run lint
-npm run build
-npm audit
+npm run validate homeintel
 ```
+
+This command runs the following operations in sequence and stops immediately if
+one fails:
+
+1. `npm run data:update`
+2. `npm run format:check`
+3. `npm run lint`
+4. `npm run build`
+5. `npm audit`
 
 ## Photo credits
 
