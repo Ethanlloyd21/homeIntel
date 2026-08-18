@@ -1,7 +1,7 @@
-import type { City } from '../data/cities'
-import SearchBox from './SearchBox'
+import type { City } from 'data/cities'
+import SearchBox from 'components/SearchBox'
 
-export default function CitySelect({
+const CitySelect = ({
   value,
   onChange,
   placeholder = 'Search for a city',
@@ -9,7 +9,7 @@ export default function CitySelect({
   value: City | null
   onChange: (city: City) => void
   placeholder?: string
-}) {
+}) => {
   return (
     <div className="city-select-search">
       <SearchBox
@@ -23,3 +23,5 @@ export default function CitySelect({
     </div>
   )
 }
+
+export default CitySelect

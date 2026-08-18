@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 export type ForecastResponse = {
   current: {
@@ -17,7 +17,7 @@ export type ForecastResponse = {
   }
 }
 
-async function fetchWeather(city: City, signal: AbortSignal) {
+const fetchWeather = async (city: City, signal: AbortSignal) => {
   const params = new URLSearchParams({
     latitude: String(city.latitude),
     longitude: String(city.longitude),
@@ -37,7 +37,7 @@ async function fetchWeather(city: City, signal: AbortSignal) {
   return (await response.json()) as ForecastResponse
 }
 
-export function useWeatherQuery(city: City, enabled = true) {
+export const useWeatherQuery = (city: City, enabled = true) => {
   return useQuery({
     queryKey: ['weather', city.latitude, city.longitude],
     queryFn: ({ signal }) => fetchWeather(city, signal),

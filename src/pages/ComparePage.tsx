@@ -11,15 +11,15 @@ import {
   Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import CitySelect from '../components/CitySelect'
-import LoadingSpinner from '../components/LoadingSpinner'
-import type { City } from '../data/cities'
-import { useDemographicsQuery } from '../hooks/useDemographicsQuery'
-import { useEmploymentQuery } from '../hooks/useEmploymentQuery'
-import { useHousingQuery } from '../hooks/useHousingQuery'
-import { useRiskQuery } from '../hooks/useRiskQuery'
-import { useComparisonIndicesQuery } from '../hooks/useComparisonIndicesQuery'
-import { compact, money } from '../utils/formatters'
+import CitySelect from 'components/CitySelect'
+import LoadingSpinner from 'components/LoadingSpinner'
+import type { City } from 'data/cities'
+import { useDemographicsQuery } from 'hooks/useDemographicsQuery'
+import { useEmploymentQuery } from 'hooks/useEmploymentQuery'
+import { useHousingQuery } from 'hooks/useHousingQuery'
+import { useRiskQuery } from 'hooks/useRiskQuery'
+import { useComparisonIndicesQuery } from 'hooks/useComparisonIndicesQuery'
+import { compact, money } from 'utils/formatters'
 
 type CompareMetric = {
   label: string
@@ -30,7 +30,7 @@ type CompareMetric = {
   better: 'high' | 'low' | 'neutral'
 }
 
-function ComparePicker({
+const ComparePicker = ({
   left,
   right,
   setLeft,
@@ -42,7 +42,7 @@ function ComparePicker({
   setLeft: (city: City) => void
   setRight: (city: City) => void
   ready: boolean
-}) {
+}) => {
   return (
     <div className="compare-picker card">
       <div>
@@ -71,7 +71,7 @@ function ComparePicker({
   )
 }
 
-function ComparisonSection({
+const ComparisonSection = ({
   title,
   eyebrow,
   icon: Icon,
@@ -89,7 +89,7 @@ function ComparisonSection({
   rightColor: string
   leftName: string
   rightName: string
-}) {
+}) => {
   return (
     <section className="card compare-section">
       <div className="compare-section-heading">
@@ -164,7 +164,7 @@ function ComparisonSection({
   )
 }
 
-export default function ComparePage({
+const ComparePage = ({
   left,
   right,
   setLeft,
@@ -174,7 +174,7 @@ export default function ComparePage({
   right: City | null
   setLeft: (city: City) => void
   setRight: (city: City) => void
-}) {
+}) => {
   const rightQueryCity = right ?? left
   const leftDemographics = useDemographicsQuery(left, Boolean(right))
   const rightDemographics = useDemographicsQuery(rightQueryCity, Boolean(right))
@@ -610,3 +610,5 @@ export default function ComparePage({
     </div>
   )
 }
+
+export default ComparePage

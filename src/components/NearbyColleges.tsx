@@ -1,9 +1,9 @@
 import { ExternalLink, GraduationCap, UsersRound } from 'lucide-react'
-import type { NearbyCollege } from '../services/colleges'
-import { fmt } from '../utils/formatters'
-import LoadingSpinner from './LoadingSpinner'
+import type { NearbyCollege } from 'services/colleges'
+import { fmt } from 'utils/formatters'
+import LoadingSpinner from 'components/LoadingSpinner'
 
-export default function NearbyColleges({
+const NearbyColleges = ({
   cityName,
   colleges,
   isLoading,
@@ -13,7 +13,7 @@ export default function NearbyColleges({
   colleges: NearbyCollege[]
   isLoading: boolean
   isError: boolean
-}) {
+}) => {
   return (
     <section className="card nearby-colleges">
       <div className="section-heading">
@@ -89,3 +89,5 @@ export default function NearbyColleges({
     </section>
   )
 }
+
+export default NearbyColleges

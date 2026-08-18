@@ -1,10 +1,10 @@
-export default function MiniTrend({
+const MiniTrend = ({
   color = '#d65e45',
   invert = false,
 }: {
   color?: string
   invert?: boolean
-}) {
+}) => {
   const points = invert
     ? '0,5 22,12 43,9 65,20 87,16 110,27'
     : '0,23 22,19 43,21 65,12 87,15 110,5'
@@ -15,3 +15,5 @@ export default function MiniTrend({
     </svg>
   )
 }
+
+export default MiniTrend

@@ -1,10 +1,10 @@
 import { useDeferredValue, useState } from 'react'
 import { ArrowRight, Map, Search } from 'lucide-react'
-import LoadingSpinner from './LoadingSpinner'
-import { cityFromGeocoding, type City } from '../data/cities'
-import { useLocationSearchQuery } from '../hooks/useLocationSearchQuery'
+import LoadingSpinner from 'components/LoadingSpinner'
+import { cityFromGeocoding, type City } from 'data/cities'
+import { useLocationSearchQuery } from 'hooks/useLocationSearchQuery'
 
-export default function SearchBox({
+const SearchBox = ({
   onSelect,
   compact = false,
   placeholder = 'Enter a city or ZIP code',
@@ -14,7 +14,7 @@ export default function SearchBox({
   compact?: boolean
   placeholder?: string
   initialValue?: string
-}) {
+}) => {
   const [value, setValue] = useState(initialValue)
   const [editing, setEditing] = useState(false)
   const deferredValue = useDeferredValue(editing ? value.trim() : '')
@@ -76,3 +76,5 @@ export default function SearchBox({
     </div>
   )
 }
+
+export default SearchBox

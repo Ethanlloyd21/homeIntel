@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import type { City } from '../data/cities'
-import { fetchEmploymentData } from '../services/employment'
+import type { City } from 'data/cities'
+import { fetchEmploymentData } from 'services/employment'
 
-export function useEmploymentQuery(city: City, enabled = true) {
+export const useEmploymentQuery = (city: City, enabled = true) => {
   return useQuery({
     queryKey: ['employment', city.id],
     queryFn: ({ signal }) => fetchEmploymentData(city, signal),

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
 import type { ReactNode } from 'react'
-import AnimatedValue from './AnimatedValue'
+import AnimatedValue from 'components/AnimatedValue'
 
 type SourceLink = {
   label: string
@@ -22,7 +22,7 @@ const metricIcons: Record<string, LucideIcon> = {
   'Data source': Database,
 }
 
-export default function HousingMetricCard({
+const HousingMetricCard = ({
   label,
   value,
   note,
@@ -38,7 +38,7 @@ export default function HousingMetricCard({
   sources: SourceLink[]
   color: string
   icon?: LucideIcon
-}) {
+}) => {
   const MetricIcon = icon ?? metricIcons[label] ?? House
 
   return (
@@ -77,3 +77,5 @@ export default function HousingMetricCard({
     </Collapsible.Root>
   )
 }
+
+export default HousingMetricCard

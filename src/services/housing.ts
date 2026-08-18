@@ -1,4 +1,4 @@
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 type CensusRow = string[]
 
@@ -97,16 +97,16 @@ const variables = [
   'B25003_003E',
 ].join(',')
 
-function toValidEstimate(value: string) {
+const toValidEstimate = (value: string) => {
   const estimate = Number(value)
   return Number.isFinite(estimate) && estimate >= 0 ? estimate : 0
 }
 
-function normalize(value: string) {
+const normalize = (value: string) => {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '')
 }
 
-function formatMonth(value?: string) {
+const formatMonth = (value?: string) => {
   if (!value) return 'latest release'
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -115,7 +115,7 @@ function formatMonth(value?: string) {
   }).format(new Date(`${value}T00:00:00Z`))
 }
 
-export async function fetchHousingData(city: City, signal: AbortSignal) {
+export const fetchHousingData = async (city: City, signal: AbortSignal) => {
   if (city.country !== 'United States') {
     throw new Error('Housing data is currently available for U.S. cities only.')
   }

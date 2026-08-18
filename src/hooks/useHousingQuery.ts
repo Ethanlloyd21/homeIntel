@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import type { City } from '../data/cities'
-import { fetchHousingData } from '../services/housing'
+import type { City } from 'data/cities'
+import { fetchHousingData } from 'services/housing'
 
-export function useHousingQuery(city: City, enabled = true) {
+export const useHousingQuery = (city: City, enabled = true) => {
   return useQuery({
     queryKey: ['housing', city.id],
     queryFn: ({ signal }) => fetchHousingData(city, signal),

@@ -1,7 +1,7 @@
 import { Bell, Download, Menu, Moon, Sun } from 'lucide-react'
 import { Switch } from 'radix-ui'
 
-export default function Header({
+const Header = ({
   onMenu,
   theme,
   onThemeChange,
@@ -9,7 +9,7 @@ export default function Header({
   onMenu: () => void
   theme: 'light' | 'dark'
   onThemeChange: (theme: 'light' | 'dark') => void
-}) {
+}) => {
   return (
     <header>
       <button
@@ -52,3 +52,5 @@ export default function Header({
     </header>
   )
 }
+
+export default Header

@@ -35,7 +35,7 @@ export type GeocodingResult = {
   population?: number
 }
 
-export function cityFromGeocoding(result: GeocodingResult): City {
+export const cityFromGeocoding = (result: GeocodingResult): City => {
   const state = result.admin1 ?? result.country_code ?? result.country ?? ''
   const words = result.name.trim().split(/\s+/)
   const short = words

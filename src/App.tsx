@@ -1,17 +1,17 @@
 import { BarChart3, Compass } from 'lucide-react'
 import { Tabs } from 'radix-ui'
 import { useEffect } from 'react'
-import Brand from './components/Brand'
-import Header from './components/Header'
-import LandingGallery from './components/LandingGallery'
-import SearchBox from './components/SearchBox'
-import Sidebar from './components/Sidebar'
-import CategoryPage from './pages/CategoryPage'
-import ComparePage from './pages/ComparePage'
-import OverviewPage from './pages/OverviewPage'
-import { useAppStore, viewFromPath } from './store/useAppStore'
+import Brand from 'components/Brand'
+import Header from 'components/Header'
+import LandingGallery from 'components/LandingGallery'
+import SearchBox from 'components/SearchBox'
+import Sidebar from 'components/Sidebar'
+import CategoryPage from 'pages/CategoryPage'
+import ComparePage from 'pages/ComparePage'
+import OverviewPage from 'pages/OverviewPage'
+import { useAppStore, viewFromPath } from 'store/useAppStore'
 
-export default function App() {
+const App = () => {
   const view = useAppStore((state) => state.view)
   const city = useAppStore((state) => state.city)
   const comparisonCity = useAppStore((state) => state.comparisonCity)
@@ -179,3 +179,5 @@ export default function App() {
     </div>
   )
 }
+
+export default App

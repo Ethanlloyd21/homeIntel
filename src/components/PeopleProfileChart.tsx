@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import type { DemographicsData } from '../services/demographics'
-import { fmt } from '../utils/formatters'
-import AnimatedValue from './AnimatedValue'
+import type { DemographicsData } from 'services/demographics'
+import { fmt } from 'utils/formatters'
+import AnimatedValue from 'components/AnimatedValue'
 
 const raceColors = [
   '#5968e8',
@@ -13,13 +13,13 @@ const raceColors = [
 ]
 const comparisonColors = ['#5968e8', '#27a87b', '#e5a43a']
 
-export default function PeopleProfileChart({
+const PeopleProfileChart = ({
   demographics,
   color,
 }: {
   demographics: DemographicsData
   color: string
-}) {
+}) => {
   const [activeRace, setActiveRace] = useState(
     demographics.raceDistribution[0]?.label ?? '',
   )
@@ -289,3 +289,5 @@ export default function PeopleProfileChart({
     </section>
   )
 }
+
+export default PeopleProfileChart

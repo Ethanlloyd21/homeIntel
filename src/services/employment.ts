@@ -1,4 +1,4 @@
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 type CensusRow = string[]
 
@@ -39,12 +39,12 @@ const variables = [
   ...industryVariables.map(([, variable]) => variable),
 ].join(',')
 
-function estimate(value: string | undefined) {
+const estimate = (value: string | undefined) => {
   const parsed = Number(value)
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
 }
 
-export async function fetchEmploymentData(city: City, signal: AbortSignal) {
+export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
   if (city.country !== 'United States') {
     throw new Error('Census employment data is available for U.S. cities only.')
   }

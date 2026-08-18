@@ -8,24 +8,24 @@ import {
   TrendingUp,
   WalletCards,
 } from 'lucide-react'
-import CityMap from '../components/CityMap'
-import MetricCard from '../components/MetricCard'
-import LoadingSpinner from '../components/LoadingSpinner'
-import ScoreRing from '../components/ScoreRing'
-import WeatherCard from '../components/WeatherCard'
-import type { City } from '../data/cities'
-import { useDemographicsQuery } from '../hooks/useDemographicsQuery'
-import { useEmploymentQuery } from '../hooks/useEmploymentQuery'
-import { useHousingQuery } from '../hooks/useHousingQuery'
-import { useRiskQuery } from '../hooks/useRiskQuery'
-import { compact, money } from '../utils/formatters'
+import CityMap from 'components/CityMap'
+import MetricCard from 'components/MetricCard'
+import LoadingSpinner from 'components/LoadingSpinner'
+import ScoreRing from 'components/ScoreRing'
+import WeatherCard from 'components/WeatherCard'
+import type { City } from 'data/cities'
+import { useDemographicsQuery } from 'hooks/useDemographicsQuery'
+import { useEmploymentQuery } from 'hooks/useEmploymentQuery'
+import { useHousingQuery } from 'hooks/useHousingQuery'
+import { useRiskQuery } from 'hooks/useRiskQuery'
+import { compact, money } from 'utils/formatters'
 
 type OverviewPageProps = {
   city: City
   setView: (view: string) => void
 }
 
-export default function OverviewPage({ city, setView }: OverviewPageProps) {
+const OverviewPage = ({ city, setView }: OverviewPageProps) => {
   const demographicsQuery = useDemographicsQuery(city)
   const demographics = demographicsQuery.data
   const employmentQuery = useEmploymentQuery(city)
@@ -298,3 +298,5 @@ export default function OverviewPage({ city, setView }: OverviewPageProps) {
     </>
   )
 }
+
+export default OverviewPage

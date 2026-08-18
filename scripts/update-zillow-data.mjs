@@ -7,7 +7,7 @@ const ZHVI_URL =
 const ZORI_URL =
   'https://files.zillowstatic.com/research/public_csvs/zori/City_zori_uc_sfrcondomfr_sm_month.csv'
 
-function parseCsv(text) {
+const parseCsv = (text) => {
   const rows = []
   let row = []
   let field = ''
@@ -40,14 +40,14 @@ function parseCsv(text) {
   return rows
 }
 
-async function download(url) {
+const download = async (url) => {
   const response = await fetch(url)
   if (!response.ok)
     throw new Error(`Zillow download failed (${response.status}): ${url}`)
   return parseCsv(await response.text())
 }
 
-function latestValue(row, headers) {
+const latestValue = (row, headers) => {
   for (let index = headers.length - 1; index >= 0; index -= 1) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(headers[index]) && row[index]) {
       const value = Number(row[index])
@@ -57,7 +57,7 @@ function latestValue(row, headers) {
   return null
 }
 
-function records(rows, field) {
+const records = (rows, field) => {
   const [headers, ...values] = rows
   const index = Object.fromEntries(
     headers.map((header, position) => [header, position]),

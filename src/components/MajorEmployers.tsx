@@ -14,9 +14,9 @@ import {
 } from 'lucide-react'
 import { Tabs } from 'radix-ui'
 import { useState, type ComponentType } from 'react'
-import type { MajorEmployer } from '../services/employers'
-import { compact, fmt } from '../utils/formatters'
-import LoadingSpinner from './LoadingSpinner'
+import type { MajorEmployer } from 'services/employers'
+import { compact, fmt } from 'utils/formatters'
+import LoadingSpinner from 'components/LoadingSpinner'
 
 const sectorOrder = [
   'Defense & government',
@@ -38,7 +38,7 @@ const sectorIcons: Record<string, ComponentType<{ size?: number }>> = {
   Transportation: Plane,
 }
 
-function companyStrength(company: MajorEmployer) {
+const companyStrength = (company: MajorEmployer) => {
   return (
     company.federalObligations ??
     company.employees ??
@@ -48,7 +48,7 @@ function companyStrength(company: MajorEmployer) {
 
 const companiesPerPage = 6
 
-export default function MajorEmployers({
+const MajorEmployers = ({
   cityName,
   employers,
   isLoading,
@@ -58,7 +58,7 @@ export default function MajorEmployers({
   employers: MajorEmployer[]
   isLoading: boolean
   isError: boolean
-}) {
+}) => {
   const [sectorPages, setSectorPages] = useState<Record<string, number>>({})
 
   const rankedSectorGroups = [...new Set(employers.map(({ sector }) => sector))]
@@ -246,3 +246,5 @@ export default function MajorEmployers({
     </section>
   )
 }
+
+export default MajorEmployers

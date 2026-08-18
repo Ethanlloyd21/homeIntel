@@ -1,13 +1,7 @@
 import type { CSSProperties } from 'react'
-import AnimatedValue from './AnimatedValue'
+import AnimatedValue from 'components/AnimatedValue'
 
-export default function ScoreRing({
-  score,
-  color,
-}: {
-  score: number
-  color: string
-}) {
+const ScoreRing = ({ score, color }: { score: number; color: string }) => {
   return (
     <div
       className="score-ring"
@@ -27,3 +21,5 @@ export default function ScoreRing({
     </div>
   )
 }
+
+export default ScoreRing

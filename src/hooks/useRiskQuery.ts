@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import type { City } from '../data/cities'
-import { fetchRiskData } from '../services/risk'
+import type { City } from 'data/cities'
+import { fetchRiskData } from 'services/risk'
 
-export function useRiskQuery(city: City, enabled = true) {
+export const useRiskQuery = (city: City, enabled = true) => {
   return useQuery({
     queryKey: ['risk', city.id],
     queryFn: ({ signal }) => fetchRiskData(city, signal),

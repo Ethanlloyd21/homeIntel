@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 const numberPattern = /-?\d[\d,]*(?:\.\d+)?/
 
-export default function AnimatedValue({
+const AnimatedValue = ({
   value,
   duration = 2400,
 }: {
   value: ReactNode
   duration?: number
-}) {
+}) => {
   const text = typeof value === 'number' ? String(value) : value
   const parsed = useMemo(() => {
     if (typeof text !== 'string') return null
@@ -62,3 +62,5 @@ export default function AnimatedValue({
     </span>
   )
 }
+
+export default AnimatedValue

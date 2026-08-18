@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import type { City } from '../data/cities'
-import { fetchComparisonIndices } from '../services/comparisonIndices'
+import type { City } from 'data/cities'
+import { fetchComparisonIndices } from 'services/comparisonIndices'
 
-export function useComparisonIndicesQuery(city: City, enabled = true) {
+export const useComparisonIndicesQuery = (city: City, enabled = true) => {
   return useQuery({
     queryKey: ['comparison-indices', city.id],
     queryFn: ({ signal }) => fetchComparisonIndices(city, signal),

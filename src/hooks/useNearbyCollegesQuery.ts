@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import type { City } from '../data/cities'
-import { fetchNearbyColleges } from '../services/colleges'
+import type { City } from 'data/cities'
+import { fetchNearbyColleges } from 'services/colleges'
 
-export function useNearbyCollegesQuery(city: City, enabled = true) {
+export const useNearbyCollegesQuery = (city: City, enabled = true) => {
   return useQuery({
     queryKey: ['nearby-colleges', city.id],
     queryFn: ({ signal }) => fetchNearbyColleges(city, signal),

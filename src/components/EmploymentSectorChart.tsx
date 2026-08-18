@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { EmploymentData } from '../services/employment'
+import type { EmploymentData } from 'services/employment'
 
 const colors = [
   '#4f8fd8',
@@ -18,11 +18,11 @@ const colors = [
   '#7d6eab',
 ]
 
-export default function EmploymentSectorChart({
+const EmploymentSectorChart = ({
   employment,
 }: {
   employment: EmploymentData
-}) {
+}) => {
   const sectors = employment.industries.filter((sector) => sector.percent > 0)
   const [activeIndex, setActiveIndex] = useState(0)
   const activeSector = sectors[activeIndex] ?? sectors[0]
@@ -106,3 +106,5 @@ export default function EmploymentSectorChart({
     </section>
   )
 }
+
+export default EmploymentSectorChart

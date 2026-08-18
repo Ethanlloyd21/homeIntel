@@ -1,4 +1,4 @@
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 const stateCodes: Record<string, { abbreviation: string; fips: string }> = {
   Alabama: { abbreviation: 'AL', fips: '01000' },
@@ -117,17 +117,17 @@ type CrimeResponse = {
   offenses?: { rates?: Record<string, Record<string, number>> }
 }
 
-function average(values: Record<string, number> | undefined) {
+const average = (values: Record<string, number> | undefined) => {
   const numbers = Object.values(values ?? {}).filter(Number.isFinite)
   return numbers.length
     ? numbers.reduce((sum, value) => sum + value, 0) / numbers.length
     : null
 }
 
-export async function fetchComparisonIndices(
+export const fetchComparisonIndices = async (
   city: City,
   signal: AbortSignal,
-): Promise<ComparisonIndices> {
+): Promise<ComparisonIndices> => {
   const code = stateCodes[city.state]
   if (!code || city.country !== 'United States')
     return {

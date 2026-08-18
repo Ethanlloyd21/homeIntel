@@ -1,4 +1,4 @@
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 type CensusRow = string[]
 
@@ -53,13 +53,13 @@ export type PopulationTrend = {
   percentChange: number
 }
 
-export function calculatePopulationFromAnchors(
+export const calculatePopulationFromAnchors = (
   startPopulation: number,
   startYear: number,
   endPopulation: number,
   endYear: number,
   targetYear: number,
-): PopulationTrend {
+): PopulationTrend => {
   if (startPopulation <= 0 || endPopulation <= 0 || endYear <= startYear) {
     return { population: 0, change: 0, percentChange: 0 }
   }
@@ -103,17 +103,17 @@ const variables = [
   'B03002_012E',
 ].join(',')
 
-function estimate(value: string) {
+const estimate = (value: string) => {
   const parsed = Number(value)
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
 }
 
-export function calculateCurrentPopulationEstimate(
+export const calculateCurrentPopulationEstimate = (
   population2023: number,
   population2024: number,
   population2025: number,
   targetYear = new Date().getFullYear(),
-) {
+) => {
   if (population2025 <= 0 || targetYear <= 2025) {
     return Math.round(population2025)
   }
@@ -128,10 +128,10 @@ export function calculateCurrentPopulationEstimate(
   )
 }
 
-export function calculatePopulationRegression(
+export const calculatePopulationRegression = (
   observations: { year: number; population: number }[],
   targetYear: number,
-) {
+) => {
   const valid = observations.filter(
     ({ year, population }) =>
       Number.isFinite(year) && Number.isFinite(population) && population > 0,
@@ -161,14 +161,14 @@ export function calculatePopulationRegression(
   )
 }
 
-function normalizePlace(value: string) {
+const normalizePlace = (value: string) => {
   return value
     .toLowerCase()
     .replace(/\b(city|town|village|borough|municipality|balance)\b/g, '')
     .replace(/[^a-z0-9]/g, '')
 }
 
-export async function fetchDemographics(city: City, signal: AbortSignal) {
+export const fetchDemographics = async (city: City, signal: AbortSignal) => {
   if (city.country !== 'United States') {
     throw new Error('Census demographics are available for U.S. cities only.')
   }

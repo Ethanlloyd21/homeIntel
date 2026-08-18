@@ -58,7 +58,61 @@ const stateCodes: Record<string, string> = {
   'District of Columbia': 'DC',
 }
 
-function fbiCrimeProxy(apiKey: string): Plugin {
+const stateFipsByCode: Record<string, string> = {
+  AL: '01',
+  AK: '02',
+  AZ: '04',
+  AR: '05',
+  CA: '06',
+  CO: '08',
+  CT: '09',
+  DE: '10',
+  DC: '11',
+  FL: '12',
+  GA: '13',
+  HI: '15',
+  ID: '16',
+  IL: '17',
+  IN: '18',
+  IA: '19',
+  KS: '20',
+  KY: '21',
+  LA: '22',
+  ME: '23',
+  MD: '24',
+  MA: '25',
+  MI: '26',
+  MN: '27',
+  MS: '28',
+  MO: '29',
+  MT: '30',
+  NE: '31',
+  NV: '32',
+  NH: '33',
+  NJ: '34',
+  NM: '35',
+  NY: '36',
+  NC: '37',
+  ND: '38',
+  OH: '39',
+  OK: '40',
+  OR: '41',
+  PA: '42',
+  RI: '44',
+  SC: '45',
+  SD: '46',
+  TN: '47',
+  TX: '48',
+  UT: '49',
+  VT: '50',
+  VA: '51',
+  WA: '53',
+  WV: '54',
+  WI: '55',
+  WY: '56',
+}
+
+const fbiCrimeProxy = (apiKey: string): Plugin => {
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -103,16 +157,16 @@ function fbiCrimeProxy(apiKey: string): Plugin {
 
   return {
     name: 'homeintel-fbi-crime-proxy',
-    configureServer(server) {
+    configureServer: (server) => {
       server.middlewares.use(handleRequest)
     },
-    configurePreviewServer(server) {
+    configurePreviewServer: (server) => {
       server.middlewares.use(handleRequest)
     },
   }
 }
 
-function collegeScorecardProxy(apiKey: string): Plugin {
+const collegeScorecardProxy = (apiKey: string): Plugin => {
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -191,10 +245,141 @@ function collegeScorecardProxy(apiKey: string): Plugin {
 
   return {
     name: 'homeintel-college-scorecard-proxy',
-    configureServer(server) {
+    configureServer: (server) => {
       server.middlewares.use(handleRequest)
     },
-    configurePreviewServer(server) {
+    configurePreviewServer: (server) => {
+      server.middlewares.use(handleRequest)
+    },
+  }
+}
+
+type CcdSchool = {
+  city_location?: string
+  latitude?: number
+  longitude?: number
+  [key: string]: unknown
+}
+
+const schoolStateCache = new Map<string, Promise<CcdSchool[]>>()
+
+const schoolDistance = (
+  latitudeA: number,
+  longitudeA: number,
+  latitudeB: number,
+  longitudeB: number,
+) => {
+  const radians = (degrees: number) => (degrees * Math.PI) / 180
+  const latitudeDelta = radians(latitudeB - latitudeA)
+  const longitudeDelta = radians(longitudeB - longitudeA)
+  const a =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(radians(latitudeA)) *
+      Math.cos(radians(latitudeB)) *
+      Math.sin(longitudeDelta / 2) ** 2
+  return 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+const loadStateSchools = (fips: string) => {
+  const cached = schoolStateCache.get(fips)
+  if (cached) return cached
+  const request = (async () => {
+    const schools: CcdSchool[] = []
+    let next: string | null =
+      `https://educationdata.urban.org/api/v1/schools/ccd/directory/2024/?fips=${fips}`
+    let page = 0
+    while (next && page < 3) {
+      const result = await fetch(next, {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'Mozilla/5.0 HomeIntel/0.1',
+        },
+      })
+      if (!result.ok)
+        throw new Error(`Education Data API returned ${result.status}.`)
+      const payload = (await result.json()) as {
+        results?: CcdSchool[]
+        next?: string | null
+      }
+      schools.push(...(payload.results ?? []))
+      next = payload.next ?? null
+      page += 1
+    }
+    return schools
+  })()
+  schoolStateCache.set(fips, request)
+  request.catch(() => schoolStateCache.delete(fips))
+  return request
+}
+
+const nearbySchoolsProxy = (): Plugin => {
+  const handleRequest = async (
+    request: IncomingMessage,
+    response: ServerResponse,
+    next: () => void,
+  ) => {
+    const requestUrl = new URL(request.url ?? '/', 'http://localhost')
+    if (requestUrl.pathname !== '/api/nearby-schools') return next()
+    const city = requestUrl.searchParams.get('city')?.trim() ?? ''
+    const stateName = requestUrl.searchParams.get('state')?.trim() ?? ''
+    const state = statePattern.test(stateName.toUpperCase())
+      ? stateName.toUpperCase()
+      : stateCodes[stateName]
+    const fips = stateFipsByCode[state]
+    const latitude = Number(requestUrl.searchParams.get('latitude'))
+    const longitude = Number(requestUrl.searchParams.get('longitude'))
+    response.setHeader('Content-Type', 'application/json')
+    if (
+      !city ||
+      !fips ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
+    ) {
+      response.statusCode = 400
+      response.end(JSON.stringify({ error: 'A valid U.S. city is required.' }))
+      return
+    }
+    try {
+      const stateSchools = await loadStateSchools(fips)
+      const normalizedCity = city.toUpperCase().replace(/[^A-Z0-9]/g, '')
+      const exact = stateSchools.filter(
+        (school) =>
+          school.city_location?.toUpperCase().replace(/[^A-Z0-9]/g, '') ===
+          normalizedCity,
+      )
+      const results =
+        exact.length > 0
+          ? exact
+          : stateSchools.filter((school) => {
+              if (
+                !Number.isFinite(school.latitude) ||
+                !Number.isFinite(school.longitude)
+              )
+                return false
+              return (
+                schoolDistance(
+                  latitude,
+                  longitude,
+                  school.latitude!,
+                  school.longitude!,
+                ) <= 15
+              )
+            })
+      response.statusCode = 200
+      response.end(JSON.stringify({ results }))
+    } catch {
+      response.statusCode = 502
+      response.end(
+        JSON.stringify({ error: 'Public school data is unavailable.' }),
+      )
+    }
+  }
+  return {
+    name: 'homeintel-nearby-schools-proxy',
+    configureServer: (server) => {
+      server.middlewares.use(handleRequest)
+    },
+    configurePreviewServer: (server) => {
       server.middlewares.use(handleRequest)
     },
   }
@@ -202,7 +387,7 @@ function collegeScorecardProxy(apiKey: string): Plugin {
 
 let lausFlatDataPromise: Promise<string> | null = null
 
-function getLausFlatData() {
+const getLausFlatData = () => {
   lausFlatDataPromise ??= Promise.all(
     ['CurrentU15-19', 'CurrentU20-24', 'CurrentU25-29'].map(async (period) => {
       const response = await fetch(
@@ -215,7 +400,7 @@ function getLausFlatData() {
   return lausFlatDataPromise
 }
 
-function currentEconomyProxy(censusKey: string, beaKey: string): Plugin {
+const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
   const numberValue = (value: unknown) => {
     const parsed = Number(String(value ?? '').replaceAll(',', ''))
     return Number.isFinite(parsed) ? parsed : null
@@ -547,16 +732,16 @@ function currentEconomyProxy(censusKey: string, beaKey: string): Plugin {
   }
   return {
     name: 'homeintel-current-economy-proxy',
-    configureServer(server) {
+    configureServer: (server) => {
       server.middlewares.use(handleRequest)
     },
-    configurePreviewServer(server) {
+    configurePreviewServer: (server) => {
       server.middlewares.use(handleRequest)
     },
   }
 }
 
-function majorEmployersProxy(): Plugin {
+const majorEmployersProxy = (): Plugin => {
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -618,16 +803,16 @@ function majorEmployersProxy(): Plugin {
   }
   return {
     name: 'homeintel-major-employers-proxy',
-    configureServer(server) {
+    configureServer: (server) => {
       server.middlewares.use(handleRequest)
     },
-    configurePreviewServer(server) {
+    configurePreviewServer: (server) => {
       server.middlewares.use(handleRequest)
     },
   }
 }
 
-function federalContractorsProxy(): Plugin {
+const federalContractorsProxy = (): Plugin => {
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -813,16 +998,16 @@ function federalContractorsProxy(): Plugin {
   }
   return {
     name: 'homeintel-federal-contractors-proxy',
-    configureServer(server) {
+    configureServer: (server) => {
       server.middlewares.use(handleRequest)
     },
-    configurePreviewServer(server) {
+    configurePreviewServer: (server) => {
       server.middlewares.use(handleRequest)
     },
   }
 }
 
-function majorHospitalsProxy(): Plugin {
+const majorHospitalsProxy = (): Plugin => {
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -869,10 +1054,10 @@ function majorHospitalsProxy(): Plugin {
   }
   return {
     name: 'homeintel-major-hospitals-proxy',
-    configureServer(server) {
+    configureServer: (server) => {
       server.middlewares.use(handleRequest)
     },
-    configurePreviewServer(server) {
+    configurePreviewServer: (server) => {
       server.middlewares.use(handleRequest)
     },
   }
@@ -884,11 +1069,26 @@ export default defineConfig(({ mode }) => {
   const censusKey = env.VITE_CENSUS_API_KEY || ''
   const beaKey = env.BEA_API_KEY || ''
   return {
+    resolve: {
+      alias: {
+        App: '/src/App.tsx',
+        assets: '/src/assets',
+        components: '/src/components',
+        data: '/src/data',
+        hooks: '/src/hooks',
+        pages: '/src/pages',
+        services: '/src/services',
+        store: '/src/store',
+        'styles.css': '/src/styles.css',
+        utils: '/src/utils',
+      },
+    },
     plugins: [
       react(),
       tailwindcss(),
       fbiCrimeProxy(apiKey),
       collegeScorecardProxy(apiKey),
+      nearbySchoolsProxy(),
       currentEconomyProxy(censusKey, beaKey),
       majorEmployersProxy(),
       federalContractorsProxy(),

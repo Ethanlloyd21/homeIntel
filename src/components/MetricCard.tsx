@@ -1,10 +1,10 @@
 import { ChevronDown, Home } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
 import type { ReactNode } from 'react'
-import AnimatedValue from './AnimatedValue'
-import MiniTrend from './MiniTrend'
+import AnimatedValue from 'components/AnimatedValue'
+import MiniTrend from 'components/MiniTrend'
 
-export default function MetricCard({
+const MetricCard = ({
   label,
   value,
   note,
@@ -20,7 +20,7 @@ export default function MetricCard({
   color: string
   trend?: string
   source?: string
-}) {
+}) => {
   return (
     <Collapsible.Root asChild>
       <article className="metric-card card group relative transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl focus-within:ring-2 focus-within:ring-violet-400/50">
@@ -61,3 +61,5 @@ export default function MetricCard({
     </Collapsible.Root>
   )
 }
+
+export default MetricCard

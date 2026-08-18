@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 type AppState = {
   view: string
@@ -24,12 +24,12 @@ const viewPaths: Record<string, string> = {
   Compare: '/compare-cities',
 }
 
-export function viewFromPath(pathname: string) {
+export const viewFromPath = (pathname: string) => {
   const entry = Object.entries(viewPaths).find(([, path]) => path === pathname)
   return entry?.[0] ?? 'Overview'
 }
 
-function updatePath(view: string) {
+const updatePath = (view: string) => {
   const path = viewPaths[view] ?? '/overview'
   if (window.location.pathname !== path) window.history.pushState({}, '', path)
 }

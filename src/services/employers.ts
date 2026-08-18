@@ -1,4 +1,4 @@
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 type Binding = Record<string, { value: string } | undefined>
 type WikidataResponse = { results?: { bindings?: Binding[] } }
@@ -207,20 +207,20 @@ const majorCompanyProfiles = [
   ],
 ] as const
 
-function getMajorCompanyProfile(name: string) {
+const getMajorCompanyProfile = (name: string) => {
   const profile = majorCompanyProfiles.find(([pattern]) => pattern.test(name))
   return profile
     ? { website: profile[1], description: profile[2], sector: profile[3] }
     : null
 }
 
-function identifyStrategicSector(value: string) {
+const identifyStrategicSector = (value: string) => {
   return (
     strategicSectors.find(({ pattern }) => pattern.test(value))?.label ?? ''
   )
 }
 
-export async function fetchMajorEmployers(city: City, signal: AbortSignal) {
+export const fetchMajorEmployers = async (city: City, signal: AbortSignal) => {
   const params = new URLSearchParams({
     latitude: String(city.latitude),
     longitude: String(city.longitude),

@@ -224,13 +224,7 @@ Companies are classified into sectors such as Defense & government, Technology, 
 
 Federal contract place-of-performance data is county-based, so its geography is an approximate surrounding region rather than an exact 50-mile circle. A contractor card does not show distance because USAspending does not consistently provide an office coordinate. Hospital and Wikidata-headquarters cards show distance because those sources provide facility coordinates.
 
-Official company descriptions and websites are enriched from Wikidata when a confident match is available. A small curated profile layer supplies verified official domains for recognizable large contractors when upstream recipient metadata does not include a website. USAspending still determines whether those contractors qualify for the selected region; companies are not inserted solely because they are well known.
-
-## State and API architecture
-
-### Architecture overview
-
-HomeIntel uses a client-first React architecture with a small server-side integration layer supplied by Vite during development and preview. Components do not call third-party APIs directly when a same-origin proxy is required.
+Official company descriptions and websites are enriched from Wikidata when a confident match is available. A small curated profile …110 tokens truncated… layer supplied by Vite during development and preview. Components do not call third-party APIs directly when a same-origin proxy is required.
 
 ![HomeIntel architecture diagram](docs/homeintel-architecture.svg)
 

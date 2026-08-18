@@ -1,4 +1,4 @@
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 type ScorecardSchool = {
   id: number
@@ -39,12 +39,12 @@ const programFields = [
   ['social_science', 'social sciences'],
 ] as const
 
-function normalizeWebsite(value: string | null) {
+const normalizeWebsite = (value: string | null) => {
   if (!value) return ''
   return /^https?:\/\//i.test(value) ? value : `https://${value}`
 }
 
-function describeSchool(school: ScorecardSchool) {
+const describeSchool = (school: ScorecardSchool) => {
   const strongest = programFields
     .map(([field, label]) => ({
       label,
@@ -58,12 +58,12 @@ function describeSchool(school: ScorecardSchool) {
   return `Known for ${strongest.map((program) => program.label).join(' and ')}.`
 }
 
-function distanceInMiles(
+const distanceInMiles = (
   latitudeA: number,
   longitudeA: number,
   latitudeB: number,
   longitudeB: number,
-) {
+) => {
   const radians = (degrees: number) => (degrees * Math.PI) / 180
   const latitudeDelta = radians(latitudeB - latitudeA)
   const longitudeDelta = radians(longitudeB - longitudeA)
@@ -75,7 +75,7 @@ function distanceInMiles(
   return 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-export async function fetchNearbyColleges(city: City, signal: AbortSignal) {
+export const fetchNearbyColleges = async (city: City, signal: AbortSignal) => {
   if (city.country !== 'United States') return []
   const response = await fetch(
     `/api/nearby-colleges?city=${encodeURIComponent(city.name)}&state=${encodeURIComponent(city.state)}`,

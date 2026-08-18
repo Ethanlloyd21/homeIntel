@@ -1,4 +1,4 @@
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 export type CurrentEconomyData = {
   county?: string
@@ -39,7 +39,7 @@ export type CurrentEconomyData = {
   }
 }
 
-export async function fetchCurrentEconomy(city: City, signal: AbortSignal) {
+export const fetchCurrentEconomy = async (city: City, signal: AbortSignal) => {
   const params = new URLSearchParams({
     city: city.name,
     state: city.state,

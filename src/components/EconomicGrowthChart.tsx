@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import type { EmploymentData } from '../services/employment'
-import { fmt } from '../utils/formatters'
-import type { CurrentEconomyData } from '../services/currentEconomy'
-import LoadingSpinner from './LoadingSpinner'
+import type { EmploymentData } from 'services/employment'
+import { fmt } from 'utils/formatters'
+import type { CurrentEconomyData } from 'services/currentEconomy'
+import LoadingSpinner from 'components/LoadingSpinner'
 
-export default function EconomicGrowthChart({
+const EconomicGrowthChart = ({
   employment,
   current,
   isCurrentLoading,
@@ -12,7 +12,7 @@ export default function EconomicGrowthChart({
   employment: EmploymentData
   current?: CurrentEconomyData
   isCurrentLoading: boolean
-}) {
+}) => {
   const historicalGrowth = employment.annualGrowth.filter(
     (item): item is typeof item & { changePercent: number } =>
       item.changePercent !== null,
@@ -226,3 +226,5 @@ export default function EconomicGrowthChart({
     </section>
   )
 }
+
+export default EconomicGrowthChart

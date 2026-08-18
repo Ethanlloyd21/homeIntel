@@ -1,9 +1,9 @@
 import { ArrowRight, CloudSun } from 'lucide-react'
-import type { City } from '../data/cities'
-import LoadingSpinner from './LoadingSpinner'
-import { useWeatherQuery } from '../hooks/useWeatherQuery'
+import type { City } from 'data/cities'
+import LoadingSpinner from 'components/LoadingSpinner'
+import { useWeatherQuery } from 'hooks/useWeatherQuery'
 
-function describeWeather(code: number) {
+const describeWeather = (code: number) => {
   if (code === 0) return 'Clear sky'
   if (code <= 3) return 'Partly cloudy'
   if (code <= 48) return 'Foggy'
@@ -15,7 +15,7 @@ function describeWeather(code: number) {
   return 'Thunderstorms'
 }
 
-function weatherComfort({
+const weatherComfort = ({
   apparentTemperature,
   humidity,
   wind,
@@ -27,7 +27,7 @@ function weatherComfort({
   wind: number
   precipitation: number
   weatherCode: number
-}) {
+}) => {
   const temperaturePenalty = Math.min(
     55,
     Math.abs(apparentTemperature - 72) * 2.2,
@@ -56,13 +56,13 @@ function weatherComfort({
   return { score, label: 'Uncomfortable', tone: 'uncomfortable' }
 }
 
-export default function WeatherCard({
+const WeatherCard = ({
   city,
   onViewEnvironment,
 }: {
   city: City
   onViewEnvironment: () => void
-}) {
+}) => {
   const weatherQuery = useWeatherQuery(city)
   const weather = weatherQuery.data
   const comfort = weather
@@ -147,3 +147,5 @@ export default function WeatherCard({
     </section>
   )
 }
+
+export default WeatherCard

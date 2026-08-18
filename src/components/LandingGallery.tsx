@@ -1,11 +1,11 @@
 import { BrainCircuit, MapPin, Sparkles } from 'lucide-react'
 import { useRef, type PointerEvent } from 'react'
-import homeAtDusk from '../assets/images/home-at-dusk.jpg'
-import cozyLivingRoom from '../assets/images/cozy-living-room.jpg'
-import sunnySuburbanHome from '../assets/images/sunny-suburban-home.jpg'
-import cozyLivingRoomNight from '../assets/images/cozy-living-room-night.jpg'
+import homeAtDusk from 'assets/images/home-at-dusk.jpg'
+import cozyLivingRoom from 'assets/images/cozy-living-room.jpg'
+import sunnySuburbanHome from 'assets/images/sunny-suburban-home.jpg'
+import cozyLivingRoomNight from 'assets/images/cozy-living-room-night.jpg'
 
-export default function LandingGallery({ theme }: { theme: 'light' | 'dark' }) {
+const LandingGallery = ({ theme }: { theme: 'light' | 'dark' }) => {
   const galleryRef = useRef<HTMLDivElement>(null)
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
@@ -109,3 +109,5 @@ export default function LandingGallery({ theme }: { theme: 'light' | 'dark' }) {
     </div>
   )
 }
+
+export default LandingGallery

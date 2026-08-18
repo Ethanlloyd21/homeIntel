@@ -10,6 +10,23 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    files: ['**/*.{js,mjs,cjs,ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'FunctionDeclaration',
+          message: 'Use an arrow function assigned to a const instead.',
+        },
+        {
+          selector: 'FunctionExpression',
+          message: 'Use an arrow function instead.',
+        },
+      ],
+      'prefer-arrow-callback': 'error',
+    },
+  },
+  {
     files: ['scripts/**/*.mjs'],
     languageOptions: {
       globals: globals.node,
@@ -30,6 +47,22 @@ export default tseslint.config(
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
+      ],
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['./*', '../*'],
+              message: 'Use an absolute import from the src root instead.',
+            },
+          ],
+        },
       ],
     },
   },

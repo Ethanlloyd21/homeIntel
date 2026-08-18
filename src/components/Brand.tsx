@@ -1,6 +1,6 @@
 import { Home } from 'lucide-react'
 
-export default function Brand() {
+const Brand = () => {
   return (
     <div className="brand">
       <div className="brand-mark">
@@ -12,3 +12,5 @@ export default function Brand() {
     </div>
   )
 }
+
+export default Brand

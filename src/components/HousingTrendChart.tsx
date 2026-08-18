@@ -1,8 +1,8 @@
 import { useId, useMemo, useState } from 'react'
 import { TrendingDown, TrendingUp } from 'lucide-react'
 import { ToggleGroup } from 'radix-ui'
-import type { HousingData, MarketPoint } from '../services/housing'
-import AnimatedValue from './AnimatedValue'
+import type { HousingData, MarketPoint } from 'services/housing'
+import AnimatedValue from 'components/AnimatedValue'
 
 type Metric = 'homeValue' | 'rent'
 
@@ -19,7 +19,7 @@ const compactCurrency = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
 })
 
-function monthLabel(date: string) {
+const monthLabel = (date: string) => {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     year: '2-digit',
@@ -27,7 +27,7 @@ function monthLabel(date: string) {
   }).format(new Date(`${date}T00:00:00Z`))
 }
 
-function chartGeometry(series: MarketPoint[]) {
+const chartGeometry = (series: MarketPoint[]) => {
   const width = 760
   const height = 250
   const top = 22
@@ -51,13 +51,13 @@ function chartGeometry(series: MarketPoint[]) {
   return { width, height, top, bottom, min, max, points, line, area }
 }
 
-export default function HousingTrendChart({
+const HousingTrendChart = ({
   housing,
   color,
 }: {
   housing: HousingData
   color: string
-}) {
+}) => {
   const [metric, setMetric] = useState<Metric>('homeValue')
   const gradientId = useId().replaceAll(':', '')
   const series =
@@ -206,3 +206,5 @@ export default function HousingTrendChart({
     </section>
   )
 }
+
+export default HousingTrendChart

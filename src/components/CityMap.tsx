@@ -7,9 +7,9 @@ import {
   useMap,
 } from 'react-leaflet'
 import { Map } from 'lucide-react'
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
-function RecenterMap({ city }: { city: City }) {
+const RecenterMap = ({ city }: { city: City }) => {
   const map = useMap()
 
   useEffect(() => {
@@ -34,7 +34,7 @@ function RecenterMap({ city }: { city: City }) {
   return null
 }
 
-export default function CityMap({ city }: { city: City }) {
+const CityMap = ({ city }: { city: City }) => {
   return (
     <section className="map-card card">
       <div className="map-toolbar">
@@ -97,3 +97,5 @@ export default function CityMap({ city }: { city: City }) {
     </section>
   )
 }
+
+export default CityMap

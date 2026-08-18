@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import type { GeocodingResult } from '../data/cities'
+import type { GeocodingResult } from 'data/cities'
 
 type GeocodingResponse = {
   results?: GeocodingResult[]
 }
 
-async function fetchLocations(search: string, signal: AbortSignal) {
+const fetchLocations = async (search: string, signal: AbortSignal) => {
   const params = new URLSearchParams({
     name: search,
     count: '8',
@@ -21,7 +21,7 @@ async function fetchLocations(search: string, signal: AbortSignal) {
   return data.results ?? []
 }
 
-export function useLocationSearchQuery(search: string) {
+export const useLocationSearchQuery = (search: string) => {
   return useQuery({
     queryKey: ['locations', search.toLowerCase()],
     enabled: search.length >= 2,

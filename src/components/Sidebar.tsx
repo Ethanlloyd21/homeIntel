@@ -9,9 +9,9 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import Brand from './Brand'
+import Brand from 'components/Brand'
 
-export default function Sidebar({
+const Sidebar = ({
   active,
   setActive,
   open,
@@ -21,7 +21,7 @@ export default function Sidebar({
   setActive: (s: string) => void
   open: boolean
   close: () => void
-}) {
+}) => {
   const nav = [
     ['Overview', Compass],
     ['Housing', Home],
@@ -79,3 +79,5 @@ export default function Sidebar({
     </aside>
   )
 }
+
+export default Sidebar

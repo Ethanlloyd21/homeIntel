@@ -1,4 +1,4 @@
-import type { City } from '../data/cities'
+import type { City } from 'data/cities'
 
 export type HazardRisk = {
   label: string
@@ -50,19 +50,19 @@ const hazards = [
   ['Winter weather', 'WNTW'],
 ] as const
 
-function tone(score: number): HazardRisk['tone'] {
+const tone = (score: number): HazardRisk['tone'] => {
   if (score >= 80) return 'high'
   if (score >= 50) return 'medium'
   return 'low'
 }
 
-function finiteScore(value: string | number | null) {
+const finiteScore = (value: string | number | null) => {
   return typeof value === 'number' && Number.isFinite(value)
     ? Math.round(Math.min(100, Math.max(0, value)))
     : null
 }
 
-export async function fetchRiskData(city: City, signal: AbortSignal) {
+export const fetchRiskData = async (city: City, signal: AbortSignal) => {
   if (city.country !== 'United States') {
     throw new Error('FEMA risk data is available for U.S. locations only.')
   }

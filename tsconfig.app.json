@@ -11,6 +11,18 @@
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "paths": {
+      "App": ["./src/App.tsx"],
+      "assets/*": ["./src/assets/*"],
+      "components/*": ["./src/components/*"],
+      "data/*": ["./src/data/*"],
+      "hooks/*": ["./src/hooks/*"],
+      "pages/*": ["./src/pages/*"],
+      "services/*": ["./src/services/*"],
+      "store/*": ["./src/store/*"],
+      "styles.css": ["./src/styles.css"],
+      "utils/*": ["./src/utils/*"]
+    },
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,

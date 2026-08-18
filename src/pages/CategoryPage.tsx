@@ -19,25 +19,27 @@ import {
   Wind,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import LoadingSpinner from '../components/LoadingSpinner'
-import PeopleProfileChart from '../components/PeopleProfileChart'
-import HousingTrendChart from '../components/HousingTrendChart'
-import type { City } from '../data/cities'
-import { useEmploymentQuery } from '../hooks/useEmploymentQuery'
-import { useDemographicsQuery } from '../hooks/useDemographicsQuery'
-import { useHousingQuery } from '../hooks/useHousingQuery'
-import { useRiskQuery } from '../hooks/useRiskQuery'
-import { useWeatherQuery } from '../hooks/useWeatherQuery'
-import { compact, fmt, money } from '../utils/formatters'
-import AnimatedValue from '../components/AnimatedValue'
-import HousingMetricCard from '../components/HousingMetricCard'
-import NearbyColleges from '../components/NearbyColleges'
-import { useNearbyCollegesQuery } from '../hooks/useNearbyCollegesQuery'
-import EmploymentSectorChart from '../components/EmploymentSectorChart'
-import EconomicGrowthChart from '../components/EconomicGrowthChart'
-import { useCurrentEconomyQuery } from '../hooks/useCurrentEconomyQuery'
-import MajorEmployers from '../components/MajorEmployers'
-import { useMajorEmployersQuery } from '../hooks/useMajorEmployersQuery'
+import LoadingSpinner from 'components/LoadingSpinner'
+import PeopleProfileChart from 'components/PeopleProfileChart'
+import HousingTrendChart from 'components/HousingTrendChart'
+import type { City } from 'data/cities'
+import { useEmploymentQuery } from 'hooks/useEmploymentQuery'
+import { useDemographicsQuery } from 'hooks/useDemographicsQuery'
+import { useHousingQuery } from 'hooks/useHousingQuery'
+import { useRiskQuery } from 'hooks/useRiskQuery'
+import { useWeatherQuery } from 'hooks/useWeatherQuery'
+import { compact, fmt, money } from 'utils/formatters'
+import AnimatedValue from 'components/AnimatedValue'
+import HousingMetricCard from 'components/HousingMetricCard'
+import NearbyColleges from 'components/NearbyColleges'
+import { useNearbyCollegesQuery } from 'hooks/useNearbyCollegesQuery'
+import EmploymentSectorChart from 'components/EmploymentSectorChart'
+import EconomicGrowthChart from 'components/EconomicGrowthChart'
+import { useCurrentEconomyQuery } from 'hooks/useCurrentEconomyQuery'
+import MajorEmployers from 'components/MajorEmployers'
+import { useMajorEmployersQuery } from 'hooks/useMajorEmployersQuery'
+import NearbySchools from 'components/NearbySchools'
+import { useNearbySchoolsQuery } from 'hooks/useNearbySchoolsQuery'
 
 const ZHVI_SOURCE =
   'https://files.zillowstatic.com/research/public_csvs/zhvi/City_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv'
@@ -64,13 +66,7 @@ const ACS_DETAILED_INDUSTRY_SOURCE =
 const FEMA_NRI_SOURCE = 'https://hazards.fema.gov/nri/data-resources'
 const OPEN_METEO_SOURCE = 'https://open-meteo.com/en/docs'
 
-export default function CategoryPage({
-  type,
-  city,
-}: {
-  type: string
-  city: City
-}) {
+const CategoryPage = ({ type, city }: { type: string; city: City }) => {
   const housingQuery = useHousingQuery(city, type === 'Housing')
   const housing = housingQuery.data
   const demographicsQuery = useDemographicsQuery(city, type === 'People')
@@ -104,6 +100,7 @@ export default function CategoryPage({
   ) : null
   const weatherQuery = useWeatherQuery(city, type === 'Environment')
   const collegesQuery = useNearbyCollegesQuery(city, type === 'People')
+  const schoolsQuery = useNearbySchoolsQuery(city, type === 'People')
   const weather = weatherQuery.data
   const weatherStatus = weatherQuery.isPending ? (
     <LoadingSpinner label="Loading live weather" />
@@ -727,6 +724,14 @@ export default function CategoryPage({
         </aside>
       </div>
       {type === 'People' && (
+        <NearbySchools
+          cityName={city.name}
+          schools={schoolsQuery.data}
+          isLoading={schoolsQuery.isPending}
+          isError={schoolsQuery.isError}
+        />
+      )}
+      {type === 'People' && (
         <NearbyColleges
           cityName={city.name}
           colleges={collegesQuery.data ?? []}
@@ -752,3 +757,5 @@ export default function CategoryPage({
     </div>
   )
 }
+
+export default CategoryPage
