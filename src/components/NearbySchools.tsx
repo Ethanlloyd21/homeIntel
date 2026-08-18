@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   School,
+  Search,
   UsersRound,
 } from 'lucide-react'
 import { Collapsible, Tabs } from 'radix-ui'
@@ -65,6 +66,63 @@ const countWithShare = (value: number | null, enrollment: number) => {
   return `${fmt.format(value)}${share}`
 }
 
+const SchoolProfile = ({ school }: { school: NearbySchool }) => {
+  const metadata = school.metadata
+  const gradeBands = [
+    metadata.elementary === 1 ? 'Elementary' : '',
+    metadata.middle === 1 ? 'Middle' : '',
+    metadata.high === 1 ? 'High school' : '',
+    metadata.ungraded === 1 ? 'Ungraded' : '',
+  ].filter(Boolean)
+
+  return (
+    <div className="school-profile-summary">
+      <div>
+        <span>School profile</span>
+        {(school.magnet || school.charter) && (
+          <b>{school.magnet ? 'Magnet' : 'Charter'}</b>
+        )}
+      </div>
+      <dl>
+        <div>
+          <dt>Grade range</dt>
+          <dd>
+            {grade(metadata.lowestGrade)} - {grade(metadata.highestGrade)}
+          </dd>
+        </div>
+        <div>
+          <dt>Type</dt>
+          <dd>
+            {metadata.schoolType === 1
+              ? 'Regular school'
+              : `Code ${metadata.schoolType}`}
+          </dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>
+            {metadata.schoolStatus === 1
+              ? 'Open'
+              : `Code ${metadata.schoolStatus}`}
+          </dd>
+        </div>
+        <div>
+          <dt>Grade bands</dt>
+          <dd>{gradeBands.join(', ') || 'Not reported'}</dd>
+        </div>
+        <div>
+          <dt>Teachers, FTE</dt>
+          <dd>{school.teachersFte.toFixed(1)}</dd>
+        </div>
+        <div>
+          <dt>From city center</dt>
+          <dd>{school.distanceMiles.toFixed(1)} miles</dd>
+        </div>
+      </dl>
+    </div>
+  )
+}
+
 const SchoolDetails = ({ school }: { school: NearbySchool }) => {
   const metadata = school.metadata
   const sections = [
@@ -80,39 +138,6 @@ const SchoolDetails = ({ school }: { school: NearbySchool }) => {
         ['Mailing address', metadata.mailingAddress],
         ['Phone', metadata.phone],
         ['Coordinates', `${metadata.latitude}, ${metadata.longitude}`],
-      ],
-    },
-    {
-      title: 'School profile',
-      rows: [
-        ['Lowest grade', grade(metadata.lowestGrade)],
-        ['Highest grade', grade(metadata.highestGrade)],
-        [
-          'School type',
-          metadata.schoolType === 1
-            ? 'Regular school'
-            : `Code ${metadata.schoolType}`,
-        ],
-        [
-          'Operational status',
-          metadata.schoolStatus === 1
-            ? 'Open'
-            : `Code ${metadata.schoolStatus}`,
-        ],
-        ['Elementary grades', yesNo(metadata.elementary)],
-        ['Middle grades', yesNo(metadata.middle)],
-        ['High-school grades', yesNo(metadata.high)],
-        ['Ungraded students', yesNo(metadata.ungraded)],
-        ['Enrollment', fmt.format(school.enrollment)],
-        ['Teachers, FTE', school.teachersFte.toFixed(1)],
-        [
-          'Student-to-teacher ratio',
-          `${school.studentTeacherRatio.toFixed(1)}:1`,
-        ],
-        [
-          'Distance from city center',
-          `${school.distanceMiles.toFixed(1)} miles`,
-        ],
       ],
     },
     {
@@ -197,9 +222,24 @@ const SchoolList = ({
   schools: NearbySchool[]
 }) => {
   const [page, setPage] = useState(1)
-  const totalPages = Math.max(1, Math.ceil(schools.length / schoolsPerPage))
+  const [search, setSearch] = useState('')
+  const normalizedSearch = search.trim().toLowerCase()
+  const filteredSchools = normalizedSearch
+    ? schools.filter((school) =>
+        [school.name, school.district, school.location].some((value) =>
+          value.toLowerCase().includes(normalizedSearch),
+        ),
+      )
+    : schools
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredSchools.length / schoolsPerPage),
+  )
   const startIndex = (page - 1) * schoolsPerPage
-  const visibleSchools = schools.slice(startIndex, startIndex + schoolsPerPage)
+  const visibleSchools = filteredSchools.slice(
+    startIndex,
+    startIndex + schoolsPerPage,
+  )
 
   const changePage = (nextPage: number) => {
     setPage(Math.min(Math.max(nextPage, 1), totalPages))
@@ -207,9 +247,28 @@ const SchoolList = ({
 
   return (
     <div className="school-group">
-      <h4>{title}</h4>
-      {schools.length === 0 ? (
-        <div className="college-empty">No matching public schools found.</div>
+      <div className="school-group-heading">
+        <h4>{title}</h4>
+        <label className="school-search">
+          <Search size={16} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label={`Search ${title.toLowerCase()}`}
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value)
+              setPage(1)
+            }}
+            placeholder="Search school, district, or address"
+          />
+        </label>
+      </div>
+      {filteredSchools.length === 0 ? (
+        <div className="college-empty">
+          {search
+            ? `No schools match “${search}”.`
+            : 'No matching public schools found.'}
+        </div>
       ) : (
         <>
           <div className="school-grid">
@@ -226,13 +285,11 @@ const SchoolList = ({
                     <div>
                       <span>{school.level}</span>
                       <h5>{school.name}</h5>
+                      <p>{school.district}</p>
+                      <small>{school.location}</small>
                     </div>
-                    {(school.magnet || school.charter) && (
-                      <b>{school.magnet ? 'Magnet' : 'Charter'}</b>
-                    )}
+                    <SchoolProfile school={school} />
                   </div>
-                  <p>{school.district}</p>
-                  <small>{school.location}</small>
                   <SchoolDetails school={school} />
                 </div>
               </article>
@@ -245,8 +302,8 @@ const SchoolList = ({
             >
               <span>
                 Showing {startIndex + 1}-
-                {Math.min(startIndex + schoolsPerPage, schools.length)} of{' '}
-                {schools.length}
+                {Math.min(startIndex + schoolsPerPage, filteredSchools.length)}{' '}
+                of {filteredSchools.length}
               </span>
               <div>
                 <button
