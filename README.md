@@ -14,6 +14,9 @@ The application does not start with a hard-coded city. The selected and comparis
 - Expandable Housing metric details with direct Zillow and Census source citations
 - Census ACS housing, demographic, education, and employment indicators
 - Census ACS race and ethnicity composition using mutually exclusive B03002 categories
+- Public K-12 school discovery using the nationwide Common Core of Data (CCD)
+- Grade-band tabs for Pre-K, Kindergarten, grades 1-6, middle/high school, and statewide online schools
+- K-12 search by school name, district, or address, with pagination and expandable metadata
 - Current BLS LAUS city labor conditions with downloadable-file fallback
 - Annual employment momentum from 2019 through 2026, using reported monthly data when available and clearly marked QCEW-based estimates otherwise
 - Census QWI county workforce flows and optional BEA county GDP growth
@@ -226,6 +229,25 @@ Federal contract place-of-performance data is county-based, so its geography is 
 
 Official company descriptions and websites are enriched from Wikidata when a confident match is available. A small curated profile …110 tokens truncated… layer supplied by Vite during development and preview. Components do not call third-party APIs directly when a same-origin proxy is required.
 
+### Public K-12 and statewide online schools
+
+The People page loads public-school directory records from the Urban Institute Education Data Portal, which republishes the U.S. Department of Education Common Core of Data (CCD). The API is free, requires no key, and currently uses the 2024 school directory endpoint.
+
+The `/api/nearby-schools` proxy downloads the selected state once per server process, caches it, and returns two collections:
+
+- Schools whose reported physical city matches the selected city. A 15-mile coordinate fallback is used only when no exact city records are found.
+- Fully virtual public schools from the entire selected state (`virtual === 1`). Statewide online results are not limited to the selected city because an administrative address does not define where virtual students attend.
+
+Local records are organized into Pre-K, Kindergarten, grades 1-6, and middle/high tabs from reported grade ranges and CCD grade-band flags. A school can appear in multiple tabs when it serves multiple grade bands. The Online tab contains statewide fully virtual schools; Texas results were verified to include University of Texas at Austin High School and Texas Tech University K-12.
+
+Each tab supports search by school name, district, or address and displays six records per page. Cards show identity, address, grade range, operating profile, enrollment, staffing ratio, teacher FTE, and distance for local schools. Distance is hidden for statewide online schools. View details exposes identifiers, contact data, program flags, lunch-access fields, geography codes, and reporting year. Missing CCD values and negative sentinel codes are displayed as `Not reported`.
+
+Results are ordered by lower reported student-to-teacher ratio and then enrollment. This is a staffing comparison, not an academic ranking. The ratio is enrollment divided by reported full-time-equivalent teachers and is not average classroom size. Online schools without staffing data remain visible.
+
+## Architecture
+
+Remote server state remains in TanStack Query. Zustand stores user/session state only. Browser components do not download state-sized CCD responses directly; Vite middleware adds compatible request headers, handles failures, filters the response, and sends only relevant records to the browser.
+
 ![HomeIntel architecture diagram](docs/homeintel-architecture.svg)
 
 The diagram can be edited in diagrams.net using [`docs/homeintel-architecture.drawio`](docs/homeintel-architecture.drawio). The SVG is committed separately so GitHub can render the architecture without requiring draw.io.
@@ -283,6 +305,7 @@ The major layers are:
 | Crime                    | FBI Crime Data API                          | Same-origin proxy                            | Data.gov key     | U.S. state/city coverage             | Proxy prevents exposing the key and avoids browser CORS errors     |
 | Natural hazards          | FEMA National Risk Index                    | Browser service                              | No               | Containing U.S. Census tract         | Converts relative hazard scores into the documented risk profile   |
 | Universities             | College Scorecard                           | Same-origin proxy                            | Data.gov key     | Radius around selected coordinates   | Ranks nearby colleges and enriches displayed institution details   |
+| Public K-12 schools      | Urban Education Data Portal / NCES CCD      | `/api/nearby-schools`                        | No               | Selected city and selected state     | City grade bands plus statewide fully virtual public schools       |
 
 ### Server proxy endpoints
 
@@ -296,6 +319,7 @@ The Vite configuration currently exposes these application-facing endpoints:
 | `/api/major-hospitals`           | Queries open hospital facilities within 50 miles                               |
 | FBI crime proxy endpoint         | Keeps the Data.gov key server-side and handles CORS                            |
 | College Scorecard proxy endpoint | Keeps the Data.gov key server-side and returns nearby universities             |
+| `/api/nearby-schools`            | Caches a state CCD directory and returns local and statewide-online schools    |
 
 These Vite middleware functions are appropriate for local development and preview. A production static host does not execute `vite.config.ts` middleware. Production deployment must recreate the `/api/*` handlers as serverless functions, edge functions, or routes in a Node server and keep their response contracts unchanged.
 
@@ -308,6 +332,8 @@ These Vite middleware functions are appropriate for local development and previe
 - The economic proxy tries recent QCEW and QWI periods from newest to oldest because federal datasets are released on different schedules.
 - Regional employer loading can continue when either Wikidata or USAspending fails; it throws only when both core company sources fail.
 - Missing optional fields, such as hospital beds or company websites, are omitted rather than invented.
+- CCD state directories are cached once per server process; TanStack Query caches normalized school results by selected city.
+- The school proxy supplies explicit JSON and application-identification headers because the upstream service rejects Node's default request identity with HTTP 403.
 
 ### Derived data versus reported data
 
@@ -319,6 +345,7 @@ HomeIntel distinguishes source observations from application calculations:
 - Weather comfort is a HomeIntel scale derived from several Open-Meteo variables.
 - FEMA scores are normalized comparative risk indicators, not probabilities.
 - Federal contract obligations describe regional contract activity and are not local payroll or employee estimates.
+- K-12 student-to-teacher ratios are calculated from CCD enrollment and teacher FTE; they are not class-size or academic-quality ratings.
 
 ### Zustand
 
@@ -343,6 +370,8 @@ All React Query configuration is centralized in `src/hooks`:
 - `useCurrentEconomyQuery.ts`
 - `useMajorEmployersQuery.ts`
 - `useRiskQuery.ts`
+- `useNearbyCollegesQuery.ts`
+- `useNearbySchoolsQuery.ts`
 
 The hooks own query keys, cancellation signals, enabling conditions, and stale times. UI components consume the hooks without containing direct `useQuery` or API `fetch` calls.
 
@@ -355,6 +384,8 @@ while retaining the project's custom visual design. The Explore/Compare
 navigation uses Radix Tabs, and the Housing chart's Home value/Rent selector
 uses Radix Toggle Group. Radix supplies keyboard navigation, ARIA behavior, and
 interaction state through `data-state` attributes.
+
+The K-12 grade selector uses Radix Tabs. Each school card uses Radix Collapsible for its View details control, including keyboard and screen-reader interaction states.
 
 The header theme control uses Radix Switch. The selected light or dark mode is
 saved in `localStorage`; on a first visit, HomeIntel follows the operating
@@ -374,7 +405,21 @@ rewrite.
 Overview metric cards use Radix Collapsible with Tailwind animation utilities,
 allowing readers to reveal supporting context with a mouse, keyboard, or touch.
 
+### Coding standards
+
+- Project-owned JavaScript and TypeScript functions use arrow-function syntax. ESLint rejects function declarations and function expressions.
+- Internal `src` imports use configured absolute paths such as `components/SearchBox`, `hooks/useNearbySchoolsQuery`, and `services/schools` rather than `../` paths.
+- TypeScript `paths`, Vite aliases, and ESLint restrictions keep absolute imports consistent at compile time, runtime, and during linting.
+- Prettier owns formatting; run the validation command before committing.
+
 ## Project structure
+
+The K-12 feature follows the same layered structure as the rest of the app:
+
+- `src/components/NearbySchools.tsx` owns grade tabs, school search, pagination, card presentation, profile summaries, and expandable details.
+- `src/hooks/useNearbySchoolsQuery.ts` owns the TanStack Query key, cancellation signal, enablement, and seven-day stale time.
+- `src/services/schools.ts` normalizes CCD records, calculates distance and staffing ratio, classifies grade bands, and preserves statewide online schools with missing staffing data.
+- `vite.config.ts` implements `/api/nearby-schools`, state/FIPS resolution, upstream request headers, per-process state caching, exact-city filtering, coordinate fallback, and statewide virtual filtering.
 
 ```text
 homeIntel/
@@ -436,7 +481,7 @@ homeIntel/
 1. The user searches for a city or ZIP code.
 2. Open-Meteo returns matching locations.
 3. Zustand stores the selected location.
-4. TanStack Query hooks load weather, housing, Census, employment, and FEMA data as needed.
+4. TanStack Query hooks load weather, housing, Census, employment, FEMA, college, and K-12 data as needed.
 5. The Overview combines the map, weather, city snapshot, housing indicators, risk profile, and economic engine.
 6. Category pages provide deeper visualizations and data-driven HomeIntel Briefs.
 
@@ -455,6 +500,10 @@ homeIntel/
 - Weather is model based and can differ from a nearby station.
 - U.S. federal datasets are unavailable for non-U.S. locations.
 - Some Environment and Compare-page indicators remain illustrative and should not be presented as verified statistics.
+- CCD covers public schools, not every private or commercial online program. State reporting completeness varies.
+- A CCD virtual flag does not establish accreditation, tuition, admission eligibility, or current enrollment availability; verify those details with the school or state education agency.
+- Online-school administrative addresses do not describe a student's attendance location, so the Online tab omits city-center distance.
+- K-12 staffing ratios are not class sizes, test scores, ratings, or recommendations.
 
 ## Environment and security
 
@@ -465,6 +514,8 @@ Variables prefixed with `VITE_` are included in browser code. FBI requests use a
 Zillow, Open-Meteo, OpenStreetMap, and FEMA requests used here do not require private application keys.
 
 BLS LAUS/QCEW, Census QWI, USAspending, Wikidata, and the HIFLD hospital feature service do not require private application keys. `BEA_API_KEY` is optional and enables county real-GDP data.
+
+The Urban Institute Education Data Portal / CCD school integration does not require an API key. Its proxy exists for response filtering, caching, request compatibility, and production control rather than secret management.
 
 ## Troubleshooting
 
@@ -505,6 +556,15 @@ npm run data:update
 - Confirm the selected location is in the United States.
 - Hospital results require qualifying open facilities within 50 miles and are limited to major facilities after bed/staff filtering.
 - Ordinary company branch offices are not inferred. A company appears through qualifying federal contract activity or a nearby headquarters record.
+
+### K-12 or online schools are missing
+
+- Restart Vite after changing `vite.config.ts`; the school endpoint is Vite middleware.
+- Confirm the selected location is a U.S. city and its state resolves to a postal and FIPS code.
+- The first request for a state can take longer because the complete 2024 CCD state directory is downloaded and cached.
+- Local staffing-ranked tabs require active regular schools with coordinates, enrollment, and teacher FTE.
+- The Online tab includes active regular public schools reported as fully virtual. Private programs and records missing the CCD virtual flag do not appear.
+- A production static host must recreate `/api/nearby-schools` as a serverless or server endpoint.
 
 ## Quality checks
 

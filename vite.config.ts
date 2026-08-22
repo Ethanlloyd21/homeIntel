@@ -258,6 +258,7 @@ type CcdSchool = {
   city_location?: string
   latitude?: number
   longitude?: number
+  virtual?: number | null
   [key: string]: unknown
 }
 
@@ -365,8 +366,11 @@ const nearbySchoolsProxy = (): Plugin => {
                 ) <= 15
               )
             })
+      const statewideVirtual = stateSchools.filter(
+        (school) => school.virtual === 1,
+      )
       response.statusCode = 200
-      response.end(JSON.stringify({ results }))
+      response.end(JSON.stringify({ results, statewideVirtual }))
     } catch {
       response.statusCode = 502
       response.end(

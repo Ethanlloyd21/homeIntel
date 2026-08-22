@@ -29,7 +29,11 @@ const schoolTabs = [
     label: 'Middle & high',
     title: 'Middle and high schools',
   },
-  { value: 'ungraded', label: 'Ungraded', title: 'Ungraded programs' },
+  {
+    value: 'online',
+    label: 'Online',
+    title: 'Statewide online schools',
+  },
 ] as const
 
 const reported = (value: string | number | null) => {
@@ -112,12 +116,18 @@ const SchoolProfile = ({ school }: { school: NearbySchool }) => {
         </div>
         <div>
           <dt>Teachers, FTE</dt>
-          <dd>{school.teachersFte.toFixed(1)}</dd>
+          <dd>
+            {school.teachersFte === null
+              ? 'Not reported'
+              : school.teachersFte.toFixed(1)}
+          </dd>
         </div>
-        <div>
-          <dt>From city center</dt>
-          <dd>{school.distanceMiles.toFixed(1)} miles</dd>
-        </div>
+        {school.level !== 'Statewide online' && (
+          <div>
+            <dt>From city center</dt>
+            <dd>{school.distanceMiles.toFixed(1)} miles</dd>
+          </div>
+        )}
       </dl>
     </div>
   )
@@ -189,7 +199,9 @@ const SchoolDetails = ({ school }: { school: NearbySchool }) => {
           <UsersRound size={15} /> {fmt.format(school.enrollment)} students
         </span>
         <span>
-          {school.studentTeacherRatio.toFixed(1)}:1 students per teacher
+          {school.studentTeacherRatio === null
+            ? 'Students per teacher not reported'
+            : `${school.studentTeacherRatio.toFixed(1)}:1 students per teacher`}
         </span>
         <Collapsible.Trigger className="school-details-trigger">
           View details <ChevronDown size={16} />
@@ -354,10 +366,11 @@ const NearbySchools = ({
       <School size={22} />
     </div>
     <p className="nearby-colleges-intro">
-      Browse public schools by the grade bands they report serving. A school may
-      appear in multiple tabs when its reported grade range spans more than one
-      band. Results are ordered by lower student-to-teacher ratios, then
-      enrollment; this is a staffing comparison, not an academic quality rating.
+      Browse local public schools by reported grade band, or use Online to view
+      fully virtual public schools across the selected city&apos;s state. A
+      school may appear in multiple grade tabs. Results are ordered by lower
+      student-to-teacher ratios when available, then enrollment; this is a
+      staffing comparison, not an academic quality rating.
     </p>
     {isLoading ? (
       <div className="loading-panel">

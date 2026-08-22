@@ -4237,9 +4237,9 @@ footer > span {
 .school-profile-summary {
   min-width: 0;
   padding: 13px 15px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 11px;
-  background: var(--soft);
+  background: transparent;
 }
 .school-profile-summary > div:first-child {
   display: flex;

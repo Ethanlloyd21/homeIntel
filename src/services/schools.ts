@@ -25,8 +25,8 @@ type SchoolApiRecord = {
   county_code: string | null
   lowest_grade_offered: number | null
   highest_grade_offered: number | null
-  enrollment: number
-  teachers_fte: number
+  enrollment: number | null
+  teachers_fte: number | null
   school_status: number
   school_type: number
   bureau_indian_education: number | null
@@ -54,6 +54,7 @@ type SchoolApiRecord = {
 
 type SchoolsResponse = {
   results?: SchoolApiRecord[]
+  statewideVirtual?: SchoolApiRecord[]
 }
 
 export type NearbySchool = {
@@ -63,8 +64,8 @@ export type NearbySchool = {
   location: string
   level: string
   enrollment: number
-  teachersFte: number
-  studentTeacherRatio: number
+  teachersFte: number | null
+  studentTeacherRatio: number | null
   distanceMiles: number
   charter: boolean
   magnet: boolean
@@ -112,7 +113,7 @@ export type NearbySchools = {
   kindergarten: NearbySchool[]
   grades1To6: NearbySchool[]
   middleHigh: NearbySchool[]
-  ungraded: NearbySchool[]
+  online: NearbySchool[]
 }
 
 const distanceInMiles = (
@@ -147,9 +148,14 @@ const toSchool = (
     .filter(Boolean)
     .join(', '),
   level,
-  enrollment: school.enrollment,
+  enrollment: school.enrollment ?? 0,
   teachersFte: school.teachers_fte,
-  studentTeacherRatio: school.enrollment / school.teachers_fte,
+  studentTeacherRatio:
+    school.enrollment !== null &&
+    school.teachers_fte !== null &&
+    school.teachers_fte > 0
+      ? school.enrollment / school.teachers_fte
+      : null,
   distanceMiles: distanceInMiles(
     city.latitude,
     city.longitude,
@@ -207,6 +213,7 @@ const selectSchools = (
   city: City,
   level: string,
   includesGradeBand: (school: SchoolApiRecord) => boolean,
+  requireStaffing = true,
 ) => {
   return schools
     .filter(
@@ -214,19 +221,26 @@ const selectSchools = (
         includesGradeBand(school) &&
         school.school_status === 1 &&
         school.school_type === 1 &&
-        school.enrollment >= 100 &&
-        school.teachers_fte > 0 &&
+        (!requireStaffing ||
+          (school.enrollment !== null &&
+            school.enrollment >= 100 &&
+            school.teachers_fte !== null &&
+            school.teachers_fte > 0)) &&
         Number.isFinite(school.latitude) &&
         Number.isFinite(school.longitude),
     )
     .map((school) => toSchool(school, city, level))
     .filter(
       (school) =>
-        school.studentTeacherRatio >= 5 && school.studentTeacherRatio <= 30,
+        !requireStaffing ||
+        (school.studentTeacherRatio !== null &&
+          school.studentTeacherRatio >= 5 &&
+          school.studentTeacherRatio <= 30),
     )
     .sort(
       (a, b) =>
-        a.studentTeacherRatio - b.studentTeacherRatio ||
+        (a.studentTeacherRatio ?? Number.POSITIVE_INFINITY) -
+          (b.studentTeacherRatio ?? Number.POSITIVE_INFINITY) ||
         b.enrollment - a.enrollment,
     )
 }
@@ -241,7 +255,7 @@ export const fetchNearbySchools = async (
       kindergarten: [],
       grades1To6: [],
       middleHigh: [],
-      ungraded: [],
+      online: [],
     }
   }
   const params = new URLSearchParams({
@@ -287,11 +301,12 @@ export const fetchNearbySchools = async (
       'Middle & high school',
       (school) => school.middle_cedp === 1 || school.high_cedp === 1,
     ),
-    ungraded: selectSchools(
-      schools,
+    online: selectSchools(
+      payload.statewideVirtual ?? [],
       city,
-      'Ungraded',
-      (school) => school.ungrade_cedp === 1,
+      'Statewide online',
+      (school) => school.virtual === 1,
+      false,
     ),
   }
 }
