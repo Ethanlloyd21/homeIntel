@@ -2693,6 +2693,9 @@ footer > span {
   .current-economy-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .year-weather-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .college-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2720,10 +2723,17 @@ footer > span {
   .employment-sector-chart {
     padding: 17px;
   }
+  .sector-breakdown-list {
+    grid-template-columns: 1fr;
+  }
   .economic-growth-chart {
     padding: 17px;
   }
   .current-economy-grid {
+    grid-template-columns: 1fr;
+  }
+  .year-weather-summary,
+  .year-weather-grid {
     grid-template-columns: 1fr;
   }
   .sector-legend {
@@ -3361,9 +3371,8 @@ footer > span {
   line-height: 1.6;
 }
 .education-household-section {
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid var(--line);
+  margin-top: 22px;
+  padding: 24px;
 }
 .comparison-key {
   display: flex;
@@ -3439,7 +3448,7 @@ footer > span {
   color: var(--muted);
   font-size: 11px;
 }
-.education-household-section > p {
+.education-household-source {
   margin: 18px 0 0;
   color: var(--muted);
   font-size: 12px;
@@ -3503,6 +3512,63 @@ footer > span {
   align-items: center;
   gap: 30px;
   margin-top: 22px;
+}
+.sector-breakdown-section {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.sector-breakdown-section > div:first-child small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+.sector-breakdown-section h4 {
+  margin: 4px 0;
+  font-family: 'Manrope';
+  font-size: 16px;
+}
+.sector-breakdown-description {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.sector-breakdown-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sector-breakdown-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 2px;
+}
+.sector-breakdown-list li::before {
+  width: 6px;
+  height: 6px;
+  margin-top: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--green);
+  content: '';
+}
+.sector-breakdown-list span {
+  display: grid;
+  gap: 3px;
+  flex: 1 1 auto;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.sector-breakdown-list strong {
+  color: var(--ink);
+  font-size: 12px;
 }
 .sector-donut-wrap {
   position: relative;
@@ -3622,6 +3688,292 @@ footer > span {
   font-size: 13px;
   line-height: 1.55;
 }
+.year-weather-outlook {
+  min-width: 0;
+}
+.year-weather-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+.year-weather-summary > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 92%, var(--soft));
+}
+.year-weather-summary svg {
+  flex: 0 0 auto;
+  color: var(--green);
+}
+.year-weather-summary span {
+  display: grid;
+  gap: 3px;
+}
+.year-weather-summary small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+}
+.year-weather-summary strong {
+  font-family: 'Manrope';
+  font-size: 16px;
+}
+.year-weather-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+.year-weather-grid article {
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 94%, var(--soft));
+}
+.year-weather-month {
+  width: 100%;
+  min-height: 164px;
+  padding: 16px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+.year-weather-month:hover {
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--green) 5%, transparent);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.year-weather-month:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--green) 44%, transparent);
+  outline-offset: 3px;
+}
+.year-weather-month-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.year-weather-grid h4 {
+  margin: 0;
+  font-family: 'Manrope';
+  font-size: 18px;
+}
+.year-weather-month-head > span {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--green) 10%, var(--paper));
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.year-weather-month-head > span[data-source='partial'] {
+  background: color-mix(in srgb, #d29a32 12%, var(--paper));
+  color: #9a6b14;
+}
+.year-weather-month-head > span[data-source='forecast'] {
+  background: color-mix(in srgb, #4b7bec 12%, var(--paper));
+  color: #315db8;
+}
+.year-weather-month-head > span[data-source='pending'] {
+  background: var(--soft);
+  color: var(--muted);
+}
+.year-weather-grid article[data-source='pending'] {
+  opacity: 0.68;
+}
+.year-weather-grid dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 14px 0 0;
+}
+.year-weather-grid dt,
+.year-weather-grid dd {
+  margin: 0;
+}
+.year-weather-grid dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.year-weather-grid dd {
+  margin-top: 3px;
+  font-family: 'Manrope';
+  font-size: 18px;
+  font-weight: 750;
+}
+.year-weather-month > small {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.year-weather-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.year-weather-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.year-weather-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.year-weather-legend i[data-source='partial'] {
+  background: #d29a32;
+}
+.year-weather-legend i[data-source='pending'] {
+  background: var(--muted);
+}
+.year-weather-legend i[data-source='forecast'] {
+  background: #4b7bec;
+}
+.year-weather-note {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.year-weather-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 26px 80px #0b152150;
+}
+.year-weather-dialog::backdrop {
+  background: #0b1521a6;
+  backdrop-filter: blur(4px);
+}
+.year-weather-dialog-card {
+  padding: 26px;
+}
+.year-weather-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.year-weather-dialog-head small {
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.year-weather-dialog-head h3 {
+  margin: 5px 0 0;
+  font-family: 'Manrope';
+  font-size: 27px;
+}
+.year-weather-dialog-close {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--ink);
+  cursor: pointer;
+}
+.year-weather-dialog-period {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+.year-weather-dialog-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 24px 0 0;
+}
+.year-weather-dialog-stats > div {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--soft);
+}
+.year-weather-dialog-stats dt {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.year-weather-dialog-stats dd {
+  margin: 8px 0 0;
+  font-family: 'Manrope';
+  font-size: 28px;
+  font-weight: 800;
+}
+.year-weather-temperature-band {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--green) 8%, var(--paper));
+}
+.year-weather-temperature-band > span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+.year-weather-temperature-band strong {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 9px;
+  font-family: 'Manrope';
+  font-size: 20px;
+}
+.year-weather-temperature-band i {
+  height: 8px;
+  flex: 1;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4b7bec, #f5b642, #e86b52);
+}
+.year-weather-dialog-note {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+@media (max-width: 560px) {
+  .year-weather-dialog-card {
+    padding: 20px;
+  }
+  .year-weather-dialog-head h3 {
+    font-size: 23px;
+  }
+  .year-weather-dialog-stats {
+    grid-template-columns: 1fr;
+  }
+}
 .economic-growth-chart {
   margin-top: 22px;
   padding: 24px;
@@ -3640,6 +3992,9 @@ footer > span {
   margin-top: 3px;
   color: var(--muted);
   font-size: 13px;
+}
+.employment-growth-preview {
+  margin-top: 14px;
 }
 .growth-bars {
   min-height: 300px;
@@ -4019,6 +4374,101 @@ footer > span {
   margin-top: 22px;
   padding: 24px;
 }
+.education-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+.education-dropdown-trigger small {
+  color: #929b97;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+}
+.education-dropdown-trigger h3 {
+  margin: 4px 0 0;
+  font-family: 'Manrope';
+  font-size: 18px;
+  letter-spacing: -0.4px;
+}
+.education-dropdown-trigger:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid rgb(139 108 255 / 70%);
+  outline-offset: 7px;
+}
+.education-dropdown-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+}
+.education-dropdown-hide {
+  display: none;
+}
+.education-dropdown[data-state='open'] .education-dropdown-show {
+  display: none;
+}
+.education-dropdown[data-state='open'] .education-dropdown-hide {
+  display: inline;
+}
+.education-dropdown-chevron {
+  transition: transform 180ms ease;
+}
+.education-dropdown[data-state='open'] .education-dropdown-chevron {
+  transform: rotate(180deg);
+}
+.education-dropdown-content {
+  overflow: hidden;
+}
+.education-dropdown-summary {
+  margin-bottom: 0;
+}
+.education-dropdown[data-state='open'] .education-dropdown-summary {
+  display: none;
+}
+.education-dropdown-content[data-state='open'] {
+  animation: education-dropdown-open 220ms ease-out;
+}
+.education-dropdown-content[data-state='closed'] {
+  animation: education-dropdown-close 180ms ease-in;
+}
+@keyframes education-dropdown-open {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+@keyframes education-dropdown-close {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .education-dropdown-content[data-state],
+  .education-dropdown-chevron {
+    animation: none;
+    transition: none;
+  }
+}
 .school-tabs {
   min-width: 0;
 }
@@ -4323,6 +4773,14 @@ footer > span {
 @media (max-width: 560px) {
   .nearby-schools {
     padding: 18px;
+  }
+  .education-dropdown-trigger {
+    gap: 12px;
+  }
+  .education-dropdown-action > svg:first-child,
+  .education-dropdown-show,
+  .education-dropdown-hide {
+    display: none !important;
   }
   .school-card {
     padding: 14px;

@@ -28,7 +28,7 @@ import { useDemographicsQuery } from 'hooks/useDemographicsQuery'
 import { useHousingQuery } from 'hooks/useHousingQuery'
 import { useRiskQuery } from 'hooks/useRiskQuery'
 import { useWeatherQuery } from 'hooks/useWeatherQuery'
-import { compact, fmt, money } from 'utils/formatters'
+import { fmt, money } from 'utils/formatters'
 import AnimatedValue from 'components/AnimatedValue'
 import HousingMetricCard from 'components/HousingMetricCard'
 import NearbyColleges from 'components/NearbyColleges'
@@ -40,6 +40,9 @@ import MajorEmployers from 'components/MajorEmployers'
 import { useMajorEmployersQuery } from 'hooks/useMajorEmployersQuery'
 import NearbySchools from 'components/NearbySchools'
 import { useNearbySchoolsQuery } from 'hooks/useNearbySchoolsQuery'
+import EducationHouseholdComparison from 'components/EducationHouseholdComparison'
+import YearWeatherOutlook from 'components/YearWeatherOutlook'
+import { useYearWeatherQuery } from 'hooks/useYearWeatherQuery'
 
 const ZHVI_SOURCE =
   'https://files.zillowstatic.com/research/public_csvs/zhvi/City_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv'
@@ -63,6 +66,10 @@ const ACS_EMPLOYMENT_SOURCE =
   'https://api.census.gov/data/2024/acs/acs5/profile/groups/DP03.html'
 const ACS_DETAILED_INDUSTRY_SOURCE =
   'https://api.census.gov/data/2024/acs/acs5/groups/C24030.html'
+const ACS_PROFESSIONAL_INDUSTRY_SOURCE =
+  'https://api.census.gov/data/2024/acs/acs5/groups/B24134.html'
+const DOL_MINIMUM_WAGE_SOURCE =
+  'https://www.dol.gov/agencies/whd/minimum-wage/state'
 const FEMA_NRI_SOURCE = 'https://hazards.fema.gov/nri/data-resources'
 const OPEN_METEO_SOURCE = 'https://open-meteo.com/en/docs'
 
@@ -91,6 +98,12 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
   ) : employmentQuery.isError ? (
     'Unavailable'
   ) : null
+  const minimumWage = currentEconomyQuery.data?.minimumWage
+  const minimumWageStatus = currentEconomyQuery.isPending ? (
+    <LoadingSpinner label="Loading minimum wage" />
+  ) : currentEconomyQuery.isError ? (
+    'Unavailable'
+  ) : null
   const riskQuery = useRiskQuery(city, type === 'Risk')
   const risk = riskQuery.data
   const riskStatus = riskQuery.isPending ? (
@@ -102,6 +115,7 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
   const collegesQuery = useNearbyCollegesQuery(city, type === 'People')
   const schoolsQuery = useNearbySchoolsQuery(city, type === 'People')
   const weather = weatherQuery.data
+  const yearWeatherQuery = useYearWeatherQuery(city, type === 'Environment')
   const weatherStatus = weatherQuery.isPending ? (
     <LoadingSpinner label="Loading live weather" />
   ) : weatherQuery.isError ? (
@@ -134,6 +148,11 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
     housing && housing.medianRent > 0
       ? housing.medianHomeValue / (housing.medianRent * 12)
       : null
+  const leadingEmploymentSector = employment?.industries[0]
+  const nextEmploymentSectors = employment?.industries.slice(1, 3) ?? []
+  const professionalServicesSector = employment?.industries.find(
+    ({ name }) => name === 'Professional services',
+  )
   const briefItems =
     type === 'Housing' && housing
       ? [
@@ -184,22 +203,59 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
               detail: `${demographics.foreignBornPercent.toFixed(1)}% of residents are foreign born, based on Census place-level estimates.`,
             },
           ]
-        : [
-            {
-              title: 'Momentum is holding.',
-              detail:
-                'The latest indicators remain above the five-year baseline.',
-            },
-            {
-              title: 'Regional context matters.',
-              detail: `${city.name} should be evaluated against comparable nearby cities.`,
-            },
-            {
-              title: 'Watch the tradeoffs.',
-              detail:
-                'Review multiple indicators together before making a location decision.',
-            },
-          ]
+        : type === 'Employment' && employment
+          ? [
+              {
+                title: 'Largest employment sector.',
+                detail: leadingEmploymentSector
+                  ? `${leadingEmploymentSector.name} is the largest sector in ${city.name}, employing ${leadingEmploymentSector.percent.toFixed(1)}% of the city’s civilian workers—about ${Math.round(leadingEmploymentSector.percent)} out of every 100 employed residents.`
+                  : 'A leading employment sector could not be identified for this city.',
+              },
+              {
+                title: 'Other major sectors.',
+                detail:
+                  nextEmploymentSectors.length > 0
+                    ? `${nextEmploymentSectors.map((sector) => `${sector.name} (${sector.percent.toFixed(1)}%)`).join(' and ')} are the next-largest parts of the local workforce. Together with the leading sector, they show where local employment is most concentrated.`
+                    : 'There is not enough sector data to compare the next-largest parts of the workforce.',
+              },
+              {
+                title: 'Professional services.',
+                detail: professionalServicesSector
+                  ? `${professionalServicesSector.percent.toFixed(1)}% of employed residents work in professional, scientific, and technical services. The position list below the chart gives examples such as lawyers, accountants, engineers, software developers, consultants, scientists, and designers.`
+                  : 'Professional-services data is unavailable for this city.',
+              },
+              {
+                title: 'Employment rate.',
+                detail: `${employment.employmentRate.toFixed(1)}% of residents participating in the civilian labor force are employed. The remaining ${(100 - employment.employmentRate).toFixed(1)}% are unemployed and actively seeking work; residents outside the labor force are not included.`,
+              },
+              {
+                title: 'Pay context.',
+                detail: minimumWage
+                  ? `Median annual worker earnings are ${money(employment.medianWorkerEarnings)}, meaning half of workers earn more and half earn less. The ${minimumWage.geography} minimum wage is ${minimumWage.rateLabel} per hour; it is a legal wage floor, not the city’s typical wage.`
+                  : `Median annual worker earnings are ${money(employment.medianWorkerEarnings)}, meaning half of workers earn more and half earn less. Minimum wage is a legal hourly floor and should not be compared as though it were a typical annual salary.`,
+              },
+              {
+                title: 'How to read the chart.',
+                detail:
+                  'The sector percentages describe industries employing residents who live in the city. They do not count company headquarters, job openings, or every job physically located within city limits.',
+              },
+            ]
+          : [
+              {
+                title: 'Momentum is holding.',
+                detail:
+                  'The latest indicators remain above the five-year baseline.',
+              },
+              {
+                title: 'Regional context matters.',
+                detail: `${city.name} should be evaluated against comparable nearby cities.`,
+              },
+              {
+                title: 'Watch the tradeoffs.',
+                detail:
+                  'Review multiple indicators together before making a location decision.',
+              },
+            ]
 
   const configs: Record<
     string,
@@ -288,9 +344,12 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
           '2024 inflation-adjusted dollars',
         ],
         [
-          'Labor force',
-          employmentStatus ?? compact(employment?.laborForce ?? 0),
-          'civilian workers',
+          'Minimum wage',
+          minimumWageStatus ??
+            (minimumWage ? `${minimumWage.rateLabel}/hr` : 'Unavailable'),
+          minimumWage
+            ? `${minimumWage.geography} · effective ${minimumWage.effectiveDate}`
+            : 'State baseline',
         ],
         [
           'Top sector',
@@ -473,27 +532,39 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
         'Median worker earnings divides workers into two equal groups, with half earning more and half earning less. The ACS value is reported in inflation-adjusted dollars.',
     },
     {
-      icon: UsersRound,
+      icon: DollarSign,
       detail:
-        'Civilian labor force counts employed residents plus unemployed residents who are actively seeking work. It does not represent the number of jobs located inside the city.',
+        'Minimum wage is the state baseline hourly rate reported by the U.S. Department of Labor. Local, industry, employer-size, tipped-worker, and other rules may require a different rate.',
     },
     {
       icon: Building2,
       detail:
         'Top sector is the industry group employing the largest share of the city’s civilian employed population, based on Census ACS industry categories.',
     },
-  ].map((item) => ({
+  ].map((item, index) => ({
     ...item,
-    sources: [
-      {
-        label: 'Census ACS profile DP03 — economic characteristics',
-        href: ACS_EMPLOYMENT_SOURCE,
-      },
-      {
-        label: 'Census ACS table C24030 — detailed industries',
-        href: ACS_DETAILED_INDUSTRY_SOURCE,
-      },
-    ],
+    sources:
+      index === 2
+        ? [
+            {
+              label: 'U.S. Department of Labor — state minimum wage laws',
+              href: DOL_MINIMUM_WAGE_SOURCE,
+            },
+          ]
+        : [
+            {
+              label: 'Census ACS profile DP03 — economic characteristics',
+              href: ACS_EMPLOYMENT_SOURCE,
+            },
+            {
+              label: 'Census ACS table C24030 — detailed industries',
+              href: ACS_DETAILED_INDUSTRY_SOURCE,
+            },
+            {
+              label: 'Census ACS table B24134 — detailed industry breakdown',
+              href: ACS_PROFESSIONAL_INDUSTRY_SOURCE,
+            },
+          ],
   }))
   const riskDetails = [
     {
@@ -656,6 +727,12 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
               </div>
             </section>
           )
+        ) : type === 'Environment' ? (
+          <YearWeatherOutlook
+            outlook={yearWeatherQuery.data}
+            isLoading={yearWeatherQuery.isPending}
+            isError={yearWeatherQuery.isError}
+          />
         ) : (
           <section className="card wide-chart">
             <div className="section-heading">
@@ -723,6 +800,9 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
           ))}
         </aside>
       </div>
+      {type === 'People' && demographics && (
+        <EducationHouseholdComparison demographics={demographics} />
+      )}
       {type === 'People' && (
         <NearbySchools
           cityName={city.name}

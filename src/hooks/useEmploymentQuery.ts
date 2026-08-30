@@ -4,7 +4,7 @@ import { fetchEmploymentData } from 'services/employment'
 
 export const useEmploymentQuery = (city: City, enabled = true) => {
   return useQuery({
-    queryKey: ['employment', city.id],
+    queryKey: ['employment-industry-groups-v7', city.id],
     queryFn: ({ signal }) => fetchEmploymentData(city, signal),
     enabled,
     staleTime: 24 * 60 * 60 * 1000,

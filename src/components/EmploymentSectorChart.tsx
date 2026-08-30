@@ -18,6 +18,53 @@ const colors = [
   '#7d6eab',
 ]
 
+const professionalServicePositions = [
+  {
+    service: 'Legal services',
+    positions: 'Lawyers, paralegals, legal assistants, and compliance analysts',
+  },
+  {
+    service: 'Accounting and payroll',
+    positions:
+      'Accountants, auditors, bookkeepers, tax specialists, and payroll specialists',
+  },
+  {
+    service: 'Architecture and engineering',
+    positions:
+      'Architects, civil engineers, mechanical engineers, electrical engineers, and drafters',
+  },
+  {
+    service: 'Computer systems design',
+    positions:
+      'Software developers, systems analysts, cybersecurity specialists, network administrators, and IT consultants',
+  },
+  {
+    service: 'Management and technical consulting',
+    positions:
+      'Management analysts, business consultants, project managers, and technical advisers',
+  },
+  {
+    service: 'Scientific research and development',
+    positions:
+      'Research scientists, laboratory technicians, research engineers, and data scientists',
+  },
+  {
+    service: 'Specialized design',
+    positions:
+      'Graphic designers, industrial designers, interior designers, and UX/UI designers',
+  },
+  {
+    service: 'Advertising and public relations',
+    positions:
+      'Marketing specialists, market research analysts, advertising professionals, and public relations specialists',
+  },
+  {
+    service: 'Other professional services',
+    positions:
+      'Veterinarians, translators, photographers, and other specialized technical professionals',
+  },
+]
+
 const EmploymentSectorChart = ({
   employment,
 }: {
@@ -26,6 +73,9 @@ const EmploymentSectorChart = ({
   const sectors = employment.industries.filter((sector) => sector.percent > 0)
   const [activeIndex, setActiveIndex] = useState(0)
   const activeSector = sectors[activeIndex] ?? sectors[0]
+  const professionalSector = sectors.find(
+    ({ name }) => name === 'Professional services',
+  )
   const sectorOffsets = sectors.map((_, index) =>
     sectors
       .slice(0, index)
@@ -41,7 +91,6 @@ const EmploymentSectorChart = ({
         </div>
         <span className="people-period">2020–2024 ACS</span>
       </div>
-
       <div className="sector-chart-layout">
         <div className="sector-donut-wrap">
           <svg
@@ -98,10 +147,38 @@ const EmploymentSectorChart = ({
         </div>
       </div>
 
+      {professionalSector && (
+        <section className="sector-breakdown-section">
+          <div>
+            <small>PROFESSIONAL SERVICES POSITIONS</small>
+            <h4>Jobs commonly found in professional services</h4>
+            <p className="sector-breakdown-description">
+              Examples of positions associated with the industries included in
+              this sector. These are role examples, not separate employment
+              percentages.
+            </p>
+          </div>
+          <ul className="sector-breakdown-list">
+            {professionalServicePositions.map((item) => (
+              <li key={item.service}>
+                <span>
+                  <strong>{item.service}</strong>
+                  {item.positions}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <p className="sector-source-note">
         Source: U.S. Census Bureau, 2020–2024 American Community Survey,
         economic profile DP03 and detailed industry table C24030. Percentages
-        represent the civilian employed population age 16 and older.
+        represent the civilian employed population age 16 and older. Information
+        and Professional services remain separate Census sectors. Position names
+        below the chart are explanatory examples of roles commonly associated
+        with professional-service industries; they are not Census employment
+        counts by occupation.
       </p>
     </section>
   )

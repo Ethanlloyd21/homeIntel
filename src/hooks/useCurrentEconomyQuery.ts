@@ -4,7 +4,7 @@ import { fetchCurrentEconomy } from 'services/currentEconomy'
 
 export const useCurrentEconomyQuery = (city: City, enabled = true) => {
   return useQuery({
-    queryKey: ['current-economy', 'laus-fallback-v2', city.id],
+    queryKey: ['current-economy', 'minimum-wage-v1', city.id],
     queryFn: ({ signal }) => fetchCurrentEconomy(city, signal),
     enabled,
     staleTime: 6 * 60 * 60 * 1000,

@@ -6,7 +6,11 @@ export type EmploymentData = {
   employmentRate: number
   laborForce: number
   medianWorkerEarnings: number
-  industries: { name: string; percent: number }[]
+  industries: {
+    name: string
+    percent: number
+    breakdown?: { name: string; percent: number }[]
+  }[]
   annualGrowth: {
     year: number
     employed: number
@@ -79,10 +83,10 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
   const laborForce = estimate(value('DP03_0003E'))
   const employed = estimate(value('DP03_0004E'))
 
-  let separateIndustries: { name: string; percent: number }[] = []
+  let separateIndustries: EmploymentData['industries'] = []
   try {
     const detailedIndustryResponse = await fetch(
-      `https://api.census.gov/data/2024/acs/acs5?get=NAME,C24030_001E,C24030_022E,C24030_023E,C24030_049E,C24030_050E&for=place:${placeCode}&in=state:${state[1]}${key}`,
+      `https://api.census.gov/data/2024/acs/acs5?get=NAME,C24030_001E,C24030_013E,C24030_018E,C24030_019E,C24030_020E,C24030_022E,C24030_023E,C24030_040E,C24030_045E,C24030_046E,C24030_047E,C24030_049E,C24030_050E&for=place:${placeCode}&in=state:${state[1]}${key}`,
       { signal },
     )
     if (detailedIndustryResponse.ok) {
@@ -93,13 +97,92 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
       const detailedValue = (variable: string) =>
         estimate(detailedPlace?.[detailedHeaders.indexOf(variable)])
       const detailedEmployed = detailedValue('C24030_001E')
+      const informationWorkers =
+        detailedValue('C24030_013E') + detailedValue('C24030_040E')
+      const professionalWorkers =
+        detailedValue('C24030_018E') + detailedValue('C24030_045E')
+      const managementAdministrativeWorkers =
+        detailedValue('C24030_019E') +
+        detailedValue('C24030_020E') +
+        detailedValue('C24030_046E') +
+        detailedValue('C24030_047E')
       const educationWorkers =
         detailedValue('C24030_022E') + detailedValue('C24030_049E')
       const healthCareWorkers =
         detailedValue('C24030_023E') + detailedValue('C24030_050E')
 
       if (detailedEmployed > 0) {
+        const informationPercent = (informationWorkers / detailedEmployed) * 100
+        const professionalServicesPercent =
+          (professionalWorkers / detailedEmployed) * 100
+        let detailedProfessionalIndustries:
+          { name: string; percent: number }[] | undefined
+        try {
+          const professionalVariables = [
+            ['Legal services', 'B24134_185E'],
+            ['Accounting & payroll', 'B24134_186E'],
+            ['Architecture & engineering', 'B24134_187E'],
+            ['Specialized design', 'B24134_188E'],
+            ['Computer systems design', 'B24134_189E'],
+            ['Management & technical consulting', 'B24134_190E'],
+            ['Scientific research & development', 'B24134_191E'],
+            ['Advertising & public relations', 'B24134_192E'],
+            ['Veterinary services', 'B24134_193E'],
+            ['Other professional & technical services', 'B24134_194E'],
+          ] as const
+          const professionalResponse = await fetch(
+            `https://api.census.gov/data/2024/acs/acs5?get=NAME,${professionalVariables.map(([, variable]) => variable).join(',')}&for=place:${placeCode}&in=state:${state[1]}${key}`,
+            { signal },
+          )
+          if (professionalResponse.ok) {
+            const professionalRows =
+              (await professionalResponse.json()) as CensusRow[]
+            const professionalHeaders = professionalRows[0]
+            const professionalPlace = professionalRows[1]
+            const detailedIndustries = professionalVariables
+              .map(([name, variable]) => ({
+                name,
+                percent:
+                  (estimate(
+                    professionalPlace?.[professionalHeaders.indexOf(variable)],
+                  ) /
+                    detailedEmployed) *
+                  100,
+              }))
+              .filter(({ percent }) => percent > 0)
+              .sort((a, b) => b.percent - a.percent)
+            detailedProfessionalIndustries =
+              detailedIndustries.length > 0 ? detailedIndustries : undefined
+          }
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError')
+            throw error
+        }
+
+        const professionalBreakdown =
+          detailedProfessionalIndustries ??
+          [
+            {
+              name: 'Professional, scientific & technical services',
+              percent: professionalServicesPercent,
+            },
+          ]
+            .filter(({ percent }) => percent > 0)
+            .sort((a, b) => b.percent - a.percent)
         separateIndustries = [
+          {
+            name: 'Information',
+            percent: informationPercent,
+          },
+          {
+            name: 'Professional services',
+            percent: professionalServicesPercent,
+            breakdown: professionalBreakdown,
+          },
+          {
+            name: 'Management & administrative services',
+            percent: (managementAdministrativeWorkers / detailedEmployed) * 100,
+          },
           {
             name: 'Educational services',
             percent: (educationWorkers / detailedEmployed) * 100,
@@ -120,7 +203,11 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
     .filter(
       ([name]) =>
         separateIndustries.length === 0 ||
-        name !== 'Education, health care & social assistance',
+        ![
+          'Information',
+          'Technology & professional services',
+          'Education, health care & social assistance',
+        ].includes(name),
     )
     .map(([name, variable]) => ({
       name,

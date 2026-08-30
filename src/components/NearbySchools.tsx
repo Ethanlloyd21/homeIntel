@@ -357,56 +357,69 @@ const NearbySchools = ({
   isLoading: boolean
   isError: boolean
 }) => (
-  <section className="card nearby-schools">
-    <div className="section-heading">
-      <div>
-        <small>K-12 EDUCATION</small>
-        <h3>Public schools in {cityName}</h3>
-      </div>
-      <School size={22} />
-    </div>
-    <p className="nearby-colleges-intro">
-      Browse local public schools by reported grade band, or use Online to view
-      fully virtual public schools across the selected city&apos;s state. A
-      school may appear in multiple grade tabs. Results are ordered by lower
-      student-to-teacher ratios when available, then enrollment; this is a
-      staffing comparison, not an academic quality rating.
-    </p>
-    {isLoading ? (
-      <div className="loading-panel">
-        <LoadingSpinner size={34} label="Loading public schools" />
-      </div>
-    ) : isError ? (
-      <div className="college-empty">
-        Public school information is temporarily unavailable.
-      </div>
-    ) : (
-      <Tabs.Root className="school-tabs" defaultValue="preK" key={cityName}>
-        <Tabs.List className="school-tab-list" aria-label="School grade bands">
-          {schoolTabs.map((tab) => (
-            <Tabs.Trigger key={tab.value} value={tab.value}>
-              {tab.label}
-              <span>{schools?.[tab.value].length ?? 0}</span>
-            </Tabs.Trigger>
-          ))}
-        </Tabs.List>
-        {schoolTabs.map((tab) => (
-          <Tabs.Content key={tab.value} value={tab.value}>
-            <SchoolList
-              title={tab.title}
-              schools={schools?.[tab.value] ?? []}
-            />
-          </Tabs.Content>
-        ))}
-      </Tabs.Root>
-    )}
-    <p className="college-source-note">
-      Source: Urban Institute Education Data Portal, U.S. Department of
-      Education Common Core of Data (CCD), 2024. Staffing ratios are calculated
-      from reported enrollment and full-time-equivalent teachers. Verify school
-      programs, attendance boundaries, and current staffing with the district.
-    </p>
-  </section>
+  <Collapsible.Root asChild>
+    <section className="card nearby-schools education-dropdown">
+      <Collapsible.Trigger className="education-dropdown-trigger">
+        <div>
+          <small>K-12 EDUCATION</small>
+          <h3>Public schools in {cityName}</h3>
+        </div>
+        <span className="education-dropdown-action">
+          <School size={22} />
+          <span className="education-dropdown-show">View data</span>
+          <span className="education-dropdown-hide">Hide data</span>
+          <ChevronDown className="education-dropdown-chevron" size={19} />
+        </span>
+      </Collapsible.Trigger>
+      <p className="nearby-colleges-intro education-dropdown-summary">
+        Browse local public schools by reported grade band, or use Online to
+        view fully virtual public schools across the selected city&apos;s state.
+        A school may appear in multiple grade tabs. Results are ordered by lower
+        student-to-teacher ratios when available, then enrollment; this is a
+        staffing comparison, not an academic quality rating.
+      </p>
+      <Collapsible.Content className="education-dropdown-content">
+        {isLoading ? (
+          <div className="loading-panel">
+            <LoadingSpinner size={34} label="Loading public schools" />
+          </div>
+        ) : isError ? (
+          <div className="college-empty">
+            Public school information is temporarily unavailable.
+          </div>
+        ) : (
+          <Tabs.Root className="school-tabs" defaultValue="preK" key={cityName}>
+            <Tabs.List
+              className="school-tab-list"
+              aria-label="School grade bands"
+            >
+              {schoolTabs.map((tab) => (
+                <Tabs.Trigger key={tab.value} value={tab.value}>
+                  {tab.label}
+                  <span>{schools?.[tab.value].length ?? 0}</span>
+                </Tabs.Trigger>
+              ))}
+            </Tabs.List>
+            {schoolTabs.map((tab) => (
+              <Tabs.Content key={tab.value} value={tab.value}>
+                <SchoolList
+                  title={tab.title}
+                  schools={schools?.[tab.value] ?? []}
+                />
+              </Tabs.Content>
+            ))}
+          </Tabs.Root>
+        )}
+        <p className="college-source-note">
+          Source: Urban Institute Education Data Portal, U.S. Department of
+          Education Common Core of Data (CCD), 2024. Staffing ratios are
+          calculated from reported enrollment and full-time-equivalent teachers.
+          Verify school programs, attendance boundaries, and current staffing
+          with the district.
+        </p>
+      </Collapsible.Content>
+    </section>
+  </Collapsible.Root>
 )
 
 export default NearbySchools

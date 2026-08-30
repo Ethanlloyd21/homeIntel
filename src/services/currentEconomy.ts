@@ -2,6 +2,14 @@ import type { City } from 'data/cities'
 
 export type CurrentEconomyData = {
   county?: string
+  minimumWage: null | {
+    rateLabel: string
+    effectiveDate: string
+    geography: string
+    sourceName: string
+    sourceUrl: string
+    note?: string
+  }
   laus: null | {
     employment: number
     unemployment: number

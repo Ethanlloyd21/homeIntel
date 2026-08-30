@@ -156,7 +156,7 @@ Important variables include:
 | `B25077_001E` | Median owner-occupied home value     |
 | `B25064_001E` | Median gross rent                    |
 
-Employment industries and median worker earnings come from the ACS DP03 Selected Economic Characteristics profile. The Economic Engine card displays the leading local industries and uses the Census professional/scientific category for “Technology & professional services.”
+Employment industries and median worker earnings come from the ACS DP03 Selected Economic Characteristics profile. Detailed ACS table C24030 separates Information, Professional services, Management & administrative services, Educational services, and Health care & social assistance. ACS table B24134 further breaks professional, scientific, and technical services into detailed industries. Information and Professional Services remain separate sectors in the chart. The Professional Services detail list below the chart shows each industry returned by B24134 without adding those industries to the pie-chart legend.
 
 ### Census Vintage 2025 population estimates
 

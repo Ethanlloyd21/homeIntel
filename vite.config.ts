@@ -2,6 +2,11 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { defineConfig, loadEnv, type Plugin } from 'vite'
+import {
+  MINIMUM_WAGE_EFFECTIVE_DATE,
+  MINIMUM_WAGE_SOURCE,
+  stateMinimumWages,
+} from './src/data/stateMinimumWages.ts'
 
 const statePattern = /^[A-Z]{2}$/
 const stateCodes: Record<string, string> = {
@@ -446,6 +451,7 @@ const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
       const countyFips = geography.County?.FIPS ?? ''
       const stateFips = geography.State?.FIPS ?? countyFips.slice(0, 2)
       const countyCode = countyFips.slice(2)
+      const stateMinimumWage = stateMinimumWages[state]
 
       const lausPromise = (async () => {
         const areaText = await (
@@ -721,6 +727,15 @@ const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
       response.end(
         JSON.stringify({
           county: geography.County?.name,
+          minimumWage: stateMinimumWage
+            ? {
+                ...stateMinimumWage,
+                effectiveDate: MINIMUM_WAGE_EFFECTIVE_DATE,
+                geography: `${geography.State?.name ?? state} state baseline`,
+                sourceName: 'U.S. Department of Labor Wage and Hour Division',
+                sourceUrl: MINIMUM_WAGE_SOURCE,
+              }
+            : null,
           laus,
           qcew,
           qwi,
