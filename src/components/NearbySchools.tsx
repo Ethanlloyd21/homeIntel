@@ -351,13 +351,15 @@ const NearbySchools = ({
   schools,
   isLoading,
   isError,
+  onOpenChange,
 }: {
   cityName: string
   schools?: NearbySchoolsData
   isLoading: boolean
   isError: boolean
+  onOpenChange: (open: boolean) => void
 }) => (
-  <Collapsible.Root asChild>
+  <Collapsible.Root asChild onOpenChange={onOpenChange}>
     <section className="card nearby-schools education-dropdown">
       <Collapsible.Trigger className="education-dropdown-trigger">
         <div>

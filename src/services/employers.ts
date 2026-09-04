@@ -18,6 +18,8 @@ export type MajorEmployer = {
   source: 'Wikidata' | 'USAspending' | 'HIFLD'
 }
 
+export type EmployerSource = MajorEmployer['source']
+
 const strategicSectors = [
   {
     label: 'Defense & government',
@@ -220,22 +222,29 @@ const identifyStrategicSector = (value: string) => {
   )
 }
 
-export const fetchMajorEmployers = async (city: City, signal: AbortSignal) => {
+export const fetchMajorEmployers = async (
+  city: City,
+  signal: AbortSignal,
+  source: EmployerSource,
+) => {
   const params = new URLSearchParams({
     latitude: String(city.latitude),
     longitude: String(city.longitude),
   })
-  const [wikidataResponse, federalResponse, hospitalsResponse] =
-    await Promise.all([
-      fetch(`/api/major-employers?${params}`, { signal }),
-      fetch(`/api/federal-contractors?${params}`, { signal }),
-      fetch(`/api/major-hospitals?${params}`, { signal }),
-    ])
-  if (!wikidataResponse.ok && !federalResponse.ok && !hospitalsResponse.ok)
-    throw new Error('Unable to load major companies.')
-  const payload = wikidataResponse.ok
-    ? ((await wikidataResponse.json()) as WikidataResponse)
-    : { results: { bindings: [] } }
+  const endpoint = {
+    Wikidata: '/api/major-employers',
+    USAspending: '/api/federal-contractors',
+    HIFLD: '/api/major-hospitals',
+  }[source]
+  const response = await fetch(`${endpoint}?${params}`, {
+    signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]),
+  })
+  if (!response.ok) throw new Error(`Unable to load ${source} employer data.`)
+  const sourcePayload = (await response.json()) as unknown
+  const payload =
+    source === 'Wikidata'
+      ? (sourcePayload as WikidataResponse)
+      : { results: { bindings: [] } }
   const companies = new Map<string, MajorEmployer>()
   for (const binding of payload.results?.bindings ?? []) {
     const id = binding.company?.value ?? ''
@@ -283,17 +292,18 @@ export const fetchMajorEmployers = async (city: City, signal: AbortSignal) => {
     )
     .sort((a, b) => (b.employees ?? 0) - (a.employees ?? 0))
     .slice(0, 18)
-  const federalPayload = federalResponse.ok
-    ? ((await federalResponse.json()) as {
-        results?: {
-          recipient_id: string
-          name: string
-          amount: number
-          website?: string
-          description?: string
-        }[]
-      })
-    : { results: [] }
+  const federalPayload =
+    source === 'USAspending'
+      ? (sourcePayload as {
+          results?: {
+            recipient_id: string
+            name: string
+            amount: number
+            website?: string
+            description?: string
+          }[]
+        })
+      : { results: [] }
   const federalCompanies = new Map<string, MajorEmployer>()
   for (const recipient of federalPayload.results ?? []) {
     const profile = getMajorCompanyProfile(recipient.name)
@@ -335,33 +345,31 @@ export const fetchMajorEmployers = async (city: City, signal: AbortSignal) => {
     })
   }
   const contractors = [...federalCompanies.values()]
-    .filter(
-      (company) =>
-        (company.federalObligations ?? 0) >= 10_000_000 && company.website,
-    )
+    .filter((company) => (company.federalObligations ?? 0) >= 10_000_000)
     .sort((a, b) => (b.federalObligations ?? 0) - (a.federalObligations ?? 0))
     .slice(0, 12)
   const contractorNames = new Set(federalCompanies.keys())
-  const hospitalPayload = hospitalsResponse.ok
-    ? ((await hospitalsResponse.json()) as {
-        features?: {
-          attributes?: {
-            ID?: string
-            NAME?: string
-            CITY?: string
-            STATE?: string
-            TYPE?: string
-            WEBSITE?: string
-            OWNER?: string
-            TTL_STAFF?: number
-            BEDS?: number
-            TRAUMA?: string
-            LATITUDE?: number
-            LONGITUDE?: number
-          }
-        }[]
-      })
-    : { features: [] }
+  const hospitalPayload =
+    source === 'HIFLD'
+      ? (sourcePayload as {
+          features?: {
+            attributes?: {
+              ID?: string
+              NAME?: string
+              CITY?: string
+              STATE?: string
+              TYPE?: string
+              WEBSITE?: string
+              OWNER?: string
+              TTL_STAFF?: number
+              BEDS?: number
+              TRAUMA?: string
+              LATITUDE?: number
+              LONGITUDE?: number
+            }
+          }[]
+        })
+      : { features: [] }
   const distanceMiles = (latitude: number, longitude: number) => {
     const radians = (degrees: number) => (degrees * Math.PI) / 180
     const latitudeDelta = radians(latitude - city.latitude)

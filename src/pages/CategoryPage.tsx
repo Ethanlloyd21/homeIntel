@@ -18,7 +18,7 @@ import {
   Waves,
   Wind,
 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import LoadingSpinner from 'components/LoadingSpinner'
 import PeopleProfileChart from 'components/PeopleProfileChart'
 import HousingTrendChart from 'components/HousingTrendChart'
@@ -74,6 +74,8 @@ const FEMA_NRI_SOURCE = 'https://hazards.fema.gov/nri/data-resources'
 const OPEN_METEO_SOURCE = 'https://open-meteo.com/en/docs'
 
 const CategoryPage = ({ type, city }: { type: string; city: City }) => {
+  const [collegesRequested, setCollegesRequested] = useState(false)
+  const [schoolsRequested, setSchoolsRequested] = useState(false)
   const housingQuery = useHousingQuery(city, type === 'Housing')
   const housing = housingQuery.data
   const demographicsQuery = useDemographicsQuery(city, type === 'People')
@@ -112,8 +114,14 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
     'Unavailable'
   ) : null
   const weatherQuery = useWeatherQuery(city, type === 'Environment')
-  const collegesQuery = useNearbyCollegesQuery(city, type === 'People')
-  const schoolsQuery = useNearbySchoolsQuery(city, type === 'People')
+  const collegesQuery = useNearbyCollegesQuery(
+    city,
+    type === 'People' && collegesRequested,
+  )
+  const schoolsQuery = useNearbySchoolsQuery(
+    city,
+    type === 'People' && schoolsRequested,
+  )
   const weather = weatherQuery.data
   const yearWeatherQuery = useYearWeatherQuery(city, type === 'Environment')
   const weatherStatus = weatherQuery.isPending ? (
@@ -809,6 +817,7 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
           schools={schoolsQuery.data}
           isLoading={schoolsQuery.isPending}
           isError={schoolsQuery.isError}
+          onOpenChange={(open) => open && setSchoolsRequested(true)}
         />
       )}
       {type === 'People' && (
@@ -817,6 +826,7 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
           colleges={collegesQuery.data ?? []}
           isLoading={collegesQuery.isPending}
           isError={collegesQuery.isError}
+          onOpenChange={(open) => open && setCollegesRequested(true)}
         />
       )}
       {type === 'Employment' && employment && (
@@ -831,6 +841,7 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
           cityName={city.name}
           employers={majorEmployersQuery.data ?? []}
           isLoading={majorEmployersQuery.isPending}
+          isFetching={majorEmployersQuery.isFetching}
           isError={majorEmployersQuery.isError}
         />
       )}

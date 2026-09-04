@@ -1,4 +1,5 @@
 import type { City } from 'data/cities'
+import { stateFipsByName } from 'data/stateFips'
 
 type CensusRow = string[]
 
@@ -43,6 +44,19 @@ const variables = [
   ...industryVariables.map(([, variable]) => variable),
 ].join(',')
 
+const professionalVariables = [
+  ['Legal services', 'B24134_185E'],
+  ['Accounting & payroll', 'B24134_186E'],
+  ['Architecture & engineering', 'B24134_187E'],
+  ['Specialized design', 'B24134_188E'],
+  ['Computer systems design', 'B24134_189E'],
+  ['Management & technical consulting', 'B24134_190E'],
+  ['Scientific research & development', 'B24134_191E'],
+  ['Advertising & public relations', 'B24134_192E'],
+  ['Veterinary services', 'B24134_193E'],
+  ['Other professional & technical services', 'B24134_194E'],
+] as const
+
 const estimate = (value: string | undefined) => {
   const parsed = Number(value)
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
@@ -55,18 +69,14 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
   const apiKey = import.meta.env.VITE_CENSUS_API_KEY
   if (!apiKey) throw new Error('Census API key is not configured.')
   const key = `&key=${encodeURIComponent(apiKey)}`
-  const statesResponse = await fetch(
-    `https://api.census.gov/data/2024/acs/acs5/profile?get=NAME&for=state:*${key}`,
-    { signal },
-  )
-  if (!statesResponse.ok) throw new Error('Unable to identify Census state.')
-  const states = (await statesResponse.json()) as CensusRow[]
-  const state = states.slice(1).find(([name]) => name === city.state)
-  if (!state) throw new Error('No Census state matched this location.')
+  const requestSignal = () =>
+    AbortSignal.any([signal, AbortSignal.timeout(12_000)])
+  const stateFips = stateFipsByName[city.state]
+  if (!stateFips) throw new Error('No Census state matched this location.')
 
   const placesResponse = await fetch(
-    `https://api.census.gov/data/2024/acs/acs5/profile?get=${variables}&for=place:*&in=state:${state[1]}${key}`,
-    { signal },
+    `https://api.census.gov/data/2024/acs/acs5/profile?get=${variables}&for=place:*&in=state:${stateFips}${key}`,
+    { signal: requestSignal() },
   )
   if (!placesResponse.ok)
     throw new Error('Unable to load Census employment data.')
@@ -83,12 +93,38 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
   const laborForce = estimate(value('DP03_0003E'))
   const employed = estimate(value('DP03_0004E'))
 
+  const annualGrowthPromise = Promise.all(
+    [2019, 2020, 2021, 2022, 2023, 2024].map(async (year) => {
+      try {
+        const response = await fetch(
+          `https://api.census.gov/data/${year}/acs/acs5/profile?get=DP03_0004E&for=place:${placeCode}&in=state:${stateFips}${key}`,
+          { signal: requestSignal() },
+        )
+        if (!response.ok) return null
+        const annualRows = (await response.json()) as CensusRow[]
+        const employedPopulation = estimate(annualRows[1]?.[0])
+        return employedPopulation > 0
+          ? { year, employed: employedPopulation }
+          : null
+      } catch (error) {
+        if (signal.aborted) throw error
+        return null
+      }
+    }),
+  )
+
   let separateIndustries: EmploymentData['industries'] = []
   try {
-    const detailedIndustryResponse = await fetch(
-      `https://api.census.gov/data/2024/acs/acs5?get=NAME,C24030_001E,C24030_013E,C24030_018E,C24030_019E,C24030_020E,C24030_022E,C24030_023E,C24030_040E,C24030_045E,C24030_046E,C24030_047E,C24030_049E,C24030_050E&for=place:${placeCode}&in=state:${state[1]}${key}`,
-      { signal },
-    )
+    const [detailedIndustryResponse, professionalResponse] = await Promise.all([
+      fetch(
+        `https://api.census.gov/data/2024/acs/acs5?get=NAME,C24030_001E,C24030_013E,C24030_018E,C24030_019E,C24030_020E,C24030_022E,C24030_023E,C24030_040E,C24030_045E,C24030_046E,C24030_047E,C24030_049E,C24030_050E&for=place:${placeCode}&in=state:${stateFips}${key}`,
+        { signal: requestSignal() },
+      ),
+      fetch(
+        `https://api.census.gov/data/2024/acs/acs5?get=NAME,${professionalVariables.map(([, variable]) => variable).join(',')}&for=place:${placeCode}&in=state:${stateFips}${key}`,
+        { signal: requestSignal() },
+      ),
+    ])
     if (detailedIndustryResponse.ok) {
       const detailedRows =
         (await detailedIndustryResponse.json()) as CensusRow[]
@@ -118,22 +154,6 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
         let detailedProfessionalIndustries:
           { name: string; percent: number }[] | undefined
         try {
-          const professionalVariables = [
-            ['Legal services', 'B24134_185E'],
-            ['Accounting & payroll', 'B24134_186E'],
-            ['Architecture & engineering', 'B24134_187E'],
-            ['Specialized design', 'B24134_188E'],
-            ['Computer systems design', 'B24134_189E'],
-            ['Management & technical consulting', 'B24134_190E'],
-            ['Scientific research & development', 'B24134_191E'],
-            ['Advertising & public relations', 'B24134_192E'],
-            ['Veterinary services', 'B24134_193E'],
-            ['Other professional & technical services', 'B24134_194E'],
-          ] as const
-          const professionalResponse = await fetch(
-            `https://api.census.gov/data/2024/acs/acs5?get=NAME,${professionalVariables.map(([, variable]) => variable).join(',')}&for=place:${placeCode}&in=state:${state[1]}${key}`,
-            { signal },
-          )
           if (professionalResponse.ok) {
             const professionalRows =
               (await professionalResponse.json()) as CensusRow[]
@@ -214,28 +234,9 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
       percent: estimate(value(variable)),
     }))
 
-  const annualGrowth = (
-    await Promise.all(
-      [2019, 2020, 2021, 2022, 2023, 2024].map(async (year) => {
-        try {
-          const response = await fetch(
-            `https://api.census.gov/data/${year}/acs/acs5/profile?get=DP03_0004E&for=place:${placeCode}&in=state:${state[1]}${key}`,
-            { signal },
-          )
-          if (!response.ok) return null
-          const annualRows = (await response.json()) as CensusRow[]
-          const employedPopulation = estimate(annualRows[1]?.[0])
-          return employedPopulation > 0
-            ? { year, employed: employedPopulation }
-            : null
-        } catch (error) {
-          if (error instanceof DOMException && error.name === 'AbortError')
-            throw error
-          return null
-        }
-      }),
-    )
-  ).filter((item): item is { year: number; employed: number } => item !== null)
+  const annualGrowth = (await annualGrowthPromise).filter(
+    (item): item is { year: number; employed: number } => item !== null,
+  )
 
   return {
     employmentRate: laborForce > 0 ? (employed / laborForce) * 100 : 0,

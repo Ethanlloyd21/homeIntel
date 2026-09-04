@@ -1,4 +1,5 @@
 import type { City } from 'data/cities'
+import { stateFipsByName } from 'data/stateFips'
 
 type CensusRow = string[]
 
@@ -177,18 +178,14 @@ export const fetchDemographics = async (city: City, signal: AbortSignal) => {
   if (!apiKey) throw new Error('Census API key is not configured.')
 
   const key = `&key=${encodeURIComponent(apiKey)}`
-  const statesResponse = await fetch(
-    `https://api.census.gov/data/2024/acs/acs5?get=NAME&for=state:*${key}`,
-    { signal },
-  )
-  if (!statesResponse.ok) throw new Error('Unable to identify Census state.')
-  const states = (await statesResponse.json()) as CensusRow[]
-  const state = states.slice(1).find(([name]) => name === city.state)
-  if (!state) throw new Error('No Census state matched this location.')
+  const requestSignal = () =>
+    AbortSignal.any([signal, AbortSignal.timeout(12_000)])
+  const stateFips = stateFipsByName[city.state]
+  if (!stateFips) throw new Error('No Census state matched this location.')
 
   const placesResponse = await fetch(
-    `https://api.census.gov/data/2024/acs/acs5?get=${variables}&for=place:*&in=state:${state[1]}${key}`,
-    { signal },
+    `https://api.census.gov/data/2024/acs/acs5?get=${variables}&for=place:*&in=state:${stateFips}${key}`,
+    { signal: requestSignal() },
   )
   if (!placesResponse.ok) throw new Error('Unable to load Census demographics.')
   const rows = (await placesResponse.json()) as CensusRow[]
@@ -210,17 +207,31 @@ export const fetchDemographics = async (city: City, signal: AbortSignal) => {
     'B15003_025E',
     'B25010_001E',
   ].join(',')
-  const [stateComparisonResponse, nationalComparisonResponse] =
-    await Promise.all([
-      fetch(
-        `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=state:${state[1]}${key}`,
-        { signal },
-      ),
-      fetch(
-        `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=us:*${key}`,
-        { signal },
-      ),
-    ])
+  const optionalResults = await Promise.allSettled([
+    fetch(
+      `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=state:${stateFips}${key}`,
+      { signal: requestSignal() },
+    ),
+    fetch(
+      `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=us:*${key}`,
+      { signal: requestSignal() },
+    ),
+    fetch(
+      `https://api.census.gov/data/2019/pep/population?get=POP&for=place:${placeCode}&in=state:${stateFips}&DATE_CODE=12${key}`,
+      { signal: requestSignal() },
+    ),
+    fetch(`${import.meta.env.BASE_URL}data/census-population-2025.json`, {
+      signal: requestSignal(),
+    }),
+  ])
+  const optionalResponse = (index: number) => {
+    const result = optionalResults[index]
+    return result.status === 'fulfilled' ? result.value : null
+  }
+  const stateComparisonResponse = optionalResponse(0)
+  const nationalComparisonResponse = optionalResponse(1)
+  const previousResponse = optionalResponse(2)
+  const populationResponse = optionalResponse(3)
   const comparisonFromRow = (
     geography: string,
     row: CensusRow,
@@ -248,7 +259,7 @@ export const fetchDemographics = async (city: City, signal: AbortSignal) => {
     row: CensusRow
     headers: CensusRow
   }[] = []
-  if (stateComparisonResponse.ok) {
+  if (stateComparisonResponse?.ok) {
     const stateRows = (await stateComparisonResponse.json()) as CensusRow[]
     if (stateRows[1])
       comparisonRows.push({
@@ -257,7 +268,7 @@ export const fetchDemographics = async (city: City, signal: AbortSignal) => {
         headers: stateRows[0],
       })
   }
-  if (nationalComparisonResponse.ok) {
+  if (nationalComparisonResponse?.ok) {
     const nationalRows =
       (await nationalComparisonResponse.json()) as CensusRow[]
     if (nationalRows[1])
@@ -268,20 +279,12 @@ export const fetchDemographics = async (city: City, signal: AbortSignal) => {
       })
   }
 
-  const previousResponse = await fetch(
-    `https://api.census.gov/data/2019/pep/population?get=POP&for=place:${placeCode}&in=state:${state[1]}&DATE_CODE=12${key}`,
-    { signal },
-  )
-  const previousRows = previousResponse.ok
+  const previousRows = previousResponse?.ok
     ? ((await previousResponse.json()) as CensusRow[])
     : []
   const currentPopulation = estimate(value('B01003_001E'))
   const official2019Population = estimate(previousRows[1]?.[0] ?? '0')
-  const populationResponse = await fetch(
-    `${import.meta.env.BASE_URL}data/census-population-2025.json`,
-    { signal },
-  )
-  const populationDataset = populationResponse.ok
+  const populationDataset = populationResponse?.ok
     ? ((await populationResponse.json()) as PopulationEstimateDataset)
     : { places: [] }
   const placeEstimate = populationDataset.places.find(

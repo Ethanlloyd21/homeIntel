@@ -264,7 +264,9 @@ export const fetchNearbySchools = async (
     latitude: String(city.latitude),
     longitude: String(city.longitude),
   })
-  const response = await fetch(`/api/nearby-schools?${params}`, { signal })
+  const response = await fetch(`/api/nearby-schools?${params}`, {
+    signal: AbortSignal.any([signal, AbortSignal.timeout(35_000)]),
+  })
   if (!response.ok) throw new Error('Unable to load public schools.')
   const payload = (await response.json()) as SchoolsResponse
   const schools = payload.results ?? []

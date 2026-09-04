@@ -14,14 +14,16 @@ const NearbyColleges = ({
   colleges,
   isLoading,
   isError,
+  onOpenChange,
 }: {
   cityName: string
   colleges: NearbyCollege[]
   isLoading: boolean
   isError: boolean
+  onOpenChange: (open: boolean) => void
 }) => {
   return (
-    <Collapsible.Root asChild>
+    <Collapsible.Root asChild onOpenChange={onOpenChange}>
       <section className="card nearby-colleges education-dropdown">
         <Collapsible.Trigger className="education-dropdown-trigger">
           <div>

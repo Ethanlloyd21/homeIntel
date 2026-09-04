@@ -158,6 +158,8 @@ Important variables include:
 
 Employment industries and median worker earnings come from the ACS DP03 Selected Economic Characteristics profile. Detailed ACS table C24030 separates Information, Professional services, Management & administrative services, Educational services, and Health care & social assistance. ACS table B24134 further breaks professional, scientific, and technical services into detailed industries. Information and Professional Services remain separate sectors in the chart. The Professional Services detail list below the chart shows each industry returned by B24134 without adding those industries to the pie-chart legend.
 
+The employment service resolves the Census state FIPS code from a local state table instead of making a separate state-discovery request. After the initial place lookup identifies the Census place code, C24030, B24134, and the six annual-history requests run concurrently. Browser-side Census requests have a 12-second timeout and remain cancellable when the selected city changes.
+
 ### Census Vintage 2025 population estimates
 
 The official Census Vintage 2025 incorporated-place table supplies point estimates for 2023, 2024, and 2025. The normalized local lookup contains approximately 19,500 incorporated places:
@@ -178,6 +180,8 @@ population 2026 = mean population + slope * (2026 - mean year)
 The 2026 result is a HomeIntel calculation, not an official Census estimate. The interface labels it accordingly. If the selected location does not match an incorporated place in the Vintage 2025 table, the application keeps the 2024 ACS value and explains that the 2025 city estimate was unavailable.
 
 The People chart compares the 2019 ACS estimate with the calculated current-year value. These are different Census series, so the comparison is useful for broad context but should not be treated as a precise official time series.
+
+The demographics service resolves state FIPS codes locally, eliminating a Census state-discovery call. After the selected Census place is identified, state and national education comparisons, the 2019 population observation, and the local Vintage 2025 dataset load concurrently. Census calls have a 12-second timeout and optional comparison failures do not discard the primary city demographics.
 
 Source: <https://www.census.gov/newsroom/press-kits/2026/vintage-2025-city-town-pop-estimates.html>
 
@@ -213,7 +217,7 @@ la.data.0.CurrentU25-29
 
 These files are downloaded once per server process and cached in memory. The fallback is not tied to San Diego or Dallas; it works for any U.S. city represented in the BLS LAUS area file. The chart uses monthly annual averages and marks an incomplete current year as `YTD`. If reported LAUS data does not yet reach the current year, the chart extends the latest employment value using the newest available QCEW covered-job growth rate and marks the result `est.`.
 
-The Current unemployment card always displays the observation period and geography. A value such as June 2026 is a reported monthly LAUS rate, not a HomeIntel forecast.
+The Current unemployment card always displays the observation period and geography. A value such as June 2026 is a reported monthly LAUS rate, not a HomeIntel forecast. After a single FCC coordinate-to-county lookup, LAUS, QCEW, QWI, and optional BEA work starts concurrently. QCEW and QWI candidate quarters are also requested concurrently and the newest available observation is selected in configured order. Individual provider failures degrade to unavailable cards instead of failing the combined response.
 
 ### Regional employment landscape
 
@@ -227,13 +231,26 @@ Companies are classified into sectors such as Defense & government, Technology, 
 
 Federal contract place-of-performance data is county-based, so its geography is an approximate surrounding region rather than an exact 50-mile circle. A contractor card does not show distance because USAspending does not consistently provide an office coordinate. Hospital and Wikidata-headquarters cards show distance because those sources provide facility coordinates.
 
-Official company descriptions and websites are enriched from Wikidata when a confident match is available. A small curated profile …110 tokens truncated… layer supplied by Vite during development and preview. Components do not call third-party APIs directly when a same-origin proxy is required.
+USAspending recipients use source-provided details or a small curated profile for well-known companies; the application does not issue per-company Wikidata lookups. Five FCC samples—the city center and four cardinal points—identify surrounding counties before one USAspending aggregation request. The three employer sources use separate TanStack Query entries and load independently, so available results render without waiting for the slowest provider. Components do not call third-party APIs directly when a same-origin proxy is required.
+
+#### Employment performance configuration
+
+The employment refactor uses bounded requests and layered caching:
+
+- Direct Census employment requests time out after 12 seconds. The employer browser requests time out after 15 seconds.
+- Server-side upstream requests time out after 12 seconds unless an endpoint defines a narrower policy.
+- `/api/current-economy` caches each successful city response in server memory for six hours and sends `Cache-Control: private, max-age=21600`.
+- `/api/major-employers`, `/api/federal-contractors`, and `/api/major-hospitals` cache successful coordinate-based responses in server memory for 24 hours and send `Cache-Control: private, max-age=86400`.
+- LAUS area metadata and fallback flat files are shared across requests for the lifetime of the server process. A failed initial download clears its promise so a later request can retry.
+- Employer queries retry once in TanStack Query. A loading indicator remains visible while slower sources continue, but already-returned source data is usable immediately.
+
+The proxy's in-memory caches are process-local and reset when Vite or the production server restarts. Browsers may continue using a fresh response according to its `Cache-Control` header; use a hard reload when testing a forced refresh. A production implementation should preserve the same response contracts, timeout behavior, and cache lifetimes when moving the handlers to serverless or edge infrastructure.
 
 ### Public K-12 and statewide online schools
 
 The People page loads public-school directory records from the Urban Institute Education Data Portal, which republishes the U.S. Department of Education Common Core of Data (CCD). The API is free, requires no key, and currently uses the 2024 school directory endpoint.
 
-The `/api/nearby-schools` proxy downloads the selected state once per server process, caches it, and returns two collections:
+Schools and colleges are collapsed secondary sections and do not request data during the People page's initial render. Each query is enabled the first time its section is opened. The `/api/nearby-schools` proxy downloads only open, regular schools for the selected state, caches that filtered state dataset once per server process, and returns two collections:
 
 - Schools whose reported physical city matches the selected city. A 15-mile coordinate fallback is used only when no exact city records are found.
 - Fully virtual public schools from the entire selected state (`virtual === 1`). Statewide online results are not limited to the selected city because an administrative address does not define where virtual students attend.
@@ -243,6 +260,8 @@ Local records are organized into Pre-K, Kindergarten, grades 1-6, and middle/hig
 Each tab supports search by school name, district, or address and displays six records per page. Cards show identity, address, grade range, operating profile, enrollment, staffing ratio, teacher FTE, and distance for local schools. Distance is hidden for statewide online schools. View details exposes identifiers, contact data, program flags, lunch-access fields, geography codes, and reporting year. Missing CCD values and negative sentinel codes are displayed as `Not reported`.
 
 Results are ordered by lower reported student-to-teacher ratio and then enrollment. This is a staffing comparison, not an academic ranking. The ratio is enrollment divided by reported full-time-equivalent teachers and is not average classroom size. Online schools without staffing data remain visible.
+
+Successful city-specific school and state-specific College Scorecard proxy responses are cached for 24 hours and include private browser cache headers. School upstream requests have a 30-second server timeout and a 35-second browser timeout; College Scorecard uses a 15-second server timeout and an 18-second browser timeout.
 
 ## Architecture
 
@@ -295,12 +314,12 @@ The major layers are:
 | Demographics and housing | Census ACS five-year                        | Browser service                              | Census key       | U.S. place                           | Variables are normalized into snapshot cards and charts            |
 | Population               | Census Vintage 2025                         | Local normalized JSON                        | No               | U.S. incorporated place              | Current-year value uses the documented average-change calculation  |
 | Current labor market     | BLS LAUS                                    | `/api/current-economy`                       | No               | U.S. city area                       | BLS API first; official five-year flat files on quota/failure      |
-| County jobs and wages    | BLS QCEW                                    | `/api/current-economy`                       | No               | Selected city’s county               | Tries the newest available quarter in descending order             |
-| Workforce flows          | Census QWI                                  | `/api/current-economy`                       | Census key       | Selected city’s county               | Tries recent quarters until data is available                      |
+| County jobs and wages    | BLS QCEW                                    | `/api/current-economy`                       | No               | Selected city’s county               | Checks candidate quarters concurrently and selects the newest      |
+| Workforce flows          | Census QWI                                  | `/api/current-economy`                       | Census key       | Selected city’s county               | Checks candidate quarters concurrently and selects the newest      |
 | Real GDP                 | BEA Regional API                            | `/api/current-economy`                       | Optional BEA key | Selected city’s county               | Card remains unavailable when no key or observations exist         |
 | Federal contractors      | USAspending                                 | `/api/federal-contractors`                   | No               | Counties around selected coordinates | Merges duplicate recipients and ranks recent obligations           |
 | Nearby headquarters      | Wikidata Query Service                      | `/api/major-employers`                       | No               | 85 km around city center             | Filters to strategic sectors and organizations with reported scale |
-| Company metadata         | Wikidata API plus curated verified profiles | `/api/federal-contractors` and service layer | No               | Company entity                       | Adds descriptions and official websites when confidently matched   |
+| Contractor presentation  | USAspending plus curated profiles            | `/api/federal-contractors` and service layer | No               | Regional recipient                   | Uses source details or a curated profile without per-company calls  |
 | Major hospitals          | U.S. Hospitals HIFLD ArcGIS feature service | `/api/major-hospitals`                       | No               | Exact 50-mile radius                 | Filters open facilities and ranks by beds, staff, then distance    |
 | Crime                    | FBI Crime Data API                          | Same-origin proxy                            | Data.gov key     | U.S. state/city coverage             | Proxy prevents exposing the key and avoids browser CORS errors     |
 | Natural hazards          | FEMA National Risk Index                    | Browser service                              | No               | Containing U.S. Census tract         | Converts relative hazard scores into the documented risk profile   |
@@ -315,7 +334,7 @@ The Vite configuration currently exposes these application-facing endpoints:
 | -------------------------------- | ------------------------------------------------------------------------------ |
 | `/api/current-economy`           | Resolves county geography and combines LAUS, QCEW, QWI, and optional BEA data  |
 | `/api/major-employers`           | Queries nearby strategic headquarters from Wikidata                            |
-| `/api/federal-contractors`       | Finds regional federal contract recipients and enriches major-company metadata |
+| `/api/federal-contractors`       | Finds and aggregates regional federal contract recipients                       |
 | `/api/major-hospitals`           | Queries open hospital facilities within 50 miles                               |
 | FBI crime proxy endpoint         | Keeps the Data.gov key server-side and handles CORS                            |
 | College Scorecard proxy endpoint | Keeps the Data.gov key server-side and returns nearby universities             |
@@ -328,11 +347,15 @@ These Vite middleware functions are appropriate for local development and previe
 - TanStack Query caches API results by selected city and dataset version.
 - `AbortSignal` cancels obsolete requests when the selected city changes.
 - Query keys include version labels when a response format or fallback strategy changes, preventing stale incompatible data from being reused.
-- The LAUS downloadable files are fetched once per server process and cached in memory.
-- The economic proxy tries recent QCEW and QWI periods from newest to oldest because federal datasets are released on different schedules.
-- Regional employer loading can continue when either Wikidata or USAspending fails; it throws only when both core company sources fail.
+- LAUS area metadata and downloadable fallback files are fetched once per server process and cached in memory.
+- QCEW and QWI candidate periods are fetched concurrently; configured newest-to-oldest order determines which successful observation is used.
+- Current-economy responses are cached for six hours; Wikidata, USAspending, and HIFLD responses are cached independently for 24 hours.
+- Wikidata, USAspending, and HIFLD use independent queries. The employer section renders partial results and fails only when every employer source fails.
+- External employment requests have explicit timeout limits, and obsolete browser requests are still cancelled when the city changes.
 - Missing optional fields, such as hospital beds or company websites, are omitted rather than invented.
-- CCD state directories are cached once per server process; TanStack Query caches normalized school results by selected city.
+- Only open, regular CCD state-directory records are downloaded. The filtered state dataset is cached once per server process, and successful city responses are cached for 24 hours.
+- College and K-12 queries are lazy: they start when their collapsed People-page section is first opened rather than delaying the initial page load.
+- Successful state-level College Scorecard responses are cached for 24 hours.
 - The school proxy supplies explicit JSON and application-identification headers because the upstream service rejects Node's default request identity with HTTP 403.
 
 ### Derived data versus reported data
@@ -549,6 +572,8 @@ npm run data:update
 - Restart Vite after changes to `vite.config.ts`; the current-economy proxy runs on the Vite server.
 - Confirm the selected location is a U.S. city represented by BLS LAUS.
 - The proxy automatically falls back from the BLS API to the official downloadable LAUS files when the API quota is exhausted.
+- A single unavailable QCEW, QWI, or BEA provider should leave only its cards unavailable. If the entire request fails, check the FCC geography response and the server log for a timeout.
+- Restarting the server clears the six-hour process-local cache; use a browser hard reload if a fresh HTTP-cached response is still being reused.
 
 ### Hospitals or regional employers are missing
 
@@ -556,12 +581,14 @@ npm run data:update
 - Confirm the selected location is in the United States.
 - Hospital results require qualifying open facilities within 50 miles and are limited to major facilities after bed/staff filtering.
 - Ordinary company branch offices are not inferred. A company appears through qualifying federal contract activity or a nearby headquarters record.
+- Employer sources settle independently. One missing source should not prevent results from the other two from appearing.
+- Restarting the server clears the 24-hour process-local employer caches; use a browser hard reload if a fresh HTTP-cached response is still being reused.
 
 ### K-12 or online schools are missing
 
 - Restart Vite after changing `vite.config.ts`; the school endpoint is Vite middleware.
 - Confirm the selected location is a U.S. city and its state resolves to a postal and FIPS code.
-- The first request for a state can take longer because the complete 2024 CCD state directory is downloaded and cached.
+- The first school request for a state can take longer because its open, regular 2024 CCD records are downloaded and cached. No school request is made until the K-12 section is opened.
 - Local staffing-ranked tabs require active regular schools with coordinates, enrollment, and teacher FTE.
 - The Online tab includes active regular public schools reported as fully virtual. Private programs and records missing the CCD virtual flag do not appear.
 - A production static host must recreate `/api/nearby-schools` as a serverless or server endpoint.

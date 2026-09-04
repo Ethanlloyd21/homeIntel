@@ -2693,9 +2693,6 @@ footer > span {
   .current-economy-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .year-weather-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .college-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2732,8 +2729,7 @@ footer > span {
   .current-economy-grid {
     grid-template-columns: 1fr;
   }
-  .year-weather-summary,
-  .year-weather-grid {
+  .year-weather-summary {
     grid-template-columns: 1fr;
   }
   .sector-legend {
@@ -3724,54 +3720,61 @@ footer > span {
   font-family: 'Manrope';
   font-size: 16px;
 }
-.year-weather-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 18px;
+.weather-month-select {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
-.year-weather-grid article {
-  padding: 0;
+.weather-month-select .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.weather-month-select select {
+  min-width: 168px;
+  height: 42px;
+  appearance: none;
+  padding: 0 38px 0 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
+  outline: none;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.weather-month-select select:focus-visible {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent);
+}
+.weather-month-select svg {
+  position: absolute;
+  right: 13px;
+  pointer-events: none;
+}
+.monthly-weather-panel {
+  margin-top: 18px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   background: color-mix(in srgb, var(--paper) 94%, var(--soft));
 }
-.year-weather-month {
-  width: 100%;
-  min-height: 164px;
-  padding: 16px;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    background-color 160ms ease;
-}
-.year-weather-month:hover {
-  transform: translateY(-2px);
-  background: color-mix(in srgb, var(--green) 5%, transparent);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 10%, transparent);
-}
-.year-weather-month:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--green) 44%, transparent);
-  outline-offset: 3px;
-}
-.year-weather-month-head {
+.monthly-weather-title {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 8px;
+  gap: 16px;
 }
-.year-weather-grid h4 {
-  margin: 0;
+.monthly-weather-title h4 {
+  margin: 7px 0 0;
   font-family: 'Manrope';
-  font-size: 18px;
+  font-size: 24px;
 }
-.year-weather-month-head > span {
+.monthly-weather-title > div > span {
+  display: inline-block;
   padding: 3px 6px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--green) 10%, var(--paper));
@@ -3781,74 +3784,149 @@ footer > span {
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
-.year-weather-month-head > span[data-source='partial'] {
+.monthly-weather-title > div > span[data-source='partial'] {
   background: color-mix(in srgb, #d29a32 12%, var(--paper));
   color: #9a6b14;
 }
-.year-weather-month-head > span[data-source='forecast'] {
+.monthly-weather-title > div > span[data-source='forecast'] {
   background: color-mix(in srgb, #4b7bec 12%, var(--paper));
   color: #315db8;
 }
-.year-weather-month-head > span[data-source='pending'] {
+.monthly-weather-title > div > span[data-source='pending'] {
   background: var(--soft);
   color: var(--muted);
 }
-.year-weather-grid article[data-source='pending'] {
-  opacity: 0.68;
-}
-.year-weather-grid dl {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 7px;
-  margin: 14px 0 0;
-}
-.year-weather-grid dt,
-.year-weather-grid dd {
-  margin: 0;
-}
-.year-weather-grid dt {
-  color: var(--muted);
-  font-size: 12px;
-}
-.year-weather-grid dd {
-  margin-top: 3px;
-  font-family: 'Manrope';
-  font-size: 18px;
-  font-weight: 750;
-}
-.year-weather-month > small {
-  display: block;
-  margin-top: 9px;
-  color: var(--muted);
-  font-size: 12px;
-}
-.year-weather-legend {
+.weather-calendar-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 18px;
-  margin-top: 16px;
+  justify-content: flex-end;
+  gap: 8px 14px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
 }
-.year-weather-legend span {
+.weather-calendar-legend span {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
-.year-weather-legend i {
-  width: 8px;
-  height: 8px;
+.weather-calendar-legend i {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--green);
 }
-.year-weather-legend i[data-source='partial'] {
-  background: #d29a32;
-}
-.year-weather-legend i[data-source='pending'] {
-  background: var(--muted);
-}
-.year-weather-legend i[data-source='forecast'] {
+.weather-calendar-legend i[data-source='forecast'] {
   background: #4b7bec;
+}
+.weather-calendar-scroll {
+  overflow-x: auto;
+  margin-top: 20px;
+  padding-bottom: 4px;
+}
+.weather-calendar {
+  min-width: 700px;
+}
+.weather-calendar-weekdays,
+.weather-calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+.weather-calendar-weekdays {
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.weather-calendar-day,
+.weather-calendar-blank {
+  min-height: 132px;
+}
+.weather-calendar-day {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.weather-calendar-day[data-source='forecast'] {
+  border-color: color-mix(in srgb, #4b7bec 34%, var(--line));
+  background: color-mix(in srgb, #4b7bec 4%, var(--paper));
+}
+.weather-calendar-day[data-source='unavailable'] {
+  background: color-mix(in srgb, var(--soft) 70%, var(--paper));
+  color: var(--muted);
+}
+.weather-calendar-day[data-today] {
+  border-color: var(--green);
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+.weather-calendar-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+.weather-calendar-day-head > strong {
+  font-family: 'Manrope';
+  font-size: 14px;
+}
+.weather-calendar-day-head > span {
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--green) 12%, var(--paper));
+  color: var(--green);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.weather-calendar-day > svg {
+  margin-top: 9px;
+  color: var(--green);
+}
+.weather-calendar-day[data-source='forecast'] > svg {
+  color: #4b7bec;
+}
+.weather-calendar-day > small {
+  overflow: hidden;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.weather-calendar-day > p {
+  margin: auto 0 0;
+  font-size: 10px;
+  line-height: 1.25;
+}
+.weather-calendar-temps {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: auto;
+  font-family: 'Manrope';
+  font-size: 13px;
+}
+.weather-calendar-temps b {
+  font-size: 15px;
+}
+.weather-calendar-temps span {
+  color: var(--muted);
+}
+.weather-calendar-rain {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 10px;
 }
 .year-weather-note {
   margin: 16px 0 0;
@@ -3856,122 +3934,24 @@ footer > span {
   font-size: 13px;
   line-height: 1.55;
 }
-.year-weather-dialog {
-  width: min(640px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
-  padding: 0;
-  border: 0;
-  border-radius: 18px;
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 0 26px 80px #0b152150;
-}
-.year-weather-dialog::backdrop {
-  background: #0b1521a6;
-  backdrop-filter: blur(4px);
-}
-.year-weather-dialog-card {
-  padding: 26px;
-}
-.year-weather-dialog-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-}
-.year-weather-dialog-head small {
-  color: var(--green);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.year-weather-dialog-head h3 {
-  margin: 5px 0 0;
-  font-family: 'Manrope';
-  font-size: 27px;
-}
-.year-weather-dialog-close {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--soft);
-  color: var(--ink);
-  cursor: pointer;
-}
-.year-weather-dialog-period {
-  margin: 14px 0 0;
-  color: var(--muted);
-  font-size: 15px;
-}
-.year-weather-dialog-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 24px 0 0;
-}
-.year-weather-dialog-stats > div {
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  background: var(--soft);
-}
-.year-weather-dialog-stats dt {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.35;
-}
-.year-weather-dialog-stats dd {
-  margin: 8px 0 0;
-  font-family: 'Manrope';
-  font-size: 28px;
-  font-weight: 800;
-}
-.year-weather-temperature-band {
-  margin-top: 18px;
-  padding: 18px;
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--green) 8%, var(--paper));
-}
-.year-weather-temperature-band > span {
-  display: block;
-  color: var(--muted);
-  font-size: 13px;
-}
-.year-weather-temperature-band strong {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 9px;
-  font-family: 'Manrope';
-  font-size: 20px;
-}
-.year-weather-temperature-band i {
-  height: 8px;
-  flex: 1;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #4b7bec, #f5b642, #e86b52);
-}
-.year-weather-dialog-note {
-  margin: 18px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
-}
 @media (max-width: 560px) {
-  .year-weather-dialog-card {
-    padding: 20px;
+  .monthly-weather-heading {
+    align-items: stretch;
+    flex-direction: column;
   }
-  .year-weather-dialog-head h3 {
-    font-size: 23px;
+  .weather-month-select,
+  .weather-month-select select {
+    width: 100%;
   }
-  .year-weather-dialog-stats {
-    grid-template-columns: 1fr;
+  .monthly-weather-panel {
+    padding: 16px;
+  }
+  .monthly-weather-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .weather-calendar-legend {
+    justify-content: flex-start;
   }
 }
 .economic-growth-chart {
@@ -4115,6 +4095,12 @@ footer > span {
 .major-employers {
   margin-top: 22px;
   padding: 24px;
+}
+.employer-source-loading {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 0;
+  color: var(--muted);
 }
 .employer-grid {
   display: grid;

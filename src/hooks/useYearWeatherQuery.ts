@@ -7,6 +7,17 @@ type ArchiveResponse = {
     temperature_2m_max: number[]
     temperature_2m_min: number[]
     precipitation_sum: number[]
+    weather_code?: number[]
+  }
+}
+
+type ForecastResponse = {
+  daily?: {
+    time: string[]
+    temperature_2m_max: number[]
+    temperature_2m_min: number[]
+    precipitation_sum: number[]
+    weather_code: number[]
   }
 }
 
@@ -27,6 +38,17 @@ export type YearWeatherMonth = {
   precipitation: number | null
   daysReported: number
   source: 'observed' | 'partial' | 'forecast' | 'pending'
+  days: YearWeatherDay[]
+}
+
+export type YearWeatherDay = {
+  date: string
+  day: number
+  high: number | null
+  low: number | null
+  precipitation: number | null
+  weatherCode: number | null
+  source: 'observed' | 'forecast' | 'unavailable'
 }
 
 export type YearWeatherOutlook = {
@@ -50,7 +72,8 @@ const fetchYearWeather = async (city: City, signal: AbortSignal) => {
   const params = new URLSearchParams({
     latitude: String(city.latitude),
     longitude: String(city.longitude),
-    daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum',
+    daily:
+      'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code',
     temperature_unit: 'fahrenheit',
     precipitation_unit: 'inch',
     timezone: 'auto',
@@ -67,7 +90,18 @@ const fetchYearWeather = async (city: City, signal: AbortSignal) => {
     models: 'ecmwf_seas5',
     forecast_months: '7',
   })
-  const [response, seasonalResponse] = await Promise.all([
+  const forecastParams = new URLSearchParams({
+    latitude: String(city.latitude),
+    longitude: String(city.longitude),
+    daily:
+      'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code',
+    temperature_unit: 'fahrenheit',
+    precipitation_unit: 'inch',
+    timezone: 'auto',
+    past_days: '7',
+    forecast_days: '16',
+  })
+  const [response, seasonalResponse, forecastResponse] = await Promise.all([
     fetch(`https://archive-api.open-meteo.com/v1/archive?${params}`, {
       signal,
     }),
@@ -75,6 +109,9 @@ const fetchYearWeather = async (city: City, signal: AbortSignal) => {
       `https://seasonal-api.open-meteo.com/v1/seasonal?${seasonalParams}`,
       { signal },
     ).catch(() => undefined),
+    fetch(`https://api.open-meteo.com/v1/forecast?${forecastParams}`, {
+      signal,
+    }).catch(() => undefined),
   ])
   if (!response.ok) throw new Error('Current-year weather request failed')
   const result = (await response.json()) as ArchiveResponse
@@ -84,6 +121,33 @@ const fetchYearWeather = async (city: City, signal: AbortSignal) => {
   const seasonalResult = seasonalResponse?.ok
     ? ((await seasonalResponse.json()) as SeasonalResponse)
     : undefined
+  const forecastResult = forecastResponse?.ok
+    ? ((await forecastResponse.json()) as ForecastResponse)
+    : undefined
+  const dailyValues = new Map<
+    string,
+    Omit<YearWeatherDay, 'date' | 'day'>
+  >()
+  result.daily.time.forEach((date, index) => {
+    dailyValues.set(date, {
+      high: result.daily!.temperature_2m_max[index] ?? null,
+      low: result.daily!.temperature_2m_min[index] ?? null,
+      precipitation: result.daily!.precipitation_sum[index] ?? null,
+      weatherCode: result.daily!.weather_code?.[index] ?? null,
+      source: 'observed',
+    })
+  })
+  const todayKey = isoDate(today)
+  forecastResult?.daily?.time.forEach((date, index) => {
+    if (date < todayKey && dailyValues.has(date)) return
+    dailyValues.set(date, {
+      high: forecastResult.daily!.temperature_2m_max[index] ?? null,
+      low: forecastResult.daily!.temperature_2m_min[index] ?? null,
+      precipitation: forecastResult.daily!.precipitation_sum[index] ?? null,
+      weatherCode: forecastResult.daily!.weather_code[index] ?? null,
+      source: date < todayKey ? 'observed' : 'forecast',
+    })
+  })
   const forecastValues = new Map<
     number,
     { high: number | null; low: number | null; precipitation: number | null }
@@ -124,6 +188,7 @@ const fetchYearWeather = async (city: City, signal: AbortSignal) => {
     const values = monthlyValues.get(month)
     const forecast = forecastValues.get(month)
     const date = new Date(Date.UTC(year, month, 1))
+    const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate()
     const source = !values
       ? forecast
         ? 'forecast'
@@ -145,6 +210,20 @@ const fetchYearWeather = async (city: City, signal: AbortSignal) => {
       daysReported:
         values?.highs.length ?? new Date(year, month + 1, 0).getDate(),
       source,
+      days: Array.from({ length: daysInMonth }, (_, index) => {
+        const day = index + 1
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+        const daily = dailyValues.get(dateKey)
+        return {
+          date: dateKey,
+          day,
+          high: daily?.high ?? null,
+          low: daily?.low ?? null,
+          precipitation: daily?.precipitation ?? null,
+          weatherCode: daily?.weatherCode ?? null,
+          source: daily?.source ?? 'unavailable',
+        }
+      }),
     } satisfies YearWeatherMonth
   })
 
@@ -164,7 +243,7 @@ const fetchYearWeather = async (city: City, signal: AbortSignal) => {
 export const useYearWeatherQuery = (city: City, enabled = true) =>
   useQuery({
     queryKey: [
-      'current-year-weather-v3',
+      'current-year-weather-v4',
       city.latitude,
       city.longitude,
       new Date().getFullYear(),

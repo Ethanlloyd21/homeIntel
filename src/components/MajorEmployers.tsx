@@ -53,11 +53,13 @@ const MajorEmployers = ({
   cityName,
   employers,
   isLoading,
+  isFetching,
   isError,
 }: {
   cityName: string
   employers: MajorEmployer[]
   isLoading: boolean
+  isFetching: boolean
   isError: boolean
 }) => {
   const [sectorPages, setSectorPages] = useState<Record<string, number>>({})
@@ -111,6 +113,10 @@ const MajorEmployers = ({
             <p className="college-empty">
               Company information is temporarily unavailable.
             </p>
+          ) : sectorGroups.length === 0 && isFetching ? (
+            <div className="loading-panel">
+              <LoadingSpinner size={34} label="Loading employer sources" />
+            </div>
           ) : sectorGroups.length === 0 ? (
             <p className="college-empty">
               No qualifying major strategic employers were found nearby.
@@ -246,6 +252,11 @@ const MajorEmployers = ({
                 )
               })}
             </Tabs.Root>
+          )}
+          {!isLoading && sectorGroups.length > 0 && isFetching && (
+            <div className="employer-source-loading" aria-live="polite">
+              <LoadingSpinner size={16} label="Loading additional sources" />
+            </div>
           )}
           <p className="sector-source-note">
             Sources: USAspending federal contract transactions by nearby place

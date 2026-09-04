@@ -172,6 +172,7 @@ const fbiCrimeProxy = (apiKey: string): Plugin => {
 }
 
 const collegeScorecardProxy = (apiKey: string): Plugin => {
+  const cache = new Map<string, ProxyCacheEntry>()
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -196,6 +197,12 @@ const collegeScorecardProxy = (apiKey: string): Plugin => {
       response.end(
         JSON.stringify({ error: 'Data.gov API key is not configured.' }),
       )
+      return
+    }
+    const cached = cache.get(state)
+    if (cached && cached.expiresAt > Date.now()) {
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(cached.body)
       return
     }
 
@@ -236,9 +243,17 @@ const collegeScorecardProxy = (apiKey: string): Plugin => {
     upstream.searchParams.set('_sort', 'latest.student.size:desc')
 
     try {
-      const result = await fetch(upstream)
+      const result = await fetch(upstream, {
+        signal: AbortSignal.timeout(15_000),
+      })
       const body = await result.text()
       response.statusCode = result.status
+      if (result.ok)
+        cache.set(state, {
+          body,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+        })
+      response.setHeader('Cache-Control', 'private, max-age=86400')
       response.end(body)
     } catch {
       response.statusCode = 502
@@ -292,7 +307,7 @@ const loadStateSchools = (fips: string) => {
   const request = (async () => {
     const schools: CcdSchool[] = []
     let next: string | null =
-      `https://educationdata.urban.org/api/v1/schools/ccd/directory/2024/?fips=${fips}`
+      `https://educationdata.urban.org/api/v1/schools/ccd/directory/2024/?fips=${fips}&school_status=1&school_type=1`
     let page = 0
     while (next && page < 3) {
       const result = await fetch(next, {
@@ -300,6 +315,7 @@ const loadStateSchools = (fips: string) => {
           Accept: 'application/json',
           'User-Agent': 'Mozilla/5.0 HomeIntel/0.1',
         },
+        signal: AbortSignal.timeout(30_000),
       })
       if (!result.ok)
         throw new Error(`Education Data API returned ${result.status}.`)
@@ -319,6 +335,7 @@ const loadStateSchools = (fips: string) => {
 }
 
 const nearbySchoolsProxy = (): Plugin => {
+  const cache = new Map<string, ProxyCacheEntry>()
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -343,6 +360,13 @@ const nearbySchoolsProxy = (): Plugin => {
     ) {
       response.statusCode = 400
       response.end(JSON.stringify({ error: 'A valid U.S. city is required.' }))
+      return
+    }
+    const cacheKey = `${fips}|${city}|${latitude}|${longitude}`
+    const cached = cache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(cached.body)
       return
     }
     try {
@@ -374,8 +398,14 @@ const nearbySchoolsProxy = (): Plugin => {
       const statewideVirtual = stateSchools.filter(
         (school) => school.virtual === 1,
       )
+      const body = JSON.stringify({ results, statewideVirtual })
+      cache.set(cacheKey, {
+        body,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      })
       response.statusCode = 200
-      response.end(JSON.stringify({ results, statewideVirtual }))
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(body)
     } catch {
       response.statusCode = 502
       response.end(
@@ -394,22 +424,53 @@ const nearbySchoolsProxy = (): Plugin => {
   }
 }
 
+const upstreamTimeoutMs = 12_000
+const timedFetch = (input: string | URL, init: RequestInit = {}) =>
+  fetch(input, {
+    ...init,
+    signal: init.signal ?? AbortSignal.timeout(upstreamTimeoutMs),
+  })
+
+type ProxyCacheEntry = { body: string; expiresAt: number }
+
+let lausAreaPromise: Promise<string> | null = null
 let lausFlatDataPromise: Promise<string> | null = null
+
+const getLausAreaData = () => {
+  lausAreaPromise ??= timedFetch(
+    'https://download.bls.gov/pub/time.series/la/la.area',
+  )
+    .then((response) => {
+      if (!response.ok) throw new Error('BLS LAUS areas are unavailable.')
+      return response.text()
+    })
+    .catch((error) => {
+      lausAreaPromise = null
+      throw error
+    })
+  return lausAreaPromise
+}
 
 const getLausFlatData = () => {
   lausFlatDataPromise ??= Promise.all(
     ['CurrentU15-19', 'CurrentU20-24', 'CurrentU25-29'].map(async (period) => {
-      const response = await fetch(
+      const response = await timedFetch(
         `https://download.bls.gov/pub/time.series/la/la.data.0.${period}`,
       )
       if (!response.ok) throw new Error(`BLS LAUS ${period} is unavailable.`)
       return response.text()
     }),
-  ).then((files) => files.join('\n'))
+  )
+    .then((files) => files.join('\n'))
+    .catch((error) => {
+      lausFlatDataPromise = null
+      throw error
+    })
   return lausFlatDataPromise
 }
 
 const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
+  const cache = new Map<string, ProxyCacheEntry>()
   const numberValue = (value: unknown) => {
     const parsed = Number(String(value ?? '').replaceAll(',', ''))
     return Number.isFinite(parsed) ? parsed : null
@@ -440,8 +501,16 @@ const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
       return
     }
 
+    const cacheKey = `${city}|${state}|${latitude}|${longitude}`
+    const cached = cache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      response.setHeader('Cache-Control', 'private, max-age=21600')
+      response.end(cached.body)
+      return
+    }
+
     try {
-      const geographyResponse = await fetch(
+      const geographyResponse = await timedFetch(
         `https://geo.fcc.gov/api/census/block/find?latitude=${latitude}&longitude=${longitude}&format=json`,
       )
       const geography = (await geographyResponse.json()) as {
@@ -454,9 +523,7 @@ const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
       const stateMinimumWage = stateMinimumWages[state]
 
       const lausPromise = (async () => {
-        const areaText = await (
-          await fetch('https://download.bls.gov/pub/time.series/la/la.area')
-        ).text()
+        const areaText = await getLausAreaData()
         const row = areaText
           .split(/\r?\n/)
           .map((line) => line.split('\t'))
@@ -481,15 +548,18 @@ const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
           }[]
         }
         let bls = (await (
-          await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              seriesid: seriesIds,
-              startyear: '2019',
-              endyear: String(new Date().getFullYear()),
-            }),
-          })
+          await timedFetch(
+            'https://api.bls.gov/publicAPI/v2/timeseries/data/',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                seriesid: seriesIds,
+                startyear: '2019',
+                endyear: String(new Date().getFullYear()),
+              }),
+            },
+          )
         ).json()) as {
           Results?: {
             series?: BlsSeries[]
@@ -600,82 +670,98 @@ const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
       })()
 
       const qcewPromise = (async () => {
-        for (const [year, quarter] of [
+        const candidates = [
           [2025, 4],
           [2025, 3],
           [2025, 2],
           [2025, 1],
           [2024, 4],
-        ]) {
-          const result = await fetch(
-            `https://data.bls.gov/cew/data/api/${year}/${quarter}/area/${countyFips}.csv`,
-          )
-          if (!result.ok) continue
-          const lines = (await result.text()).trim().split(/\r?\n/)
-          const parse = (line: string) =>
-            line
-              .match(/("[^"]*"|[^,]+)(?=,|$)/g)
-              ?.map((item) => item.replace(/^"|"$/g, '').trim()) ?? []
-          const headers = parse(lines[0])
-          const records = lines.slice(1).map(parse)
-          const get = (row: string[], field: string) =>
-            row[headers.indexOf(field)]
-          const total = records.find(
-            (row) =>
-              get(row, 'own_code') === '0' &&
-              get(row, 'industry_code') === '10',
-          )
-          if (!total) continue
-          const employmentValues = [
-            'month1_emplvl',
-            'month2_emplvl',
-            'month3_emplvl',
-          ].map((field) => numberValue(get(total, field)) ?? 0)
-          return {
-            period: `${year} Q${quarter}`,
-            geography: geography.County?.name ?? countyFips,
-            employment: Math.round(
-              employmentValues.reduce((sum, value) => sum + value, 0) / 3,
-            ),
-            averageWeeklyWage: numberValue(get(total, 'avg_wkly_wage')),
-            employmentGrowthPercent: numberValue(
-              get(total, 'oty_month3_emplvl_pct_chg') ??
-                get(total, 'oty_qtrly_emplvl_pct_chg'),
-            ),
-          }
-        }
-        return null
+        ] as const
+        const results = await Promise.all(
+          candidates.map(async ([year, quarter]) => {
+            try {
+              const result = await timedFetch(
+                `https://data.bls.gov/cew/data/api/${year}/${quarter}/area/${countyFips}.csv`,
+              )
+              if (!result.ok) return null
+              const lines = (await result.text()).trim().split(/\r?\n/)
+              const parse = (line: string) =>
+                line
+                  .match(/("[^"]*"|[^,]+)(?=,|$)/g)
+                  ?.map((item) => item.replace(/^"|"$/g, '').trim()) ?? []
+              const headers = parse(lines[0])
+              const records = lines.slice(1).map(parse)
+              const get = (row: string[], field: string) =>
+                row[headers.indexOf(field)]
+              const total = records.find(
+                (row) =>
+                  get(row, 'own_code') === '0' &&
+                  get(row, 'industry_code') === '10',
+              )
+              if (!total) return null
+              const employmentValues = [
+                'month1_emplvl',
+                'month2_emplvl',
+                'month3_emplvl',
+              ].map((field) => numberValue(get(total, field)) ?? 0)
+              return {
+                period: `${year} Q${quarter}`,
+                geography: geography.County?.name ?? countyFips,
+                employment: Math.round(
+                  employmentValues.reduce((sum, value) => sum + value, 0) / 3,
+                ),
+                averageWeeklyWage: numberValue(get(total, 'avg_wkly_wage')),
+                employmentGrowthPercent: numberValue(
+                  get(total, 'oty_month3_emplvl_pct_chg') ??
+                    get(total, 'oty_qtrly_emplvl_pct_chg'),
+                ),
+              }
+            } catch {
+              return null
+            }
+          }),
+        )
+        return results.find((result) => result !== null) ?? null
       })()
 
       const qwiPromise = (async () => {
         if (!censusKey || !countyCode) return null
-        for (const [year, quarter] of [
+        const candidates = [
           [2025, 2],
           [2025, 1],
           [2024, 4],
           [2024, 3],
-        ]) {
-          const url = new URL('https://api.census.gov/data/timeseries/qwi/rh')
-          url.searchParams.set('get', 'Emp,HirA,Sep,EarnS')
-          url.searchParams.set('for', `county:${countyCode}`)
-          url.searchParams.set('in', `state:${stateFips}`)
-          url.searchParams.set('year', String(year))
-          url.searchParams.set('quarter', String(quarter))
-          url.searchParams.set('key', censusKey)
-          const result = await fetch(url)
-          if (!result.ok) continue
-          const rows = (await result.json()) as string[][]
-          if (!rows[1]) continue
-          return {
-            period: `${year} Q${quarter}`,
-            geography: geography.County?.name ?? countyFips,
-            employment: numberValue(rows[1][0]),
-            hires: numberValue(rows[1][1]),
-            separations: numberValue(rows[1][2]),
-            averageMonthlyEarnings: numberValue(rows[1][3]),
-          }
-        }
-        return null
+        ] as const
+        const results = await Promise.all(
+          candidates.map(async ([year, quarter]) => {
+            try {
+              const url = new URL(
+                'https://api.census.gov/data/timeseries/qwi/rh',
+              )
+              url.searchParams.set('get', 'Emp,HirA,Sep,EarnS')
+              url.searchParams.set('for', `county:${countyCode}`)
+              url.searchParams.set('in', `state:${stateFips}`)
+              url.searchParams.set('year', String(year))
+              url.searchParams.set('quarter', String(quarter))
+              url.searchParams.set('key', censusKey)
+              const result = await timedFetch(url)
+              if (!result.ok) return null
+              const rows = (await result.json()) as string[][]
+              if (!rows[1]) return null
+              return {
+                period: `${year} Q${quarter}`,
+                geography: geography.County?.name ?? countyFips,
+                employment: numberValue(rows[1][0]),
+                hires: numberValue(rows[1][1]),
+                separations: numberValue(rows[1][2]),
+                averageMonthlyEarnings: numberValue(rows[1][3]),
+              }
+            } catch {
+              return null
+            }
+          }),
+        )
+        return results.find((result) => result !== null) ?? null
       })()
 
       const beaPromise = (async () => {
@@ -691,7 +777,7 @@ const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
           Year: 'LAST5',
           ResultFormat: 'JSON',
         }).forEach(([key, value]) => url.searchParams.set(key, value))
-        const result = (await (await fetch(url)).json()) as {
+        const result = (await (await timedFetch(url)).json()) as {
           BEAAPI?: {
             Results?: {
               Data?: {
@@ -718,30 +804,39 @@ const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
           : null
       })()
 
-      const [laus, qcew, qwi, bea] = await Promise.all([
-        lausPromise,
-        qcewPromise,
-        qwiPromise,
-        beaPromise,
-      ])
-      response.end(
-        JSON.stringify({
-          county: geography.County?.name,
-          minimumWage: stateMinimumWage
-            ? {
-                ...stateMinimumWage,
-                effectiveDate: MINIMUM_WAGE_EFFECTIVE_DATE,
-                geography: `${geography.State?.name ?? state} state baseline`,
-                sourceName: 'U.S. Department of Labor Wage and Hour Division',
-                sourceUrl: MINIMUM_WAGE_SOURCE,
-              }
-            : null,
-          laus,
-          qcew,
-          qwi,
-          bea,
-        }),
-      )
+      const [lausResult, qcewResult, qwiResult, beaResult] =
+        await Promise.allSettled([
+          lausPromise,
+          qcewPromise,
+          qwiPromise,
+          beaPromise,
+        ])
+      const laus = lausResult.status === 'fulfilled' ? lausResult.value : null
+      const qcew = qcewResult.status === 'fulfilled' ? qcewResult.value : null
+      const qwi = qwiResult.status === 'fulfilled' ? qwiResult.value : null
+      const bea = beaResult.status === 'fulfilled' ? beaResult.value : null
+      const body = JSON.stringify({
+        county: geography.County?.name,
+        minimumWage: stateMinimumWage
+          ? {
+              ...stateMinimumWage,
+              effectiveDate: MINIMUM_WAGE_EFFECTIVE_DATE,
+              geography: `${geography.State?.name ?? state} state baseline`,
+              sourceName: 'U.S. Department of Labor Wage and Hour Division',
+              sourceUrl: MINIMUM_WAGE_SOURCE,
+            }
+          : null,
+        laus,
+        qcew,
+        qwi,
+        bea,
+      })
+      cache.set(cacheKey, {
+        body,
+        expiresAt: Date.now() + 6 * 60 * 60 * 1000,
+      })
+      response.setHeader('Cache-Control', 'private, max-age=21600')
+      response.end(body)
     } catch {
       response.statusCode = 502
       response.end(
@@ -761,6 +856,7 @@ const currentEconomyProxy = (censusKey: string, beaKey: string): Plugin => {
 }
 
 const majorEmployersProxy = (): Plugin => {
+  const cache = new Map<string, ProxyCacheEntry>()
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -774,6 +870,13 @@ const majorEmployersProxy = (): Plugin => {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       response.statusCode = 400
       response.end(JSON.stringify({ error: 'Valid coordinates are required.' }))
+      return
+    }
+    const cacheKey = `${latitude}|${longitude}`
+    const cached = cache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(cached.body)
       return
     }
     const query = `
@@ -806,7 +909,7 @@ const majorEmployersProxy = (): Plugin => {
     upstream.searchParams.set('query', query)
     upstream.searchParams.set('format', 'json')
     try {
-      const result = await fetch(upstream, {
+      const result = await timedFetch(upstream, {
         headers: {
           Accept: 'application/sparql-results+json',
           'User-Agent': 'HomeIntel/0.1 (city research application)',
@@ -814,6 +917,12 @@ const majorEmployersProxy = (): Plugin => {
       })
       const body = await result.text()
       response.statusCode = result.status
+      if (result.ok)
+        cache.set(cacheKey, {
+          body,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+        })
+      response.setHeader('Cache-Control', 'private, max-age=86400')
       response.end(body)
     } catch {
       response.statusCode = 502
@@ -832,6 +941,7 @@ const majorEmployersProxy = (): Plugin => {
 }
 
 const federalContractorsProxy = (): Plugin => {
+  const cache = new Map<string, ProxyCacheEntry>()
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -847,6 +957,13 @@ const federalContractorsProxy = (): Plugin => {
       response.end(JSON.stringify({ error: 'Valid coordinates are required.' }))
       return
     }
+    const cacheKey = `${latitude}|${longitude}`
+    const cached = cache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(cached.body)
+      return
+    }
     try {
       const latitudeOffset = 45 / 69
       const longitudeOffset = 45 / (69 * Math.cos((latitude * Math.PI) / 180))
@@ -856,14 +973,10 @@ const federalContractorsProxy = (): Plugin => {
         [latitude - latitudeOffset, longitude],
         [latitude, longitude + longitudeOffset],
         [latitude, longitude - longitudeOffset],
-        [latitude + latitudeOffset * 0.7, longitude + longitudeOffset * 0.7],
-        [latitude + latitudeOffset * 0.7, longitude - longitudeOffset * 0.7],
-        [latitude - latitudeOffset * 0.7, longitude + longitudeOffset * 0.7],
-        [latitude - latitudeOffset * 0.7, longitude - longitudeOffset * 0.7],
       ]
-      const geographies = await Promise.all(
+      const geographyResults = await Promise.allSettled(
         samples.map(async ([lat, lon]) => {
-          const result = await fetch(
+          const result = await timedFetch(
             `https://geo.fcc.gov/api/census/block/find?latitude=${lat}&longitude=${lon}&format=json`,
           )
           return (await result.json()) as {
@@ -871,6 +984,9 @@ const federalContractorsProxy = (): Plugin => {
             State?: { code?: string }
           }
         }),
+      )
+      const geographies = geographyResults.flatMap((result) =>
+        result.status === 'fulfilled' ? [result.value] : [],
       )
       const locations = new Map<
         string,
@@ -885,7 +1001,7 @@ const federalContractorsProxy = (): Plugin => {
       const endDate = new Date()
       const startDate = new Date(endDate)
       startDate.setFullYear(startDate.getFullYear() - 3)
-      const upstream = await fetch(
+      const upstream = await timedFetch(
         'https://api.usaspending.gov/api/v2/search/spending_by_category/recipient/',
         {
           method: 'POST',
@@ -923,91 +1039,13 @@ const federalContractorsProxy = (): Plugin => {
         }[]
         [key: string]: unknown
       }
-      const normalizeCompanyName = (name: string) =>
-        name
-          .replace(/[.,]/g, '')
-          .replace(
-            /\b(CORPORATION|COMPANY|INCORPORATED|INC|LLC|LP|LTD)\b/gi,
-            '',
-          )
-          .replace(/\s+/g, ' ')
-          .trim()
-          .toLowerCase()
-      const enriched = await Promise.all(
-        (spending.results ?? []).map(async (recipient, index) => {
-          if (index >= 20) return recipient
-          try {
-            const searchUrl = new URL('https://www.wikidata.org/w/api.php')
-            searchUrl.search = new URLSearchParams({
-              action: 'wbsearchentities',
-              search: normalizeCompanyName(recipient.name),
-              language: 'en',
-              uselang: 'en',
-              type: 'item',
-              limit: '3',
-              format: 'json',
-              origin: '*',
-            }).toString()
-            const searchResult = (await (
-              await fetch(searchUrl, {
-                headers: {
-                  'User-Agent': 'HomeIntel/0.1 (city research application)',
-                },
-              })
-            ).json()) as {
-              search?: { id: string; label: string; description?: string }[]
-            }
-            const requestedName = normalizeCompanyName(recipient.name)
-            const match = searchResult.search?.find((candidate) => {
-              const candidateName = normalizeCompanyName(candidate.label)
-              return (
-                candidateName === requestedName ||
-                requestedName.includes(candidateName) ||
-                candidateName.includes(requestedName)
-              )
-            })
-            if (!match) return recipient
-            const entityUrl = new URL('https://www.wikidata.org/w/api.php')
-            entityUrl.search = new URLSearchParams({
-              action: 'wbgetentities',
-              ids: match.id,
-              props: 'claims',
-              format: 'json',
-              origin: '*',
-            }).toString()
-            const entityResult = (await (
-              await fetch(entityUrl, {
-                headers: {
-                  'User-Agent': 'HomeIntel/0.1 (city research application)',
-                },
-              })
-            ).json()) as {
-              entities?: Record<
-                string,
-                {
-                  claims?: Record<
-                    string,
-                    { mainsnak?: { datavalue?: { value?: unknown } } }[]
-                  >
-                }
-              >
-            }
-            const website = entityResult.entities?.[
-              match.id
-            ]?.claims?.P856?.find(
-              (claim) => typeof claim.mainsnak?.datavalue?.value === 'string',
-            )?.mainsnak?.datavalue?.value
-            return {
-              ...recipient,
-              website: typeof website === 'string' ? website : undefined,
-              description: match.description,
-            }
-          } catch {
-            return recipient
-          }
-        }),
-      )
-      response.end(JSON.stringify({ ...spending, results: enriched }))
+      const body = JSON.stringify(spending)
+      cache.set(cacheKey, {
+        body,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      })
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(body)
     } catch {
       response.statusCode = 502
       response.end(
@@ -1027,6 +1065,7 @@ const federalContractorsProxy = (): Plugin => {
 }
 
 const majorHospitalsProxy = (): Plugin => {
+  const cache = new Map<string, ProxyCacheEntry>()
   const handleRequest = async (
     request: IncomingMessage,
     response: ServerResponse,
@@ -1040,6 +1079,13 @@ const majorHospitalsProxy = (): Plugin => {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       response.statusCode = 400
       response.end(JSON.stringify({ error: 'Valid coordinates are required.' }))
+      return
+    }
+    const cacheKey = `${latitude}|${longitude}`
+    const cached = cache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(cached.body)
       return
     }
     try {
@@ -1059,11 +1105,16 @@ const majorHospitalsProxy = (): Plugin => {
         returnGeometry: 'false',
         f: 'json',
       }).forEach(([key, value]) => upstream.searchParams.set(key, value))
-      const result = await fetch(upstream, {
-        signal: AbortSignal.timeout(15_000),
-      })
+      const result = await timedFetch(upstream)
+      const body = await result.text()
       response.statusCode = result.status
-      response.end(await result.text())
+      if (result.ok)
+        cache.set(cacheKey, {
+          body,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+        })
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(body)
     } catch {
       response.statusCode = 502
       response.end(
