@@ -26,9 +26,9 @@ type OverviewPageProps = {
 }
 
 const OverviewPage = ({ city, setView }: OverviewPageProps) => {
-  const demographicsQuery = useDemographicsQuery(city)
+  const demographicsQuery = useDemographicsQuery(city, true, false)
   const demographics = demographicsQuery.data
-  const employmentQuery = useEmploymentQuery(city)
+  const employmentQuery = useEmploymentQuery(city, true, false)
   const employment = employmentQuery.data
   const housingQuery = useHousingQuery(city)
   const housing = housingQuery.data
@@ -173,7 +173,7 @@ const OverviewPage = ({ city, setView }: OverviewPageProps) => {
               ? `${demographics.estimatedCurrentGrowthPercent.toFixed(1)}%`
               : pendingValue
           }
-          note={`2019 to ${demographics?.estimateYear ?? 'current year'}`}
+          note={`${demographics?.populationGrowthStartYear ?? 'Recent'} to ${demographics?.estimateYear ?? 'current year'}`}
           trend={
             demographics
               ? trendLabel(demographics.estimatedCurrentGrowthPercent)

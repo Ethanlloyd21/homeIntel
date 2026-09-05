@@ -1,5 +1,6 @@
 import {
   Building2,
+  Calculator,
   ChevronDown,
   CloudSun,
   Compass,
@@ -29,6 +30,7 @@ const Sidebar = ({
     ['Employment', Building2],
     ['Risk', ShieldAlert],
     ['Environment', CloudSun],
+    ['Simulator', Calculator],
   ] as const
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>

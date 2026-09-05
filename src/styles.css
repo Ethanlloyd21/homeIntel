@@ -10,6 +10,7 @@
   --muted: #69746f;
   --line: #d7e0dc;
   --paper: #fbfdfc;
+  --surface: #fff;
   --navy: #111e31;
   --coral: #d65e45;
   --green: #287a64;
@@ -227,6 +228,7 @@
   --muted: #9da8c5;
   --line: rgb(139 157 255 / 18%);
   --paper: rgb(21 27 51 / 82%);
+  --surface: #151b33;
   --navy: #090d1d;
   --coral: #9d7cff;
   --green: #5eead4;
@@ -5533,6 +5535,797 @@ footer > span {
   footer {
     padding-inline: 16px;
     gap: 14px;
+  }
+}
+
+/* Deterministic life simulator */
+.simulator-page {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.simulator-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 0 28px;
+}
+.simulator-hero h2 {
+  margin: 8px 0 9px;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.08;
+}
+.simulator-hero > div > span {
+  display: block;
+  max-width: 720px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.simulator-hero-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+}
+.sim-guide-toggle {
+  display: flex;
+  min-height: 43px;
+  cursor: pointer;
+  align-items: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 700 12px 'DM Sans';
+}
+.sim-guide-toggle:hover,
+.sim-guide-toggle:focus-visible {
+  border-color: #8b6cff;
+  color: #8062e8;
+  outline: none;
+}
+.simulator-guide {
+  margin-bottom: 16px;
+  border-color: rgb(139 108 255 / 26%);
+  background:
+    radial-gradient(circle at 95% 10%, rgb(139 108 255 / 10%), transparent 28%),
+    var(--paper);
+}
+.sim-guide-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+.sim-guide-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.sim-guide-heading > div > span {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgb(139 108 255 / 14%);
+  color: #8062e8;
+}
+.sim-guide-heading small {
+  color: #8062e8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.sim-guide-heading h3 {
+  margin: 2px 0 0;
+  font-size: 19px;
+}
+.sim-guide-heading > p {
+  max-width: 470px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.sim-guide-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.sim-guide-steps a {
+  display: flex;
+  min-width: 0;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 82%, var(--soft));
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+.sim-guide-steps a:hover,
+.sim-guide-steps a:focus-visible {
+  border-color: #8b6cff;
+  outline: none;
+  transform: translateY(-2px);
+}
+.sim-guide-steps a > b {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  place-items: center;
+  border-radius: 50%;
+  background: #8062e8;
+  color: white;
+  font-size: 11px;
+}
+.sim-guide-steps span,
+.sim-guide-steps strong,
+.sim-guide-steps small {
+  display: block;
+}
+.sim-guide-steps strong {
+  font-size: 12px;
+  line-height: 1.35;
+}
+.sim-guide-steps small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.sim-guide-tip {
+  margin: 15px 0 0;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.sim-guide-tip strong {
+  color: var(--ink);
+}
+#sim-household,
+#sim-results,
+#sim-rules,
+#sim-consensus {
+  scroll-margin-top: 90px;
+}
+.simulator-page > .card,
+.sim-result-grid .card,
+.sim-side-stack .card,
+.sim-bottom-grid .card {
+  padding: 24px;
+}
+.sim-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 21px;
+}
+.sim-section-heading > span {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  flex: 0 0 39px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgb(139 108 255 / 12%);
+  color: #8062e8;
+}
+.sim-section-heading small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.sim-section-heading h3 {
+  margin: 2px 0 0;
+  font-size: 19px;
+}
+.sim-form-grid,
+.sim-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.sim-field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+.sim-field > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.sim-field-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.sim-help,
+.confidence-help {
+  position: relative;
+  display: inline-flex;
+  color: var(--muted);
+}
+.sim-help > button {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  cursor: help;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #8062e8;
+}
+.sim-help > button:hover,
+.sim-help > button:focus-visible {
+  background: rgb(139 108 255 / 13%);
+  outline: none;
+}
+.sim-tooltip {
+  position: absolute;
+  z-index: 80;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  width: min(270px, 75vw);
+  padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, #8b6cff);
+  border-radius: 8px;
+  background: var(--ink);
+  box-shadow: 0 10px 28px rgb(15 28 45 / 20%);
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+.sim-help:hover .sim-tooltip,
+.sim-help:focus-within .sim-tooltip,
+.confidence-help:hover .sim-tooltip,
+.confidence-help:focus-within .sim-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.sim-tooltip strong {
+  color: inherit;
+}
+.sim-field > input,
+.sim-field > select,
+.sim-number-input {
+  width: 100%;
+  height: 45px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--input);
+  color: var(--ink);
+  font: inherit;
+}
+.sim-field > input,
+.sim-field > select {
+  padding: 0 12px;
+}
+.sim-number-input {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.sim-number-input input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 10px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+}
+.sim-number-input i {
+  padding: 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+.sim-field > input:focus,
+.sim-field > select:focus,
+.sim-number-input:focus-within {
+  border-color: #8b6cff;
+  box-shadow: 0 0 0 3px rgb(139 108 255 / 12%);
+  outline: 0;
+}
+.sim-advanced {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 15px;
+}
+.sim-advanced summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+}
+.sim-advanced .sim-form-grid {
+  margin-top: 14px;
+}
+.sim-result-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(330px, 0.8fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+.sim-side-stack {
+  display: grid;
+  gap: 16px;
+}
+.sim-budget-summary {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 21px;
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--soft);
+}
+.sim-budget-summary > div {
+  display: grid;
+  gap: 4px;
+}
+.sim-budget-summary span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.sim-budget-summary strong {
+  font: 700 21px 'Manrope';
+}
+.sim-budget-summary .positive strong {
+  color: var(--green);
+}
+.sim-budget-summary .negative strong {
+  color: #c54c42;
+}
+.sim-budget-summary > i {
+  color: var(--muted);
+  font-style: normal;
+}
+.sim-cost-list details {
+  border-top: 1px solid var(--line);
+}
+.sim-cost-list summary {
+  display: flex;
+  cursor: pointer;
+  justify-content: space-between;
+  padding: 11px 2px;
+  font-size: 13px;
+}
+.sim-cost-list details p {
+  margin: -4px 0 11px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.sim-method-note,
+.simulator-disclaimer {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.sim-method-note {
+  margin: 16px 0 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgb(225 168 94 / 10%);
+}
+.sim-score-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sim-score {
+  display: grid;
+  padding: 15px;
+  border-radius: 11px;
+  background: var(--soft);
+}
+.sim-score span,
+.sim-score small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.sim-score strong {
+  margin: 3px 0 -1px;
+  font: 700 31px 'Manrope';
+}
+.sim-score-good strong {
+  color: var(--green);
+}
+.sim-score-warning strong {
+  color: #c56d3e;
+}
+.sim-dimensions {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+.sim-dimensions > div {
+  display: grid;
+  grid-template-columns: 86px 1fr 27px;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  text-transform: capitalize;
+}
+.sim-dimensions > div > div,
+.checklist-progress {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--line);
+}
+.sim-dimensions i,
+.checklist-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8062e8, #56aa96);
+}
+.sim-scores-card ul {
+  margin: 16px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.sim-exposure-card > strong {
+  font: 700 32px 'Manrope';
+}
+.sim-exposure-card > strong small {
+  margin-left: 4px;
+  color: var(--muted);
+  font: 500 12px 'DM Sans';
+}
+.sim-exposure-card > p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.sim-dealbreakers,
+.sim-career-card,
+.sim-consensus-card,
+.sim-bottom-grid {
+  margin-top: 16px;
+}
+.sim-requirements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 20px;
+}
+.sim-requirements > div {
+  display: grid;
+  grid-template-columns: 30px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.sim-requirements > div > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+}
+.sim-requirements .passed > span {
+  background: rgb(40 122 100 / 12%);
+  color: var(--green);
+}
+.sim-requirements .failed > span {
+  background: rgb(197 76 66 / 12%);
+  color: #c54c42;
+}
+.sim-requirements strong,
+.sim-requirements small {
+  display: block;
+}
+.sim-requirements strong {
+  font-size: 12px;
+}
+.sim-requirements small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.sim-requirements b {
+  font-size: 12px;
+  text-align: right;
+}
+.sim-career-controls {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) 1fr;
+  align-items: end;
+  gap: 18px;
+}
+.sim-check-field {
+  display: flex;
+  min-height: 45px;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.sim-check-field input,
+.readiness-list input {
+  width: 17px;
+  height: 17px;
+  accent-color: #8062e8;
+}
+.sim-career-result {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+.sim-career-result > div {
+  display: grid;
+  padding: 15px;
+  border-radius: 10px;
+  background: var(--soft);
+}
+.sim-career-result span,
+.sim-career-result small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.sim-career-result strong {
+  margin: 4px 0 2px;
+  font: 700 20px 'Manrope';
+}
+.sim-consensus-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.15fr;
+  gap: 18px;
+}
+.consensus-person {
+  display: grid;
+  gap: 11px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.consensus-person > strong {
+  font-size: 13px;
+}
+.consensus-person label {
+  display: grid;
+  grid-template-columns: 83px 1fr 15px;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: capitalize;
+}
+.consensus-person input {
+  width: 100%;
+  accent-color: #8062e8;
+}
+.consensus-result {
+  display: grid;
+  gap: 10px;
+}
+.consensus-result > div {
+  display: grid;
+  align-content: center;
+  min-height: 93px;
+  padding: 15px;
+  border-radius: 11px;
+  background: var(--soft);
+}
+.consensus-result span,
+.consensus-result small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.consensus-result strong {
+  font: 700 26px 'Manrope';
+}
+.consensus-result .city-select-search,
+.consensus-result .search-wrap {
+  width: 100%;
+  margin-top: 7px;
+}
+.sim-bottom-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 16px;
+}
+.confidence-list,
+.readiness-list {
+  display: grid;
+}
+.confidence-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+.confidence-list span,
+.confidence-list strong,
+.confidence-list small {
+  display: block;
+}
+.confidence-list strong {
+  font-size: 12px;
+}
+.confidence-list small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.confidence-list b,
+.confidence-help > button {
+  display: inline-flex;
+  cursor: help;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 99px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 9px;
+}
+.confidence-help .sim-tooltip {
+  right: 0;
+  left: auto;
+  transform: translateY(4px);
+}
+.confidence-help:hover .sim-tooltip,
+.confidence-help:focus-within .sim-tooltip {
+  transform: translateY(0);
+}
+.sim-confidence-card .sim-section-heading p {
+  max-width: 350px;
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.confidence-high {
+  background: rgb(40 122 100 / 12%);
+  color: var(--green);
+}
+.confidence-medium,
+.confidence-estimated {
+  background: rgb(213 145 57 / 13%);
+  color: #a16327;
+}
+.confidence-loading {
+  background: var(--soft);
+  color: var(--muted);
+}
+.confidence-unavailable {
+  background: rgb(197 76 66 / 12%);
+  color: #c54c42;
+}
+.checklist-progress {
+  margin-bottom: 11px;
+}
+.readiness-list label {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+.readiness-list label.complete span {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.simulator-disclaimer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  margin: 15px 0 0;
+  text-align: center;
+}
+@media (max-width: 980px) {
+  .sim-guide-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sim-form-grid,
+  .sim-rules-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sim-result-grid,
+  .sim-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+  .sim-consensus-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+  .consensus-result {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .simulator-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .simulator-hero-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .sim-guide-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .sim-guide-steps {
+    grid-template-columns: 1fr;
+  }
+  .sim-help .sim-tooltip {
+    left: 0;
+    transform: translateY(4px);
+  }
+  .sim-help:hover .sim-tooltip,
+  .sim-help:focus-within .sim-tooltip {
+    transform: translateY(0);
+  }
+  .simulator-hero h2 {
+    font-size: 28px;
+  }
+  .sim-form-grid,
+  .sim-rules-grid,
+  .sim-requirements,
+  .sim-career-controls,
+  .sim-career-result,
+  .sim-consensus-layout,
+  .consensus-result {
+    grid-template-columns: 1fr;
+  }
+  .consensus-result {
+    grid-column: auto;
+  }
+  .sim-budget-summary {
+    grid-template-columns: 1fr;
+  }
+  .sim-budget-summary > i {
+    display: none;
+  }
+  .sim-requirements > div {
+    grid-template-columns: 30px 1fr;
+  }
+  .sim-requirements b {
+    grid-column: 2;
+    text-align: left;
   }
 }
 

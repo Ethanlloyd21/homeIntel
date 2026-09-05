@@ -23,6 +23,7 @@ export type DemographicsData = {
   previousPopulation: number
   estimatedCurrentPopulation: number
   estimatedCurrentGrowthPercent: number
+  populationGrowthStartYear: number
   annualPopulationGrowthPercent: number
   estimateYear: number
   currentPopulationNote: string
@@ -169,7 +170,11 @@ const normalizePlace = (value: string) => {
     .replace(/[^a-z0-9]/g, '')
 }
 
-export const fetchDemographics = async (city: City, signal: AbortSignal) => {
+export const fetchDemographics = async (
+  city: City,
+  signal: AbortSignal,
+  includeDetails = true,
+) => {
   if (city.country !== 'United States') {
     throw new Error('Census demographics are available for U.S. cities only.')
   }
@@ -183,6 +188,12 @@ export const fetchDemographics = async (city: City, signal: AbortSignal) => {
   const stateFips = stateFipsByName[city.state]
   if (!stateFips) throw new Error('No Census state matched this location.')
 
+  // This static asset is needed for the current population estimate. Start it
+  // alongside the Census request instead of adding another serial round trip.
+  const populationResponsePromise = fetch(
+    `${import.meta.env.BASE_URL}data/census-population-2025.json`,
+    { signal: requestSignal() },
+  ).catch(() => null)
   const placesResponse = await fetch(
     `https://api.census.gov/data/2024/acs/acs5?get=${variables}&for=place:*&in=state:${stateFips}${key}`,
     { signal: requestSignal() },
@@ -207,31 +218,30 @@ export const fetchDemographics = async (city: City, signal: AbortSignal) => {
     'B15003_025E',
     'B25010_001E',
   ].join(',')
-  const optionalResults = await Promise.allSettled([
-    fetch(
-      `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=state:${stateFips}${key}`,
-      { signal: requestSignal() },
-    ),
-    fetch(
-      `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=us:*${key}`,
-      { signal: requestSignal() },
-    ),
-    fetch(
-      `https://api.census.gov/data/2019/pep/population?get=POP&for=place:${placeCode}&in=state:${stateFips}&DATE_CODE=12${key}`,
-      { signal: requestSignal() },
-    ),
-    fetch(`${import.meta.env.BASE_URL}data/census-population-2025.json`, {
-      signal: requestSignal(),
-    }),
-  ])
-  const optionalResponse = (index: number) => {
-    const result = optionalResults[index]
-    return result.status === 'fulfilled' ? result.value : null
+  const detailResults = includeDetails
+    ? await Promise.allSettled([
+        fetch(
+          `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=state:${stateFips}${key}`,
+          { signal: requestSignal() },
+        ),
+        fetch(
+          `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=us:*${key}`,
+          { signal: requestSignal() },
+        ),
+        fetch(
+          `https://api.census.gov/data/2019/pep/population?get=POP&for=place:${placeCode}&in=state:${stateFips}&DATE_CODE=12${key}`,
+          { signal: requestSignal() },
+        ),
+      ])
+    : []
+  const detailResponse = (index: number) => {
+    const result = detailResults[index]
+    return result?.status === 'fulfilled' ? result.value : null
   }
-  const stateComparisonResponse = optionalResponse(0)
-  const nationalComparisonResponse = optionalResponse(1)
-  const previousResponse = optionalResponse(2)
-  const populationResponse = optionalResponse(3)
+  const stateComparisonResponse = detailResponse(0)
+  const nationalComparisonResponse = detailResponse(1)
+  const previousResponse = detailResponse(2)
+  const populationResponse = await populationResponsePromise
   const comparisonFromRow = (
     geography: string,
     row: CensusRow,
@@ -296,7 +306,13 @@ export const fetchDemographics = async (city: City, signal: AbortSignal) => {
   const population2024 = placeEstimate?.population2024 ?? currentPopulation
   const population2025 = placeEstimate?.population2025 ?? currentPopulation
   const previousPopulation =
-    official2019Population > 0 ? official2019Population : currentPopulation
+    official2019Population > 0
+      ? official2019Population
+      : includeDetails
+        ? currentPopulation
+        : population2023
+  const populationGrowthStartYear =
+    official2019Population > 0 ? 2019 : includeDetails ? 2024 : 2023
   const estimateYear = new Date().getFullYear()
   const estimatedCurrentPopulation = calculateCurrentPopulationEstimate(
     population2023,
@@ -412,6 +428,7 @@ export const fetchDemographics = async (city: City, signal: AbortSignal) => {
             previousPopulation) *
           100
         : 0,
+    populationGrowthStartYear,
     annualPopulationGrowthPercent:
       population2023 > 0 && population2024 > 0
         ? (((population2024 - population2023) / population2023 +

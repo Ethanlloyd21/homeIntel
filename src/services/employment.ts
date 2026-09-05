@@ -62,7 +62,11 @@ const estimate = (value: string | undefined) => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
 }
 
-export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
+export const fetchEmploymentData = async (
+  city: City,
+  signal: AbortSignal,
+  includeDetails = true,
+) => {
   if (city.country !== 'United States') {
     throw new Error('Census employment data is available for U.S. cities only.')
   }
@@ -92,6 +96,24 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
   const placeCode = place[headers.indexOf('place')]
   const laborForce = estimate(value('DP03_0003E'))
   const employed = estimate(value('DP03_0004E'))
+
+  const profileIndustries = industryVariables
+    .map(([name, variable]) => ({
+      name,
+      percent: estimate(value(variable)),
+    }))
+    .sort((a, b) => b.percent - a.percent)
+
+  if (!includeDetails) {
+    return {
+      employmentRate: laborForce > 0 ? (employed / laborForce) * 100 : 0,
+      laborForce,
+      medianWorkerEarnings: estimate(value('DP03_0092E')),
+      industries: profileIndustries,
+      annualGrowth: [],
+      sourceName: place[0],
+    } satisfies EmploymentData
+  }
 
   const annualGrowthPromise = Promise.all(
     [2019, 2020, 2021, 2022, 2023, 2024].map(async (year) => {
@@ -219,7 +241,7 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
       throw error
   }
 
-  const profileIndustries = industryVariables
+  const detailedProfileIndustries = industryVariables
     .filter(
       ([name]) =>
         separateIndustries.length === 0 ||
@@ -242,7 +264,7 @@ export const fetchEmploymentData = async (city: City, signal: AbortSignal) => {
     employmentRate: laborForce > 0 ? (employed / laborForce) * 100 : 0,
     laborForce,
     medianWorkerEarnings: estimate(value('DP03_0092E')),
-    industries: [...profileIndustries, ...separateIndustries].sort(
+    industries: [...detailedProfileIndustries, ...separateIndustries].sort(
       (a, b) => b.percent - a.percent,
     ),
     annualGrowth: annualGrowth.map((item, index) => ({

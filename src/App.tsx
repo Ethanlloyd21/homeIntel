@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import Brand from 'components/Brand'
 import Header from 'components/Header'
 import LandingGallery from 'components/LandingGallery'
+import LifeSimulatorPage from 'pages/LifeSimulatorPage'
 import SearchBox from 'components/SearchBox'
 import Sidebar from 'components/Sidebar'
 import CategoryPage from 'pages/CategoryPage'
@@ -153,6 +154,12 @@ const App = () => {
         <div className="page-content">
           {view === 'Overview' ? (
             <OverviewPage city={city} setView={setView} />
+          ) : view === 'Simulator' ? (
+            <LifeSimulatorPage
+              city={city}
+              comparisonCity={comparisonCity}
+              setComparisonCity={setComparisonCity}
+            />
           ) : view === 'Compare' ? (
             <ComparePage
               left={city}

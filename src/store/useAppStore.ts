@@ -21,6 +21,7 @@ const viewPaths: Record<string, string> = {
   Employment: '/employment',
   Risk: '/risk',
   Environment: '/environment',
+  Simulator: '/life-simulator',
   Compare: '/compare-cities',
 }
 

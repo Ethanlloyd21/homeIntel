@@ -1,4 +1,5 @@
 import type { City } from 'data/cities'
+import { stateFipsByName } from 'data/stateFips'
 
 type CensusRow = string[]
 
@@ -128,29 +129,26 @@ export const fetchHousingData = async (city: City, signal: AbortSignal) => {
   }
 
   const key = `&key=${encodeURIComponent(apiKey)}`
-  const zillowResponse = await fetch(
+  const requestSignal = () =>
+    AbortSignal.any([signal, AbortSignal.timeout(12_000)])
+  const stateCode = stateFipsByName[city.state]
+  if (!stateCode) throw new Error('No Census state matched this location.')
+
+  const zillowResponsePromise = fetch(
     `${import.meta.env.BASE_URL}data/zillow-market.json`,
-    { signal },
+    { signal: requestSignal() },
   )
+  const placesResponsePromise = fetch(
+    `https://api.census.gov/data/2024/acs/acs5?get=${variables}&for=place:*&in=state:${stateCode}${key}`,
+    { signal: requestSignal() },
+  )
+  const [zillowResponse, placesResponse] = await Promise.all([
+    zillowResponsePromise,
+    placesResponsePromise,
+  ])
   const zillowDataset: ZillowDataset = zillowResponse.ok
     ? ((await zillowResponse.json()) as ZillowDataset)
     : { homeValueDates: [], rentDates: [], markets: [] }
-
-  const statesResponse = await fetch(
-    `https://api.census.gov/data/2024/acs/acs5?get=NAME&for=state:*${key}`,
-    { signal },
-  )
-  if (!statesResponse.ok)
-    throw new Error('Unable to identify the Census state.')
-  const states = (await statesResponse.json()) as CensusRow[]
-  const stateRow = states.slice(1).find(([name]) => name === city.state)
-  if (!stateRow) throw new Error('No Census state matched this location.')
-
-  const stateCode = stateRow[1]
-  const placesResponse = await fetch(
-    `https://api.census.gov/data/2024/acs/acs5?get=${variables}&for=place:*&in=state:${stateCode}${key}`,
-    { signal },
-  )
   if (!placesResponse.ok) throw new Error('Unable to load Census housing data.')
   const rows = (await placesResponse.json()) as CensusRow[]
   const cityName = city.name.toLowerCase()

@@ -11,6 +11,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
+    "test": "node --test --test-isolation=none tests/lifeSimulator.test.mjs",
     "data:update": "node scripts/update-zillow-data.mjs",
     "build:with-data": "npm run data:update && npm run build",
     "validate": "node scripts/validate-homeintel.mjs",
