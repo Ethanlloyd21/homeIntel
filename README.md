@@ -1,6 +1,6 @@
 # HomeIntel
 
-HomeIntel is a React and TypeScript city-research and relocation-comparison dashboard. It helps users investigate cities they may move to, understand housing, population, employment, weather, mapping, and natural-hazard conditions, and compare shortlisted cities before making a decision.
+HomeIntel is a React and TypeScript city-research, relocation-comparison, and life-simulation dashboard. It helps users investigate cities they may move to, understand housing, population, employment, weather, mapping, and natural-hazard conditions, compare shortlisted cities, and model how a move could affect their monthly budget and priorities.
 
 The application does not start with a hard-coded city. The selected and comparison cities are stored in Zustand, while remote data is loaded and cached through TanStack Query.
 
@@ -9,6 +9,11 @@ The application does not start with a hard-coded city. The selected and comparis
 - Worldwide city and ZIP-code search through Open-Meteo
 - Interactive Leaflet map with OpenStreetMap tiles
 - Compact live weather summary on Overview, with daily high/low, humidity, and wind details on Environment
+- Interactive Environment-page commute map with click-to-select start and destination points
+- Current traffic-aware drive time, free-flow comparison, delay, and condition when TomTom is configured
+- Sampled morning and evening rush-hour travel times with the slowest weekday window identified
+- Baseline point-to-point routing when live traffic is unavailable, without presenting fallback results as live
+- Nearby OpenStreetMap bus, train, subway, and tram stops plus transparent walking and cycling estimates
 - Outdoor comfort estimate based on feels-like temperature, humidity, wind, precipitation, and storm conditions
 - Zillow ZHVI typical home values and ZORI market rents
 - Expandable Housing metric details with direct Zillow and Census source citations
@@ -28,6 +33,17 @@ The application does not start with a hard-coded city. The selected and comparis
 - Housing and demographic visualizations
 - Data-driven HomeIntel Briefs for Housing and People
 - Side-by-side city comparison interface
+- Deterministic Life Simulator at `/life-simulator`, with no AI-generated calculations
+- Monthly disposable-income model with editable income, tax, household, commute, healthcare, childcare, debt, and essential-cost assumptions
+- Rent and buy scenarios, including a transparent 30-year fixed-mortgage calculation
+- Total housing exposure combining housing, utilities, transportation, and a FEMA-based planning reserve
+- Explainable deal-breaker matching, weighted city-fit results, and relocation-regret risk
+- Career compatibility using Census employment rates, worker earnings, and industry categories
+- Two-person household consensus with independent priority weights and optional second-city comparison
+- Data-confidence ratings that distinguish strong source coverage from broader estimates or unavailable data
+- Per-city move-readiness checklists and locally saved simulator preferences
+- First-visit quick-start guide plus accessible field and confidence tooltips for mouse, keyboard, and touch users
+- Lightweight Overview queries that avoid loading detail-only employment and demographic requests
 - Responsive desktop and mobile layouts
 - Animated, hover-responsive charts with reduced-motion support
 - Persistent light and dark appearance modes
@@ -90,6 +106,7 @@ Vite normally serves the application at `http://localhost:5173`. Restart the dev
 | `npm run lint:fix`           | Fix supported ESLint issues                                                |
 | `npm run format`             | Format the repository with Prettier                                        |
 | `npm run format:check`       | Check formatting without editing files                                     |
+| `npm test`                   | Run deterministic Life Simulator calculation tests                         |
 | `npm run data:update`        | Refresh the normalized Zillow Research dataset                             |
 | `npm run build:with-data`    | Refresh Zillow data and create a production build                          |
 | `npm run validate homeintel` | Refresh Zillow data, check formatting, lint, build, and audit dependencies |
@@ -108,6 +125,14 @@ The weather request uses the selected coordinates and includes temperature, appa
 ### OpenStreetMap
 
 The selected location is rendered with React Leaflet and OpenStreetMap tiles. Required map attribution remains visible.
+
+The Environment commute planner also queries nearby mapped bus stops, train stations, subway entrances, and tram stops through a same-origin Overpass proxy. These records indicate mapped infrastructure only; they do not provide timetables, fares, service alerts, accessibility, or a complete public-transit itinerary.
+
+### TomTom traffic and routing
+
+When the optional server-only `TOMTOM_API_KEY` is configured, the Environment commute planner uses TomTom's Calculate Route API with traffic enabled. The current route response includes traffic-aware travel time, free-flow time, traffic delay, distance, and route geometry. Six future weekday departure samples—6:30, 7:30, and 8:30 AM plus 4:00, 5:00, and 6:00 PM—use TomTom's time-dependent historical traffic model to compare common rush-hour windows.
+
+If the key is absent or TomTom is temporarily unavailable, the proxy requests an OSRM baseline road route. The interface labels this as **Baseline routing**, hides live congestion and rush-hour claims, and explains how to enable traffic data. Walking and cycling times are distance-only estimates and are not pedestrian- or bicycle-routed itineraries.
 
 ### Zillow Research
 
@@ -263,6 +288,65 @@ Results are ordered by lower reported student-to-teacher ratio and then enrollme
 
 Successful city-specific school and state-specific College Scorecard proxy responses are cached for 24 hours and include private browser cache headers. School upstream requests have a 30-second server timeout and a 35-second browser timeout; College Scorecard uses a 15-second server timeout and an 18-second browser timeout.
 
+## Life Simulator
+
+The Life Simulator turns HomeIntel's city data into an editable household planning scenario. Select a city, open **Simulator** in the sidebar, and follow the quick-start guide:
+
+1. Enter annual household income, household size, a rent-or-buy plan, an effective tax assumption, commute details, and recurring expenses.
+2. Review gross monthly income, itemized modeled costs, disposable income, and total housing exposure. Each cost row can be expanded to show its assumption.
+3. Set non-negotiable housing, cash-buffer, FEMA-risk, employment-rate, and optional career-field requirements.
+4. Adjust personal and partner priority weights. Add a comparison city to see which option provides the stronger household compromise.
+5. Review data confidence and complete the move-readiness checklist before relying on the result.
+
+The guide opens for first-time users and can be hidden or reopened with **How to use**. Help icons beside every input explain the field on hover, keyboard focus, click, or tap. Simulator settings, guide visibility, household preferences, and per-city checklist progress are saved in browser `localStorage`.
+
+### Deterministic calculations
+
+`src/services/lifeSimulator.ts` contains pure calculation functions. React renders their results but does not calculate them, making the formulas independently testable. No language model or generative AI determines taxes, expenses, scores, comparisons, or recommendations.
+
+The monthly result is:
+
+```text
+Gross monthly household income
+  - user-selected effective tax percentage
+  - rent, or mortgage plus property-tax/insurance allowance
+  - household-size and regional-price-adjusted utilities
+  - household-size and regional-price-adjusted groceries
+  - commute fuel and transportation allowance
+  - user-entered healthcare, childcare, debt, and other essentials
+  - transparent FEMA-risk planning reserve
+= estimated disposable income
+```
+
+Buy scenarios use the standard amortization formula for a 30-year fixed mortgage with the user's down-payment and interest-rate assumptions. The property-tax and insurance allowance is 1.8% of the typical home value annually. The hazard reserve is a planning buffer that scales from zero to 3.5% of housing cost as the FEMA risk score moves from 0 to 100. These are editable planning assumptions, not quotes or financial advice.
+
+Total housing exposure combines housing, utilities, transportation, and the hazard reserve. Its burden percentage divides that exposure by gross monthly income.
+
+### Fit, regret, deal-breakers, and consensus
+
+City fit is a weighted result from four visible dimensions:
+
+- **Affordability** uses disposable-income share and applies additional pressure when housing exposure exceeds 40% of gross income.
+- **Career** uses the Census employment rate and, when selected, the size and presence of a matching Census industry.
+- **Safety** is the inverse of the FEMA Expected Annual Loss score.
+- **Community** currently uses college-educated population share as a limited demographic proxy.
+
+The user's priority sliders control the weight of each dimension. The regret score begins with the inverse fit score, adds seven points for every failed deal-breaker, adds pressure when housing exposure exceeds 45%, and adds a penalty for negative disposable income. All scores are clamped from 0 to 100 and supporting reasons remain visible in the interface.
+
+Deal-breakers are evaluated independently and show the configured rule, the calculated city value, and a pass/fail result. Household consensus calculates each person's weighted score independently, averages the two scores, and reports alignment based on the difference between them. It does not allow one hidden overall score to replace the individual requirements.
+
+### Data-confidence meanings
+
+Confidence describes the quality and geographic precision of the source, not whether the city performed well:
+
+- **High** is good source confidence: a recent authoritative value is available at a relevant city or tract geography. The value may still be a survey or model estimate.
+- **Medium** is useful but less precise: the value may use broader geography, an older observation, or a fallback dataset.
+- **Estimated** means HomeIntel is applying a disclosed planning fallback because a more precise city value is unavailable.
+- **Loading** means the source request is still in progress and the rating may change.
+- **Unavailable** means no verified value was returned and the category should be independently confirmed.
+
+Until a new city's requests finish, or when a source is unavailable, the simulator can use disclosed planning defaults adjusted by the available regional price index. The confidence card exposes this limitation rather than presenting fallback data as verified city observations.
+
 ## Architecture
 
 Remote server state remains in TanStack Query. Zustand stores user/session state only. Browser components do not download state-sized CCD responses directly; Vite middleware adds compatible request headers, handles failures, filters the response, and sends only relevant records to the browser.
@@ -277,6 +361,12 @@ User interface
         |
         +-- Zustand ------------------------------------+
         |   Selected city, comparison city, route/UI    |
+        |                                               |
+        +-- Deterministic calculation engine -----------+
+        |   Costs, deal-breakers, fit/regret, consensus |
+        |                                               |
+        +-- localStorage --------------------------------+
+        |   Simulator assumptions, guide, checklists    |
         |                                               |
         +-- TanStack Query hooks                        |
                 Query keys, caching, retries, signals   |
@@ -299,9 +389,10 @@ The major layers are:
 1. **Pages and components (`src/pages`, `src/components`)** render the dashboard, charts, cards, maps, sector tabs, pagination, and responsive navigation.
 2. **Zustand (`src/store/useAppStore.ts`)** stores application state that belongs to the user session, such as the selected city, comparison city, active page, and mobile-navigation state.
 3. **TanStack Query hooks (`src/hooks`)** own asynchronous server state. Hooks define cache keys, stale times, cancellation, and query-enabling conditions.
-4. **Services (`src/services`)** build request parameters, call local or remote endpoints, validate response shapes, normalize records, calculate derived values, and return UI-ready data.
-5. **Vite integration proxies (`vite.config.ts`)** protect server-only keys, avoid browser CORS restrictions, combine upstream sources, and implement fallbacks. These endpoints run in Vite development and preview servers.
-6. **Local normalized datasets (`public/data`)** provide Zillow market history and Census population estimates without repeatedly downloading large source files in the browser.
+4. **Services (`src/services`)** build request parameters, call local or remote endpoints, validate response shapes, normalize records, calculate derived values, and return UI-ready data. `lifeSimulator.ts` is a pure synchronous calculation service with no network or React dependencies.
+5. **Browser persistence (`localStorage`)** retains simulator assumptions, two-person preference weights, guide visibility, theme, and per-city readiness checklists on the current device.
+6. **Vite integration proxies (`vite.config.ts`)** protect server-only keys, avoid browser CORS restrictions, combine upstream sources, and implement fallbacks. These endpoints run in Vite development and preview servers.
+7. **Local normalized datasets (`public/data`)** provide Zillow market history and Census population estimates without repeatedly downloading large source files in the browser.
 
 ### API and data flow
 
@@ -319,10 +410,12 @@ The major layers are:
 | Real GDP                 | BEA Regional API                            | `/api/current-economy`                       | Optional BEA key | Selected city’s county               | Card remains unavailable when no key or observations exist         |
 | Federal contractors      | USAspending                                 | `/api/federal-contractors`                   | No               | Counties around selected coordinates | Merges duplicate recipients and ranks recent obligations           |
 | Nearby headquarters      | Wikidata Query Service                      | `/api/major-employers`                       | No               | 85 km around city center             | Filters to strategic sectors and organizations with reported scale |
-| Contractor presentation  | USAspending plus curated profiles            | `/api/federal-contractors` and service layer | No               | Regional recipient                   | Uses source details or a curated profile without per-company calls  |
+| Contractor presentation  | USAspending plus curated profiles           | `/api/federal-contractors` and service layer | No               | Regional recipient                   | Uses source details or a curated profile without per-company calls |
 | Major hospitals          | U.S. Hospitals HIFLD ArcGIS feature service | `/api/major-hospitals`                       | No               | Exact 50-mile radius                 | Filters open facilities and ranks by beds, staff, then distance    |
 | Crime                    | FBI Crime Data API                          | Same-origin proxy                            | Data.gov key     | U.S. state/city coverage             | Proxy prevents exposing the key and avoids browser CORS errors     |
 | Natural hazards          | FEMA National Risk Index                    | Browser service                              | No               | Containing U.S. Census tract         | Converts relative hazard scores into the documented risk profile   |
+| Traffic-aware routing    | TomTom Calculate Route                      | `/api/traffic-route`                         | Optional TomTom  | User-selected point-to-point route   | OSRM baseline route when live traffic is unavailable               |
+| Transit infrastructure   | OpenStreetMap Overpass                      | `/api/transit-options`                       | No               | 2.5 km around both route endpoints   | Deduplicates and classifies mapped bus and rail stops              |
 | Universities             | College Scorecard                           | Same-origin proxy                            | Data.gov key     | Radius around selected coordinates   | Ranks nearby colleges and enriches displayed institution details   |
 | Public K-12 schools      | Urban Education Data Portal / NCES CCD      | `/api/nearby-schools`                        | No               | Selected city and selected state     | City grade bands plus statewide fully virtual public schools       |
 
@@ -330,21 +423,24 @@ The major layers are:
 
 The Vite configuration currently exposes these application-facing endpoints:
 
-| Endpoint                         | Purpose                                                                        |
-| -------------------------------- | ------------------------------------------------------------------------------ |
-| `/api/current-economy`           | Resolves county geography and combines LAUS, QCEW, QWI, and optional BEA data  |
-| `/api/major-employers`           | Queries nearby strategic headquarters from Wikidata                            |
-| `/api/federal-contractors`       | Finds and aggregates regional federal contract recipients                       |
-| `/api/major-hospitals`           | Queries open hospital facilities within 50 miles                               |
-| FBI crime proxy endpoint         | Keeps the Data.gov key server-side and handles CORS                            |
-| College Scorecard proxy endpoint | Keeps the Data.gov key server-side and returns nearby universities             |
-| `/api/nearby-schools`            | Caches a state CCD directory and returns local and statewide-online schools    |
+| Endpoint                         | Purpose                                                                       |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| `/api/current-economy`           | Resolves county geography and combines LAUS, QCEW, QWI, and optional BEA data |
+| `/api/major-employers`           | Queries nearby strategic headquarters from Wikidata                           |
+| `/api/federal-contractors`       | Finds and aggregates regional federal contract recipients                     |
+| `/api/major-hospitals`           | Queries open hospital facilities within 50 miles                              |
+| FBI crime proxy endpoint         | Keeps the Data.gov key server-side and handles CORS                           |
+| College Scorecard proxy endpoint | Keeps the Data.gov key server-side and returns nearby universities            |
+| `/api/nearby-schools`            | Caches a state CCD directory and returns local and statewide-online schools   |
+| `/api/traffic-route`             | Returns live traffic and rush samples, or a clearly labeled baseline route    |
+| `/api/transit-options`           | Finds mapped bus, train, subway, and tram stops near both commute endpoints   |
 
 These Vite middleware functions are appropriate for local development and preview. A production static host does not execute `vite.config.ts` middleware. Production deployment must recreate the `/api/*` handlers as serverless functions, edge functions, or routes in a Node server and keep their response contracts unchanged.
 
 ### Caching and failure behavior
 
 - TanStack Query caches API results by selected city and dataset version.
+- Overview uses lightweight demographic and employment query variants. Detail-only comparison tables, annual employment history, and industry breakdown calls are deferred until their dedicated pages need them.
 - `AbortSignal` cancels obsolete requests when the selected city changes.
 - Query keys include version labels when a response format or fallback strategy changes, preventing stale incompatible data from being reused.
 - LAUS area metadata and downloadable fallback files are fetched once per server process and cached in memory.
@@ -369,6 +465,11 @@ HomeIntel distinguishes source observations from application calculations:
 - FEMA scores are normalized comparative risk indicators, not probabilities.
 - Federal contract obligations describe regional contract activity and are not local payroll or employee estimates.
 - K-12 student-to-teacher ratios are calculated from CCD enrollment and teacher FTE; they are not class-size or academic-quality ratings.
+- Life Simulator costs, deal-breakers, fit, regret, housing exposure, and consensus are deterministic HomeIntel calculations based on visible source values and user assumptions.
+- The effective tax percentage is supplied by the user. HomeIntel does not infer a tax return, filing status, deductions, or legal tax liability.
+- Life Simulator confidence labels describe source quality and precision, not whether a city has a favorable result.
+- Traffic condition is calculated from the percentage difference between the traffic-aware time and free-flow time: under 8% is Light, 8–19% Moderate, 20–39% Heavy, and 40% or more Severe.
+- Rush-hour results compare six disclosed weekday departure samples rather than claiming to identify every possible slowdown minute.
 
 ### Zustand
 
@@ -380,6 +481,8 @@ HomeIntel distinguishes source observations from application calculations:
 - Mobile-navigation state
 
 API responses are not stored in Zustand.
+
+Life Simulator form values are intentionally stored in `localStorage`, not Zustand, so they survive a reload on the same browser. They are not synchronized to an account or sent to an AI service.
 
 ### TanStack Query hooks
 
@@ -453,6 +556,8 @@ homeIntel/
 │   └── zillow-market.json
 ├── scripts/
 │   └── update-zillow-data.mjs
+├── tests/
+│   └── lifeSimulator.test.mjs
 ├── src/
 │   ├── assets/images/
 │   ├── components/
@@ -464,11 +569,13 @@ homeIntel/
 │   │   ├── ScoreRing.tsx
 │   │   ├── SearchBox.tsx
 │   │   ├── Sidebar.tsx
+│   │   ├── TrafficCommute.tsx
 │   │   └── WeatherCard.tsx
 │   ├── data/
 │   │   └── cities.ts
 │   ├── hooks/
 │   │   ├── useDemographicsQuery.ts
+│   │   ├── useCommuteQuery.ts
 │   │   ├── useEmploymentQuery.ts
 │   │   ├── useHousingQuery.ts
 │   │   ├── useLocationSearchQuery.ts
@@ -477,12 +584,15 @@ homeIntel/
 │   ├── pages/
 │   │   ├── CategoryPage.tsx
 │   │   ├── ComparePage.tsx
+│   │   ├── LifeSimulatorPage.tsx
 │   │   └── OverviewPage.tsx
 │   ├── services/
 │   │   ├── demographics.ts
 │   │   ├── employment.ts
 │   │   ├── housing.ts
-│   │   └── risk.ts
+│   │   ├── lifeSimulator.ts
+│   │   ├── risk.ts
+│   │   └── traffic.ts
 │   ├── store/
 │   │   └── useAppStore.ts
 │   ├── utils/
@@ -507,6 +617,8 @@ homeIntel/
 4. TanStack Query hooks load weather, housing, Census, employment, FEMA, college, and K-12 data as needed.
 5. The Overview combines the map, weather, city snapshot, housing indicators, risk profile, and economic engine.
 6. Category pages provide deeper visualizations and data-driven HomeIntel Briefs.
+7. The Simulator reuses cached city data, applies synchronous deterministic calculations, and updates all results immediately as household assumptions change.
+8. Simulator assumptions and checklist progress remain on the current device through `localStorage`.
 
 ## Data limitations
 
@@ -527,16 +639,23 @@ homeIntel/
 - A CCD virtual flag does not establish accreditation, tuition, admission eligibility, or current enrollment availability; verify those details with the school or state education agency.
 - Online-school administrative addresses do not describe a student's attendance location, so the Online tab omits city-center distance.
 - K-12 staffing ratios are not class sizes, test scores, ratings, or recommendations.
+- Life Simulator outputs are planning estimates rather than tax, mortgage, utility, insurance, fuel-price, financial, employment, or relocation advice.
+- State-level regional price parity is broader than a city or neighborhood and cannot represent every household's grocery, utility, or transportation costs.
+- The Community fit dimension is a limited demographic proxy, not a measure of culture, belonging, compatibility, or quality of life.
+- Career matching searches the available Census industry labels; it does not measure job openings, occupation-level demand, licensing requirements, or an individual's likelihood of employment.
+- Readiness checklist completion records user progress only and does not verify that an external task was performed correctly.
 
 ## Environment and security
 
-`.env` is ignored by Git. Never commit Census or Data.gov keys.
+`.env` is ignored by Git. Never commit Census, Data.gov, BEA, or TomTom keys.
 
 Variables prefixed with `VITE_` are included in browser code. FBI requests use a same-origin server proxy and the `DATA_GOV_API_KEY` server-only variable. For a static public deployment, implement the equivalent endpoint as a serverless function. Census requests still need a production proxy so that key is not exposed to browser users.
 
 Zillow, Open-Meteo, OpenStreetMap, and FEMA requests used here do not require private application keys.
 
 BLS LAUS/QCEW, Census QWI, USAspending, Wikidata, and the HIFLD hospital feature service do not require private application keys. `BEA_API_KEY` is optional and enables county real-GDP data.
+
+`TOMTOM_API_KEY` is optional and remains server-side. It enables live traffic-aware travel time and typical rush-hour sampling. Without it, the commute planner automatically uses a clearly labeled OSRM baseline route. Both commute endpoints must be recreated alongside the other Vite proxies for a production static deployment.
 
 The Urban Institute Education Data Portal / CCD school integration does not require an API key. Its proxy exists for response filtering, caching, request compatibility, and production control rather than secret management.
 
@@ -566,6 +685,14 @@ npm run data:update
 
 - Confirm the browser can access `open-meteo.com`.
 - Check the browser network panel for blocked or rate-limited requests.
+
+### Live traffic or transit options are unavailable
+
+- Add `TOMTOM_API_KEY` to `.env`, then restart Vite to enable live and historical traffic-aware routing.
+- Without a TomTom key, **Baseline routing** is expected and still provides road distance, route geometry, and a non-live duration.
+- Select Start or Destination before clicking the map. The highlighted control shows which point the next click will move.
+- Overpass transit records may be incomplete or temporarily rate limited. They represent mapped stops, not live schedules or a routed transit itinerary.
+- The routing proxy caches results for two minutes; mapped transit stops are cached for 24 hours.
 
 ### Current unemployment says unavailable
 
@@ -598,10 +725,13 @@ npm run data:update
 Run before committing:
 
 ```bash
+npm test
 npm run validate homeintel
 ```
 
-This command runs the following operations in sequence and stops immediately if
+`npm test` runs the pure calculation suite, including mortgage math, itemized-cost reconciliation, explainable deal-breaker failures, score bounds, household-consensus averaging, traffic-delay classification, and transit-stop proximity distance.
+
+The validation command runs the following operations in sequence and stops immediately if
 one fails:
 
 1. `npm run data:update`

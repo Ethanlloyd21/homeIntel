@@ -1133,11 +1133,333 @@ const majorHospitalsProxy = (): Plugin => {
   }
 }
 
+type TomTomRoutePayload = {
+  routes?: {
+    summary: {
+      lengthInMeters: number
+      travelTimeInSeconds: number
+      trafficDelayInSeconds?: number
+      noTrafficTravelTimeInSeconds?: number
+      historicTrafficTravelTimeInSeconds?: number
+      liveTrafficIncidentsTravelTimeInSeconds?: number
+    }
+    legs?: { points?: { latitude: number; longitude: number }[] }[]
+  }[]
+}
+
+type OsrmRoutePayload = {
+  routes?: {
+    distance: number
+    duration: number
+    geometry?: { coordinates?: [number, number][] }
+  }[]
+}
+
+type OverpassPayload = {
+  elements?: {
+    id: number
+    lat?: number
+    lon?: number
+    center?: { lat: number; lon: number }
+    tags?: Record<string, string>
+  }[]
+}
+
+const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
+  const routeCache = new Map<string, ProxyCacheEntry>()
+  const transitCache = new Map<string, ProxyCacheEntry>()
+  const coordinate = (requestUrl: URL, name: string) =>
+    Number(requestUrl.searchParams.get(name))
+  const validPoint = (latitude: number, longitude: number) =>
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    Math.abs(latitude) <= 90 &&
+    Math.abs(longitude) <= 180
+  const nextWeekday = () => {
+    const date = new Date()
+    date.setUTCDate(date.getUTCDate() + 1)
+    while (date.getUTCDay() === 0 || date.getUTCDay() === 6)
+      date.setUTCDate(date.getUTCDate() + 1)
+    return date.toISOString().slice(0, 10)
+  }
+  const fetchTomTomRoute = async (
+    originLatitude: number,
+    originLongitude: number,
+    destinationLatitude: number,
+    destinationLongitude: number,
+    departAt: string,
+  ) => {
+    const locations = `${originLatitude},${originLongitude}:${destinationLatitude},${destinationLongitude}`
+    const upstream = new URL(
+      `https://api.tomtom.com/routing/1/calculateRoute/${locations}/json`,
+    )
+    Object.entries({
+      key: tomTomApiKey,
+      traffic: 'true',
+      travelMode: 'car',
+      routeType: 'fastest',
+      routeRepresentation: 'polyline',
+      computeTravelTimeFor: 'all',
+      departAt,
+    }).forEach(([key, value]) => upstream.searchParams.set(key, value))
+    const result = await timedFetch(upstream, {
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!result.ok)
+      throw new Error(`Traffic route failed with ${result.status}`)
+    const payload = (await result.json()) as TomTomRoutePayload
+    const route = payload.routes?.[0]
+    if (!route) throw new Error('No traffic route was returned.')
+    return route
+  }
+  const fetchOsrmFallback = async (
+    originLatitude: number,
+    originLongitude: number,
+    destinationLatitude: number,
+    destinationLongitude: number,
+  ) => {
+    const upstream = new URL(
+      `https://router.project-osrm.org/route/v1/driving/${originLongitude},${originLatitude};${destinationLongitude},${destinationLatitude}`,
+    )
+    upstream.searchParams.set('overview', 'full')
+    upstream.searchParams.set('geometries', 'geojson')
+    const result = await timedFetch(upstream, {
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!result.ok) throw new Error('Fallback routing is unavailable.')
+    const payload = (await result.json()) as OsrmRoutePayload
+    const route = payload.routes?.[0]
+    if (!route) throw new Error('No fallback route was returned.')
+    return {
+      provider: 'OSRM',
+      trafficAvailable: false,
+      distanceMeters: route.distance,
+      travelTimeSeconds: route.duration,
+      freeFlowTimeSeconds: route.duration,
+      trafficDelaySeconds: 0,
+      points: (route.geometry?.coordinates ?? []).map(
+        ([longitude, latitude]) => ({ latitude, longitude }),
+      ),
+      profiles: [],
+      note: tomTomApiKey
+        ? 'Live traffic was temporarily unavailable; showing a baseline route.'
+        : 'Add TOMTOM_API_KEY to enable live and historical traffic estimates.',
+    }
+  }
+
+  const handleRequest = async (
+    request: IncomingMessage,
+    response: ServerResponse,
+    next: () => void,
+  ) => {
+    const requestUrl = new URL(request.url ?? '/', 'http://localhost')
+    if (
+      requestUrl.pathname !== '/api/traffic-route' &&
+      requestUrl.pathname !== '/api/transit-options'
+    )
+      return next()
+
+    response.setHeader('Content-Type', 'application/json')
+    const originLatitude = coordinate(requestUrl, 'originLat')
+    const originLongitude = coordinate(requestUrl, 'originLon')
+    const destinationLatitude = coordinate(requestUrl, 'destinationLat')
+    const destinationLongitude = coordinate(requestUrl, 'destinationLon')
+    if (
+      !validPoint(originLatitude, originLongitude) ||
+      !validPoint(destinationLatitude, destinationLongitude)
+    ) {
+      response.statusCode = 400
+      response.end(
+        JSON.stringify({ error: 'Valid route coordinates are required.' }),
+      )
+      return
+    }
+
+    const cacheKey = [
+      originLatitude.toFixed(4),
+      originLongitude.toFixed(4),
+      destinationLatitude.toFixed(4),
+      destinationLongitude.toFixed(4),
+    ].join('|')
+
+    if (requestUrl.pathname === '/api/traffic-route') {
+      const cached = routeCache.get(cacheKey)
+      if (cached && cached.expiresAt > Date.now()) {
+        response.setHeader('Cache-Control', 'private, max-age=120')
+        response.end(cached.body)
+        return
+      }
+      try {
+        let resultBody: object
+        if (!tomTomApiKey) {
+          resultBody = await fetchOsrmFallback(
+            originLatitude,
+            originLongitude,
+            destinationLatitude,
+            destinationLongitude,
+          )
+        } else {
+          try {
+            const date = nextWeekday()
+            const sampleTimes = [
+              '06:30',
+              '07:30',
+              '08:30',
+              '16:00',
+              '17:00',
+              '18:00',
+            ]
+            const [currentResult, ...sampleResults] = await Promise.allSettled([
+              fetchTomTomRoute(
+                originLatitude,
+                originLongitude,
+                destinationLatitude,
+                destinationLongitude,
+                'now',
+              ),
+              ...sampleTimes.map((time) =>
+                fetchTomTomRoute(
+                  originLatitude,
+                  originLongitude,
+                  destinationLatitude,
+                  destinationLongitude,
+                  `${date}T${time}:00`,
+                ),
+              ),
+            ])
+            if (currentResult.status === 'rejected') throw currentResult.reason
+            const current = currentResult.value
+            const summary = current.summary
+            resultBody = {
+              provider: 'TomTom',
+              trafficAvailable: true,
+              distanceMeters: summary.lengthInMeters,
+              travelTimeSeconds: summary.travelTimeInSeconds,
+              freeFlowTimeSeconds:
+                summary.noTrafficTravelTimeInSeconds ??
+                summary.travelTimeInSeconds -
+                  (summary.trafficDelayInSeconds ?? 0),
+              trafficDelaySeconds: Math.max(
+                summary.trafficDelayInSeconds ?? 0,
+                summary.travelTimeInSeconds -
+                  (summary.noTrafficTravelTimeInSeconds ??
+                    summary.travelTimeInSeconds),
+              ),
+              points: (current.legs ?? []).flatMap((leg) => leg.points ?? []),
+              profiles: sampleResults.flatMap((result, index) =>
+                result.status === 'fulfilled'
+                  ? [
+                      {
+                        time: sampleTimes[index],
+                        travelTimeSeconds:
+                          result.value.summary
+                            .historicTrafficTravelTimeInSeconds ??
+                          result.value.summary.travelTimeInSeconds,
+                        freeFlowTimeSeconds:
+                          result.value.summary.noTrafficTravelTimeInSeconds ??
+                          result.value.summary.travelTimeInSeconds,
+                      },
+                    ]
+                  : [],
+              ),
+              note: `Typical weekday estimates sampled for ${date}; current conditions use live traffic. ${sampleResults.filter((result) => result.status === 'fulfilled').length} of ${sampleTimes.length} rush-hour samples were available.`,
+            }
+          } catch {
+            resultBody = await fetchOsrmFallback(
+              originLatitude,
+              originLongitude,
+              destinationLatitude,
+              destinationLongitude,
+            )
+          }
+        }
+        const body = JSON.stringify(resultBody)
+        routeCache.set(cacheKey, {
+          body,
+          expiresAt: Date.now() + 2 * 60 * 1000,
+        })
+        response.setHeader('Cache-Control', 'private, max-age=120')
+        response.end(body)
+      } catch {
+        response.statusCode = 502
+        response.end(
+          JSON.stringify({ error: 'Commute routing is unavailable.' }),
+        )
+      }
+      return
+    }
+
+    const cached = transitCache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(cached.body)
+      return
+    }
+    try {
+      const query = `[out:json][timeout:18];(nwr(around:2500,${originLatitude},${originLongitude})[highway=bus_stop];nwr(around:2500,${originLatitude},${originLongitude})[railway~"station|halt|tram_stop|subway_entrance"];nwr(around:2500,${destinationLatitude},${destinationLongitude})[highway=bus_stop];nwr(around:2500,${destinationLatitude},${destinationLongitude})[railway~"station|halt|tram_stop|subway_entrance"];);out center tags 60;`
+      const upstream = new URL('https://overpass-api.de/api/interpreter')
+      upstream.searchParams.set('data', query)
+      const result = await timedFetch(upstream, {
+        headers: { 'User-Agent': 'HomeIntel/0.1 transit-discovery' },
+        signal: AbortSignal.timeout(22_000),
+      })
+      if (!result.ok) throw new Error('Transit discovery failed.')
+      const payload = (await result.json()) as OverpassPayload
+      const places = (payload.elements ?? []).flatMap((element) => {
+        const latitude = element.lat ?? element.center?.lat
+        const longitude = element.lon ?? element.center?.lon
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return []
+        const tags = element.tags ?? {}
+        const mode = tags.railway
+          ? tags.railway === 'subway_entrance'
+            ? 'Subway'
+            : tags.railway === 'tram_stop'
+              ? 'Tram'
+              : 'Train'
+          : 'Bus'
+        return [
+          {
+            id: `${mode}-${element.id}`,
+            name: tags.name || `${mode} stop`,
+            mode,
+            latitude,
+            longitude,
+            operator: tags.operator || '',
+          },
+        ]
+      })
+      const body = JSON.stringify({ places })
+      transitCache.set(cacheKey, {
+        body,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      })
+      response.setHeader('Cache-Control', 'private, max-age=86400')
+      response.end(body)
+    } catch {
+      response.statusCode = 502
+      response.end(
+        JSON.stringify({ error: 'Nearby transit information is unavailable.' }),
+      )
+    }
+  }
+
+  return {
+    name: 'homeintel-traffic-commute-proxy',
+    configureServer: (server) => {
+      server.middlewares.use(handleRequest)
+    },
+    configurePreviewServer: (server) => {
+      server.middlewares.use(handleRequest)
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '')
   const apiKey = env.DATA_GOV_API_KEY || env.VITE_DATA_GOV_API_KEY || ''
   const censusKey = env.VITE_CENSUS_API_KEY || ''
   const beaKey = env.BEA_API_KEY || ''
+  const tomTomApiKey = env.TOMTOM_API_KEY || ''
   return {
     resolve: {
       alias: {
@@ -1163,6 +1485,7 @@ export default defineConfig(({ mode }) => {
       majorEmployersProxy(),
       federalContractorsProxy(),
       majorHospitalsProxy(),
+      trafficCommuteProxy(tomTomApiKey),
     ],
   }
 })

@@ -8,6 +8,12 @@ import {
   defaultPreferenceWeights,
   monthlyMortgagePayment,
 } from '../src/services/lifeSimulator.ts'
+import {
+  minutes,
+  pointDistanceMiles,
+  trafficCondition,
+  trafficDelayPercent,
+} from '../src/services/traffic.ts'
 
 const city = {
   name: 'Test City',
@@ -85,4 +91,21 @@ test('consensus is the mean of both independently weighted scores', () => {
     Math.round((consensus.firstScore + consensus.secondScore) / 2),
   )
   assert.ok(consensus.alignment >= 0 && consensus.alignment <= 100)
+})
+
+test('classifies traffic from the delay above free-flow time', () => {
+  assert.equal(minutes(0), 0)
+  assert.equal(Math.round(trafficDelayPercent(1_800, 1_200)), 50)
+  assert.equal(trafficCondition(5).label, 'Light')
+  assert.equal(trafficCondition(12).label, 'Moderate')
+  assert.equal(trafficCondition(25).label, 'Heavy')
+  assert.equal(trafficCondition(50).label, 'Severe')
+})
+
+test('calculates point-to-point distance for transit proximity', () => {
+  const miles = pointDistanceMiles(
+    { latitude: 41.8781, longitude: -87.6298 },
+    { latitude: 41.8819, longitude: -87.6278 },
+  )
+  assert.ok(miles > 0.25 && miles < 0.35)
 })

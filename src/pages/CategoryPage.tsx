@@ -42,6 +42,7 @@ import NearbySchools from 'components/NearbySchools'
 import { useNearbySchoolsQuery } from 'hooks/useNearbySchoolsQuery'
 import EducationHouseholdComparison from 'components/EducationHouseholdComparison'
 import YearWeatherOutlook from 'components/YearWeatherOutlook'
+import TrafficCommute from 'components/TrafficCommute'
 import { useYearWeatherQuery } from 'hooks/useYearWeatherQuery'
 
 const ZHVI_SOURCE =
@@ -845,6 +846,7 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
           isError={majorEmployersQuery.isError}
         />
       )}
+      {type === 'Environment' && <TrafficCommute key={city.id} city={city} />}
     </div>
   )
 }
