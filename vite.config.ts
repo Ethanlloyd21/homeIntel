@@ -1454,6 +1454,122 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
   }
 }
 
+type NominatimResult = {
+  place_id?: number
+  lat?: string
+  lon?: string
+  display_name?: string
+  type?: string
+  addresstype?: string
+}
+
+const placeSearchCache = new Map<string, { body: string; expiresAt: number }>()
+/** Nominatim asks for at most one request per second from a single client. */
+let placeSearchChain: Promise<unknown> = Promise.resolve()
+
+const placeSearchProxy = (): Plugin => {
+  const handleRequest = async (
+    request: IncomingMessage,
+    response: ServerResponse,
+    next: (error?: unknown) => void,
+  ) => {
+    const requestUrl = new URL(request.url ?? '', 'http://localhost')
+    if (requestUrl.pathname !== '/api/place-search') return next()
+
+    const query = (requestUrl.searchParams.get('q') ?? '').trim()
+    const near = requestUrl.searchParams.get('near') ?? ''
+    if (query.length < 3) {
+      response.setHeader('Content-Type', 'application/json')
+      response.end(JSON.stringify({ places: [] }))
+      return
+    }
+
+    const cacheKey = `${query.toLowerCase()}|${near}`
+    const cached = placeSearchCache.get(cacheKey)
+    response.setHeader('Content-Type', 'application/json')
+    if (cached && cached.expiresAt > Date.now()) {
+      response.end(cached.body)
+      return
+    }
+
+    const params = new URLSearchParams({
+      q: query,
+      format: 'jsonv2',
+      addressdetails: '0',
+      limit: '6',
+      countrycodes: 'us',
+    })
+    if (near) {
+      const [lat, lon] = near.split(',').map(Number)
+      if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        const box = 0.6
+        params.set(
+          'viewbox',
+          `${lon - box},${lat + box},${lon + box},${lat - box}`,
+        )
+        params.set('bounded', '0')
+      }
+    }
+
+    try {
+      const run = placeSearchChain.then(async () => {
+        const upstream = await timedFetch(
+          `https://nominatim.openstreetmap.org/search?${params}`,
+          {
+            headers: {
+              'User-Agent': 'HomeIntel/0.1 (relocation research tool)',
+              'Accept-Language': 'en',
+            },
+          },
+        )
+        if (!upstream.ok) throw new Error('Place search failed.')
+        return (await upstream.json()) as NominatimResult[]
+      })
+      placeSearchChain = run
+        .catch(() => undefined)
+        .then(() => new Promise((resolve) => setTimeout(resolve, 1_100)))
+
+      const results = await run
+      const places = results.flatMap((result) => {
+        const latitude = Number(result.lat)
+        const longitude = Number(result.lon)
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return []
+        const name = result.display_name ?? ''
+        return [
+          {
+            id: String(result.place_id ?? `${latitude},${longitude}`),
+            label: name.split(',').slice(0, 3).join(',').trim(),
+            fullLabel: name,
+            kind: result.addresstype ?? result.type ?? 'place',
+            latitude,
+            longitude,
+          },
+        ]
+      })
+      const body = JSON.stringify({ places })
+      placeSearchCache.set(cacheKey, {
+        body,
+        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      })
+      response.setHeader('Cache-Control', 'private, max-age=604800')
+      response.end(body)
+    } catch {
+      response.statusCode = 502
+      response.end(JSON.stringify({ error: 'Place search is unavailable.' }))
+    }
+  }
+
+  return {
+    name: 'homeintel-place-search-proxy',
+    configureServer: (server) => {
+      server.middlewares.use(handleRequest)
+    },
+    configurePreviewServer: (server) => {
+      server.middlewares.use(handleRequest)
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '')
   const apiKey = env.DATA_GOV_API_KEY || env.VITE_DATA_GOV_API_KEY || ''
@@ -1463,6 +1579,7 @@ export default defineConfig(({ mode }) => {
   return {
     resolve: {
       alias: {
+        '@': '/src',
         App: '/src/App.tsx',
         assets: '/src/assets',
         components: '/src/components',
@@ -1486,6 +1603,7 @@ export default defineConfig(({ mode }) => {
       federalContractorsProxy(),
       majorHospitalsProxy(),
       trafficCommuteProxy(tomTomApiKey),
+      placeSearchProxy(),
     ],
   }
 })

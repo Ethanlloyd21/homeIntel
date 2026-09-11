@@ -9,11 +9,14 @@ const SearchBox = ({
   compact = false,
   placeholder = 'Enter a city or ZIP code',
   initialValue = '',
+  autoFocus = false,
 }: {
   onSelect: (city: City) => void
   compact?: boolean
   placeholder?: string
   initialValue?: string
+  /** Focus the field on mount, for searches opened by an explicit "edit" tap. */
+  autoFocus?: boolean
 }) => {
   const [value, setValue] = useState(initialValue)
   const [editing, setEditing] = useState(false)
@@ -29,6 +32,7 @@ const SearchBox = ({
       <Search size={20} />
       <input
         value={value}
+        autoFocus={autoFocus}
         aria-label="Search for a city"
         placeholder={placeholder}
         onChange={(event) => {

@@ -14,27 +14,24 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useId, useState } from 'react'
 import CitySelect from 'components/CitySelect'
 import LoadingSpinner from 'components/LoadingSpinner'
+import SourceChip from 'components/SourceChip'
 import type { City } from 'data/cities'
-import { useComparisonIndicesQuery } from 'hooks/useComparisonIndicesQuery'
-import { useDemographicsQuery } from 'hooks/useDemographicsQuery'
-import { useEmploymentQuery } from 'hooks/useEmploymentQuery'
-import { useHousingQuery } from 'hooks/useHousingQuery'
-import { useRiskQuery } from 'hooks/useRiskQuery'
+import { useCityIntel } from 'hooks/useCityIntel'
+import { useDecision } from 'hooks/useDecision'
 import {
   calculateConsensusScore,
   calculateLifeSimulation,
-  defaultDealBreakers,
-  defaultLifeInputs,
-  defaultPreferenceWeights,
-  type CityLifeData,
-  type DealBreakers,
-  type LifeInputs,
   type PreferenceWeights,
 } from 'services/lifeSimulator'
+import { useProfileStore } from 'store/useProfileStore'
 import { money } from 'utils/formatters'
+
+// Stable fallback: a selector returning a fresh [] each read would make
+// zustand's snapshot comparison fail and re-render forever.
+const noReadiness: string[] = []
 
 const checklistItems = [
   'Confirm income or employment before moving',
@@ -47,18 +44,19 @@ const checklistItems = [
   'Plan a test visit during a difficult season',
 ]
 
-const loadStored = <T,>(key: string, fallback: T): T => {
-  try {
-    const saved = localStorage.getItem(key)
-    return saved ? ({ ...fallback, ...JSON.parse(saved) } as T) : fallback
-  } catch {
-    return fallback
-  }
-}
-
 const fieldHelp: Record<string, string> = {
   'Annual household income':
     'The combined gross income your household expects to earn in one year, before taxes.',
+  'Current annual income':
+    'What your household earns today, before the move. This is what the salary-adjustment and cost-difference comparisons measure against.',
+  'Maximum commute':
+    'The longest one-way commute you would accept. Measured against a routed trip once you pin a home and workplace on the Neighbourhoods page.',
+  'Hospital within':
+    'The furthest you would accept a major hospital to be from where you live.',
+  'Minimum comfortable days':
+    'The fewest days a year you would accept inside your preferred outdoor temperature range. Set that range on the Day in your life page.',
+  'Maximum crime index':
+    'The highest reported violent-crime rate you would accept, where the national average is 100. This is a state-level FBI figure, so treat it as context rather than a measure of a specific neighbourhood.',
   'Household size':
     'The number of adults and children whose groceries, utilities, and other shared costs should be estimated.',
   'Housing plan':
@@ -257,43 +255,6 @@ const SimulatorScore = ({
   </div>
 )
 
-type SimulatorCityQueries = {
-  housing: ReturnType<typeof useHousingQuery>
-  demographics: ReturnType<typeof useDemographicsQuery>
-  employment: ReturnType<typeof useEmploymentQuery>
-  risk: ReturnType<typeof useRiskQuery>
-  indices: ReturnType<typeof useComparisonIndicesQuery>
-}
-
-const cityDataFromQueries = (
-  city: City,
-  queries: SimulatorCityQueries,
-): CityLifeData => {
-  const costOfLivingIndex = queries.indices.data?.costOfLivingIndex || 100
-  return {
-    name: city.name,
-    medianRent:
-      queries.housing.data?.medianRent ||
-      city.rent ||
-      1_500 * (costOfLivingIndex / 100),
-    medianHomeValue:
-      queries.housing.data?.medianHomeValue ||
-      city.home ||
-      300_000 * (costOfLivingIndex / 100),
-    costOfLivingIndex,
-    employmentRate:
-      queries.employment.data?.employmentRate || city.employed || 90,
-    medianWorkerEarnings:
-      queries.employment.data?.medianWorkerEarnings ||
-      city.income ||
-      50_000 * (costOfLivingIndex / 100),
-    collegeEducatedPercent:
-      queries.demographics.data?.collegeEducatedPercent || city.college,
-    riskScore: queries.risk.data?.score ?? (city.risk || 50),
-    industries: queries.employment.data?.industries ?? [],
-  }
-}
-
 const LifeSimulatorPage = ({
   city,
   comparisonCity,
@@ -303,86 +264,41 @@ const LifeSimulatorPage = ({
   comparisonCity: City | null
   setComparisonCity: (city: City) => void
 }) => {
-  const [inputs, setInputs] = useState<LifeInputs>(() =>
-    loadStored('homeintel-life-inputs', defaultLifeInputs),
-  )
-  const [dealBreakers, setDealBreakers] = useState<DealBreakers>(() =>
-    loadStored('homeintel-deal-breakers', defaultDealBreakers),
-  )
-  const [firstWeights, setFirstWeights] = useState<PreferenceWeights>(() =>
-    loadStored('homeintel-first-preferences', defaultPreferenceWeights),
-  )
-  const [secondWeights, setSecondWeights] = useState<PreferenceWeights>(() =>
-    loadStored('homeintel-second-preferences', {
-      affordability: 3,
-      career: 2,
-      safety: 5,
-      community: 4,
-    }),
-  )
-  const [checklists, setChecklists] = useState<Record<string, string[]>>(() =>
-    loadStored('homeintel-readiness', {}),
-  )
-  const completed = checklists[city.id] ?? []
+  const inputs = useProfileStore((state) => state.inputs)
+  const dealBreakers = useProfileStore((state) => state.dealBreakers)
+  const firstWeights = useProfileStore((state) => state.weights)
+  const secondWeights = useProfileStore((state) => state.partnerWeights)
+  const updateInput = useProfileStore((state) => state.setInput)
+  const updateRule = useProfileStore((state) => state.setRule)
+  const setFirstWeights = useProfileStore((state) => state.setWeights)
+  const setSecondWeights = useProfileStore((state) => state.setPartnerWeights)
+  const completed =
+    useProfileStore((state) => state.readiness[city.id]) ?? noReadiness
+  const toggleReadiness = useProfileStore((state) => state.toggleReadiness)
   const [guideOpen, setGuideOpen] = useState(
     () => localStorage.getItem('homeintel-simulator-guide') !== 'hidden',
   )
 
-  const leftHousing = useHousingQuery(city)
-  const leftDemographics = useDemographicsQuery(city, true, false)
-  const leftEmployment = useEmploymentQuery(city, true, false)
-  const leftRisk = useRiskQuery(city)
-  const leftIndices = useComparisonIndicesQuery(city)
-  const rightQueryCity = comparisonCity ?? city
-  const rightHousing = useHousingQuery(rightQueryCity, Boolean(comparisonCity))
-  const rightDemographics = useDemographicsQuery(
-    rightQueryCity,
-    Boolean(comparisonCity),
-    false,
-  )
-  const rightEmployment = useEmploymentQuery(
-    rightQueryCity,
-    Boolean(comparisonCity),
-    false,
-  )
-  const rightRisk = useRiskQuery(rightQueryCity, Boolean(comparisonCity))
-  const rightIndices = useComparisonIndicesQuery(
-    rightQueryCity,
-    Boolean(comparisonCity),
-  )
+  const decision = useDecision(city)
+  const rightIntel = useCityIntel(comparisonCity)
 
-  const leftQueries = {
-    housing: leftHousing,
-    demographics: leftDemographics,
-    employment: leftEmployment,
-    risk: leftRisk,
-    indices: leftIndices,
-  }
-  const rightQueries = {
-    housing: rightHousing,
-    demographics: rightDemographics,
-    employment: rightEmployment,
-    risk: rightRisk,
-    indices: rightIndices,
-  }
-  const leftData = cityDataFromQueries(city, leftQueries)
-  const rightData = cityDataFromQueries(rightQueryCity, rightQueries)
-  const leftResult = useMemo(
-    () => calculateLifeSimulation(leftData, inputs, dealBreakers, firstWeights),
-    [leftData, inputs, dealBreakers, firstWeights],
-  )
-  const rightResult = useMemo(
-    () =>
-      comparisonCity
-        ? calculateLifeSimulation(rightData, inputs, dealBreakers, firstWeights)
-        : null,
-    [comparisonCity, rightData, inputs, dealBreakers, firstWeights],
-  )
-  const leftConsensus = calculateConsensusScore(
-    leftResult.dimensions,
-    firstWeights,
-    secondWeights,
-  )
+  const leftResult = decision?.simulation ?? null
+  const rightResult =
+    rightIntel && leftResult
+      ? calculateLifeSimulation(
+          rightIntel.data,
+          inputs,
+          dealBreakers,
+          firstWeights,
+        )
+      : null
+  const leftConsensus = leftResult
+    ? calculateConsensusScore(
+        leftResult.dimensions,
+        firstWeights,
+        secondWeights,
+      )
+    : null
   const rightConsensus = rightResult
     ? calculateConsensusScore(
         rightResult.dimensions,
@@ -390,40 +306,9 @@ const LifeSimulatorPage = ({
         secondWeights,
       )
     : null
-  const pending = Object.values(leftQueries).some((query) => query.isPending)
+  const pending = decision?.intel.isPending ?? true
 
-  useEffect(() => {
-    localStorage.setItem('homeintel-life-inputs', JSON.stringify(inputs))
-    localStorage.setItem(
-      'homeintel-deal-breakers',
-      JSON.stringify(dealBreakers),
-    )
-    localStorage.setItem(
-      'homeintel-first-preferences',
-      JSON.stringify(firstWeights),
-    )
-    localStorage.setItem(
-      'homeintel-second-preferences',
-      JSON.stringify(secondWeights),
-    )
-  }, [inputs, dealBreakers, firstWeights, secondWeights])
-
-  const updateInput = <K extends keyof LifeInputs>(
-    key: K,
-    value: LifeInputs[K],
-  ) => setInputs((current) => ({ ...current, [key]: value }))
-  const updateRule = <K extends keyof DealBreakers>(
-    key: K,
-    value: DealBreakers[K],
-  ) => setDealBreakers((current) => ({ ...current, [key]: value }))
-  const toggleChecklist = (item: string) => {
-    const next = completed.includes(item)
-      ? completed.filter((value) => value !== item)
-      : [...completed, item]
-    const nextChecklists = { ...checklists, [city.id]: next }
-    setChecklists(nextChecklists)
-    localStorage.setItem('homeintel-readiness', JSON.stringify(nextChecklists))
-  }
+  const toggleChecklist = (item: string) => toggleReadiness(city.id, item)
   const toggleGuide = () => {
     const next = !guideOpen
     setGuideOpen(next)
@@ -433,51 +318,16 @@ const LifeSimulatorPage = ({
     )
   }
 
-  const confidence = [
-    {
-      label: 'Housing',
-      level: leftHousing.isPending
-        ? 'Loading'
-        : leftHousing.data?.homeValueNote.startsWith('ZHVI')
-          ? 'High'
-          : leftHousing.data
-            ? 'Medium'
-            : 'Unavailable',
-      note: leftHousing.data?.homeValueNote ?? 'Waiting for market data',
-    },
-    {
-      label: 'People',
-      level: leftDemographics.isPending
-        ? 'Loading'
-        : leftDemographics.data
-          ? 'High'
-          : 'Unavailable',
-      note: 'Census ACS place estimate',
-    },
-    {
-      label: 'Career',
-      level: leftEmployment.isPending
-        ? 'Loading'
-        : leftEmployment.data
-          ? 'High'
-          : 'Unavailable',
-      note: 'Census ACS employment profile',
-    },
-    {
-      label: 'Hazard',
-      level: leftRisk.isPending
-        ? 'Loading'
-        : leftRisk.data
-          ? 'High'
-          : 'Unavailable',
-      note: 'FEMA National Risk Index tract result',
-    },
-    {
-      label: 'Living costs',
-      level: leftIndices.data?.costOfLivingIndex ? 'Medium' : 'Estimated',
-      note: 'BEA state price level; not neighborhood-specific',
-    },
-  ]
+  if (!decision || !leftResult || !leftConsensus) {
+    return (
+      <div className="simulator-page">
+        <LoadingSpinner size={40} label="Loading this city" />
+      </div>
+    )
+  }
+
+  const leftData = decision.intel.data
+  const confidence = decision.intel.confidence
 
   return (
     <div className="simulator-page">
@@ -582,6 +432,11 @@ const LifeSimulatorPage = ({
             label="Annual household income"
             value={inputs.annualIncome}
             onChange={(value) => updateInput('annualIncome', value)}
+          />
+          <CurrencyInput
+            label="Current annual income"
+            value={inputs.currentAnnualIncome}
+            onChange={(value) => updateInput('currentAnnualIncome', value)}
           />
           <NumberInput
             label="Household size"
@@ -774,6 +629,13 @@ const LifeSimulatorPage = ({
                 <li key={explanation}>{explanation}</li>
               ))}
             </ul>
+            <p className="sim-regret-lede">
+              {decision.regret.summary}{' '}
+              <SourceChip
+                source={`${decision.regret.assessed.length} of ${decision.regret.factors.length} regret factors assessed. Open the Decision brief for the full breakdown.`}
+                level="Medium"
+              />
+            </p>
           </section>
 
           <section className="card sim-exposure-card">
@@ -834,7 +696,40 @@ const LifeSimulatorPage = ({
             step={0.1}
             onChange={(value) => updateRule('minimumEmploymentRate', value)}
           />
+          <NumberInput
+            label="Maximum commute"
+            value={dealBreakers.maximumCommuteMinutes}
+            suffix="min"
+            max={180}
+            onChange={(value) => updateRule('maximumCommuteMinutes', value)}
+          />
+          <NumberInput
+            label="Hospital within"
+            value={dealBreakers.hospitalWithinMiles}
+            suffix="mi"
+            max={200}
+            onChange={(value) => updateRule('hospitalWithinMiles', value)}
+          />
+          <NumberInput
+            label="Minimum comfortable days"
+            value={dealBreakers.minimumComfortableDays}
+            suffix="days/yr"
+            max={365}
+            onChange={(value) => updateRule('minimumComfortableDays', value)}
+          />
+          <NumberInput
+            label="Maximum crime index"
+            value={dealBreakers.maximumCrimeIndex}
+            suffix="vs 100"
+            max={500}
+            onChange={(value) => updateRule('maximumCrimeIndex', value)}
+          />
         </div>
+        <p className="sim-rule-note">
+          Commute, hospital access, comfortable-weather, and crime rules are
+          only checked once the underlying measurement exists — pin a home and
+          workplace on Neighbourhoods, and let the weather archive load.
+        </p>
         <div className="sim-requirements">
           {leftResult.requirements.map((requirement) => (
             <div

@@ -2,6 +2,8 @@ export type HousingMode = 'rent' | 'buy'
 
 export type LifeInputs = {
   annualIncome: number
+  /** What the household earns today, before the move. Drives salary-shock risk. */
+  currentAnnualIncome: number
   householdSize: number
   housingMode: HousingMode
   effectiveTaxRate: number
@@ -16,6 +18,9 @@ export type LifeInputs = {
   debtMonthly: number
   otherMonthly: number
   desiredIndustry: string
+  /** Outdoor temperature band the household actually enjoys, in °F. */
+  comfortLowF: number
+  comfortHighF: number
 }
 
 export type DealBreakers = {
@@ -24,6 +29,10 @@ export type DealBreakers = {
   maximumRisk: number
   minimumEmploymentRate: number
   requireIndustryMatch: boolean
+  maximumCommuteMinutes: number
+  hospitalWithinMiles: number
+  minimumComfortableDays: number
+  maximumCrimeIndex: number
 }
 
 export type PreferenceWeights = {
@@ -43,6 +52,12 @@ export type CityLifeData = {
   collegeEducatedPercent: number
   riskScore: number
   industries: { name: string; percent: number }[]
+  /** Optional context. Each value adds a requirement only when it is known. */
+  comfortableDaysPerYear?: number | null
+  commuteMinutes?: number | null
+  nearestHospitalMiles?: number | null
+  /** FBI UCR reported violent-crime rate as an index where the US average is 100. */
+  violentCrimeIndex?: number | null
 }
 
 export type CostLine = {
@@ -76,6 +91,7 @@ export type LifeSimulation = {
 
 export const defaultLifeInputs: LifeInputs = {
   annualIncome: 90_000,
+  currentAnnualIncome: 90_000,
   householdSize: 2,
   housingMode: 'rent',
   effectiveTaxRate: 22,
@@ -90,6 +106,8 @@ export const defaultLifeInputs: LifeInputs = {
   debtMonthly: 300,
   otherMonthly: 350,
   desiredIndustry: '',
+  comfortLowF: 60,
+  comfortHighF: 82,
 }
 
 export const defaultDealBreakers: DealBreakers = {
@@ -98,6 +116,10 @@ export const defaultDealBreakers: DealBreakers = {
   maximumRisk: 65,
   minimumEmploymentRate: 92,
   requireIndustryMatch: false,
+  maximumCommuteMinutes: 40,
+  hospitalWithinMiles: 15,
+  minimumComfortableDays: 120,
+  maximumCrimeIndex: 130,
 }
 
 export const defaultPreferenceWeights: PreferenceWeights = {
@@ -141,6 +163,20 @@ const findIndustry = (
       industry.name.toLowerCase().includes(search),
     ) ?? null
   )
+}
+
+/**
+ * Safety blends two different dangers a mover actually weighs together: the
+ * natural-hazard loss score and the reported violent-crime rate. Crime is only
+ * available at state level, so it is given equal weight but never more.
+ */
+const safetyDimension = (city: CityLifeData) => {
+  const hazardSafety = clamp(100 - city.riskScore)
+  const index = city.violentCrimeIndex
+  if (typeof index !== 'number' || !Number.isFinite(index)) return hazardSafety
+  // An index of 60 is well below the national average; 200 is far above it.
+  const crimeSafety = clamp(100 - ((index - 60) / 140) * 100)
+  return clamp(hazardSafety * 0.5 + crimeSafety * 0.5)
 }
 
 const weightedScore = (
@@ -307,6 +343,56 @@ export const calculateLifeSimulation = (
           },
         ]
       : []),
+    ...(typeof city.commuteMinutes === 'number' &&
+    Number.isFinite(city.commuteMinutes)
+      ? [
+          {
+            label: 'Commute time',
+            passed:
+              city.commuteMinutes <= safe(dealBreakers.maximumCommuteMinutes),
+            actual: `${Math.round(city.commuteMinutes)} min each way`,
+            rule: `At most ${Math.round(dealBreakers.maximumCommuteMinutes)} min`,
+          },
+        ]
+      : []),
+    ...(typeof city.nearestHospitalMiles === 'number' &&
+    Number.isFinite(city.nearestHospitalMiles)
+      ? [
+          {
+            label: 'Hospital access',
+            passed:
+              city.nearestHospitalMiles <=
+              safe(dealBreakers.hospitalWithinMiles),
+            actual: `${city.nearestHospitalMiles.toFixed(1)} mi to nearest major hospital`,
+            rule: `Within ${Math.round(dealBreakers.hospitalWithinMiles)} mi`,
+          },
+        ]
+      : []),
+    ...(typeof city.violentCrimeIndex === 'number' &&
+    Number.isFinite(city.violentCrimeIndex)
+      ? [
+          {
+            label: 'Reported crime',
+            passed:
+              city.violentCrimeIndex <= safe(dealBreakers.maximumCrimeIndex),
+            actual: `${Math.round(city.violentCrimeIndex)} vs US average 100`,
+            rule: `At most ${Math.round(dealBreakers.maximumCrimeIndex)}`,
+          },
+        ]
+      : []),
+    ...(typeof city.comfortableDaysPerYear === 'number' &&
+    Number.isFinite(city.comfortableDaysPerYear)
+      ? [
+          {
+            label: 'Comfortable weather',
+            passed:
+              city.comfortableDaysPerYear >=
+              safe(dealBreakers.minimumComfortableDays),
+            actual: `${Math.round(city.comfortableDaysPerYear)} days/yr in your range`,
+            rule: `At least ${Math.round(dealBreakers.minimumComfortableDays)} days/yr`,
+          },
+        ]
+      : []),
   ]
 
   const disposableRatio = grossMonthlyIncome
@@ -321,7 +407,7 @@ export const calculateLifeSimulation = (
         Math.min(25, industryMatch.percent * 1.5) +
         (inputs.desiredIndustry.trim() && industryMatch.matched ? 10 : 0),
     ),
-    safety: clamp(100 - city.riskScore),
+    safety: safetyDimension(city),
     community: clamp(35 + city.collegeEducatedPercent * 1.15),
   }
   const fitScore = Math.round(weightedScore(dimensions, weights))

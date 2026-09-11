@@ -1,14 +1,23 @@
-import { Bell, Download, Menu, Moon, Sun } from 'lucide-react'
+import { Menu, Moon, Search, Sun } from 'lucide-react'
 import { Switch } from 'radix-ui'
+
+const greeting = () => {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
 
 const Header = ({
   onMenu,
   theme,
   onThemeChange,
+  onOpenPalette,
 }: {
   onMenu: () => void
   theme: 'light' | 'dark'
   onThemeChange: (theme: 'light' | 'dark') => void
+  onOpenPalette: () => void
 }) => {
   return (
     <header>
@@ -20,11 +29,27 @@ const Header = ({
         <Menu />
       </button>
       <div>
-        <p className="eyebrow">LOCATION INTELLIGENCE</p>
-        <h1>Good morning, Lloyd.</h1>
+        <p className="eyebrow">RELOCATION INTELLIGENCE</p>
+        <h1>{greeting()}. Where are you thinking of moving?</h1>
       </div>
       <div className="header-actions">
-        <div className="theme-control transition-all duration-200 hover:border-violet-400/60 hover:shadow-[0_0_18px_rgba(139,92,246,0.16)]">
+        <button
+          type="button"
+          className="palette-trigger"
+          onClick={onOpenPalette}
+          aria-label="Open command palette"
+        >
+          <Search size={15} aria-hidden="true" />
+          <span>Search or jump to…</span>
+          <kbd>
+            {typeof navigator !== 'undefined' &&
+            navigator.platform.toLowerCase().includes('mac')
+              ? '⌘'
+              : 'Ctrl'}
+            K
+          </kbd>
+        </button>
+        <div className="theme-control">
           <Sun size={15} aria-hidden="true" />
           <Switch.Root
             className="theme-switch outline-none transition focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2"
@@ -38,16 +63,6 @@ const Header = ({
           </Switch.Root>
           <Moon size={15} aria-hidden="true" />
         </div>
-        <button
-          className="icon-btn transition duration-200 hover:-translate-y-0.5 hover:border-violet-400/60 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
-          aria-label="Notifications"
-        >
-          <Bell size={18} />
-          <i />
-        </button>
-        <button className="export transition duration-200 hover:-translate-y-0.5 hover:border-violet-400/60 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
-          <Download size={16} /> Export report
-        </button>
       </div>
     </header>
   )
