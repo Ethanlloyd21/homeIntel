@@ -5,6 +5,10 @@ export type HazardRisk = {
   score: number
   rating: string
   tone: 'high' | 'medium' | 'low'
+  annualLoss: number | null
+  buildingLoss: number | null
+  annualFrequency: number | null
+  historicalBuildingLossRatio: number | null
 }
 
 export type RiskData = {
@@ -17,6 +21,13 @@ export type RiskData = {
   resilienceRating: string | null
   version: string
   hazards: HazardRisk[]
+  countyFips: string
+  stateCode: string
+  annualLoss: number | null
+  buildingLoss: number | null
+  agricultureLoss: number | null
+  socialVulnerabilityScore: number | null
+  socialVulnerabilityRating: string | null
 }
 
 type Attributes = Record<string, string | number | null>
@@ -57,8 +68,11 @@ const tone = (score: number): HazardRisk['tone'] => {
 }
 
 const finiteScore = (value: string | number | null) => {
-  return typeof value === 'number' && Number.isFinite(value)
-    ? Math.round(Math.min(100, Math.max(0, value)))
+  return typeof value === 'number' &&
+    Number.isFinite(value) &&
+    value >= 0 &&
+    value <= 100
+    ? Math.round(value)
     : null
 }
 
@@ -70,6 +84,10 @@ export const fetchRiskData = async (city: City, signal: AbortSignal) => {
   const hazardFields = hazards.flatMap(([, code]) => [
     `${code}_EALS`,
     `${code}_EALR`,
+    `${code}_EALT`,
+    `${code}_AFREQ`,
+    // FEMA drought exposure is agricultural; building fields do not exist.
+    ...(code === 'DRGT' ? [] : [`${code}_EALB`, `${code}_HLRB`]),
   ])
   const params = new URLSearchParams({
     f: 'json',
@@ -87,6 +105,13 @@ export const fetchRiskData = async (city: City, signal: AbortSignal) => {
       'RESL_SCORE',
       'RESL_RATNG',
       'NRI_VER',
+      'STCOFIPS',
+      'STATEABBRV',
+      'EAL_VALT',
+      'EAL_VALB',
+      'EAL_VALA',
+      'SOVI_SCORE',
+      'SOVI_RATNG',
       ...hazardFields,
     ].join(','),
     returnGeometry: 'false',
@@ -110,6 +135,10 @@ export const fetchRiskData = async (city: City, signal: AbortSignal) => {
         score: normalizedScore,
         rating: String(attributes[`${code}_EALR`] ?? 'Not rated'),
         tone: tone(normalizedScore),
+        annualLoss: nonnegative(attributes[`${code}_EALT`]),
+        buildingLoss: nonnegative(attributes[`${code}_EALB`]),
+        annualFrequency: nonnegative(attributes[`${code}_AFREQ`]),
+        historicalBuildingLossRatio: nonnegative(attributes[`${code}_HLRB`]),
       })
       return results
     }, [])
@@ -126,13 +155,23 @@ export const fetchRiskData = async (city: City, signal: AbortSignal) => {
     statePercentile: finiteScore(attributes.EAL_SPCTL) ?? 0,
     county: String(attributes.COUNTY ?? ''),
     tract: String(attributes.TRACT ?? ''),
-    resilienceScore:
-      typeof attributes.RESL_SCORE === 'number'
-        ? Math.round(attributes.RESL_SCORE)
-        : null,
+    resilienceScore: finiteScore(attributes.RESL_SCORE),
     resilienceRating:
       typeof attributes.RESL_RATNG === 'string' ? attributes.RESL_RATNG : null,
-    version: String(attributes.NRI_VER ?? 'December 2025'),
+    version: String(attributes.NRI_VER ?? 'Version not supplied'),
     hazards: hazardRisks,
+    countyFips: String(attributes.STCOFIPS ?? '').padStart(5, '0'),
+    stateCode: String(attributes.STATEABBRV ?? ''),
+    annualLoss: nonnegative(attributes.EAL_VALT),
+    buildingLoss: nonnegative(attributes.EAL_VALB),
+    agricultureLoss: nonnegative(attributes.EAL_VALA),
+    socialVulnerabilityScore: finiteScore(attributes.SOVI_SCORE),
+    socialVulnerabilityRating:
+      typeof attributes.SOVI_RATNG === 'string' ? attributes.SOVI_RATNG : null,
   } satisfies RiskData
 }
+
+const nonnegative = (value: string | number | null) =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? value
+    : null

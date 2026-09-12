@@ -36,7 +36,7 @@ type ZillowDataset = {
   markets: ZillowMarket[]
 }
 
-const stateAbbreviations: Record<string, string> = {
+export const stateAbbreviations: Record<string, string> = {
   Alabama: 'AL',
   Alaska: 'AK',
   Arizona: 'AZ',

@@ -11,20 +11,23 @@ const NeighborhoodPage = ({
 }: {
   city: City
   comparisonCity: City | null
-  setComparisonCity: (city: City) => void
+  setComparisonCity: (city: City | null) => void
 }) => (
   <div className="neighborhood-page">
     <PageHeader
       eyebrow="NEIGHBOURHOOD FOCUS"
       icon={MapPinned}
       title="City averages hide the decision. Pin the actual block."
-      description="Hazard risk, commute time, and service access change street by street. Pin a home point and a workplace, and every number below is measured from there — including the commute the rest of the app uses."
+      description="Pin a home and workplace to compare the actual commute and local hazard context. Each information icon explains what the number measures and which area it represents."
     />
 
     <div className="neighborhood-grid">
       <NeighborhoodColumn city={city} />
       {comparisonCity ? (
-        <NeighborhoodColumn city={comparisonCity} />
+        <NeighborhoodColumn
+          city={comparisonCity}
+          onRemove={() => setComparisonCity(null)}
+        />
       ) : (
         <div className="card neighborhood-empty">
           <span>

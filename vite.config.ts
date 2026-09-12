@@ -2,6 +2,9 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { defineConfig, loadEnv, type Plugin } from 'vite'
+import { placeSearchParams } from './src/utils/placeSearch.ts'
+import { trafficTilesProxy } from './server/trafficTilesProxy.ts'
+import { trafficDeparture } from './src/utils/trafficTiming.ts'
 import {
   MINIMUM_WAGE_EFFECTIVE_DATE,
   MINIMUM_WAGE_SOURCE,
@@ -1168,6 +1171,14 @@ type OverpassPayload = {
 const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
   const routeCache = new Map<string, ProxyCacheEntry>()
   const transitCache = new Map<string, ProxyCacheEntry>()
+  const trafficSamples = new Map<
+    string,
+    {
+      expiresAt: number
+      result: Promise<NonNullable<TomTomRoutePayload['routes']>[number]>
+    }
+  >()
+  let trafficRequestChain: Promise<unknown> = Promise.resolve()
   const coordinate = (requestUrl: URL, name: string) =>
     Number(requestUrl.searchParams.get(name))
   const validPoint = (latitude: number, longitude: number) =>
@@ -1190,6 +1201,9 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
     departAt: string,
   ) => {
     const locations = `${originLatitude},${originLongitude}:${destinationLatitude},${destinationLongitude}`
+    const sampleKey = `${locations}|${departAt}`
+    const cached = trafficSamples.get(sampleKey)
+    if (cached && cached.expiresAt > Date.now()) return cached.result
     const upstream = new URL(
       `https://api.tomtom.com/routing/1/calculateRoute/${locations}/json`,
     )
@@ -1202,15 +1216,34 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
       computeTravelTimeFor: 'all',
       departAt,
     }).forEach(([key, value]) => upstream.searchParams.set(key, value))
-    const result = await timedFetch(upstream, {
-      signal: AbortSignal.timeout(15_000),
+    // Share day/time samples and pace requests so comparison charts do not
+    // exhaust the provider's per-second allowance and knock out the main route.
+    const pending = trafficRequestChain.then(async () => {
+      const result = await timedFetch(upstream, {
+        signal: AbortSignal.timeout(15_000),
+      })
+      if (!result.ok)
+        throw new Error(`Traffic route failed with ${result.status}`)
+      const payload = (await result.json()) as TomTomRoutePayload
+      const route = payload.routes?.[0]
+      if (!route) throw new Error('No traffic route was returned.')
+      return route
     })
-    if (!result.ok)
-      throw new Error(`Traffic route failed with ${result.status}`)
-    const payload = (await result.json()) as TomTomRoutePayload
-    const route = payload.routes?.[0]
-    if (!route) throw new Error('No traffic route was returned.')
-    return route
+    trafficRequestChain = pending
+      .catch(() => undefined)
+      .then(() => new Promise((resolve) => setTimeout(resolve, 300)))
+    if (trafficSamples.size >= 128)
+      trafficSamples.delete(trafficSamples.keys().next().value!)
+    trafficSamples.set(sampleKey, {
+      expiresAt: Date.now() + 120_000,
+      result: pending,
+    })
+    try {
+      return await pending
+    } catch (error) {
+      trafficSamples.delete(sampleKey)
+      throw error
+    }
   }
   const fetchOsrmFallback = async (
     originLatitude: number,
@@ -1283,7 +1316,28 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
     ].join('|')
 
     if (requestUrl.pathname === '/api/traffic-route') {
-      const cached = routeCache.get(cacheKey)
+      let departure = 'now'
+      if (requestUrl.searchParams.has('day')) {
+        try {
+          const day = requestUrl.searchParams.get('day') ?? ''
+          if (!/^[0-6]$/.test(day)) throw new Error('Invalid day')
+          departure = trafficDeparture(
+            Number(day),
+            requestUrl.searchParams.get('time') ?? '',
+            requestUrl.searchParams.get('timeZone') ?? '',
+          )
+        } catch {
+          response.statusCode = 400
+          response.end(
+            JSON.stringify({
+              error: 'A valid day, time, and city time zone are required.',
+            }),
+          )
+          return
+        }
+      }
+      const routeKey = `${cacheKey}|${departure}`
+      const cached = routeCache.get(routeKey)
       if (cached && cached.expiresAt > Date.now()) {
         response.setHeader('Cache-Control', 'private, max-age=120')
         response.end(cached.body)
@@ -1300,7 +1354,8 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
           )
         } else {
           try {
-            const date = nextWeekday()
+            const date =
+              departure === 'now' ? nextWeekday() : departure.slice(0, 10)
             const sampleTimes = [
               '06:30',
               '07:30',
@@ -1315,7 +1370,7 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
                 originLongitude,
                 destinationLatitude,
                 destinationLongitude,
-                'now',
+                departure,
               ),
               ...sampleTimes.map((time) =>
                 fetchTomTomRoute(
@@ -1332,6 +1387,8 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
             const summary = current.summary
             resultBody = {
               provider: 'TomTom',
+              departure,
+              fetchedAt: new Date().toISOString(),
               trafficAvailable: true,
               distanceMeters: summary.lengthInMeters,
               travelTimeSeconds: summary.travelTimeInSeconds,
@@ -1362,7 +1419,7 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
                     ]
                   : [],
               ),
-              note: `Typical weekday estimates sampled for ${date}; current conditions use live traffic. ${sampleResults.filter((result) => result.status === 'fulfilled').length} of ${sampleTimes.length} rush-hour samples were available.`,
+              note: `${departure === 'now' ? 'Current conditions use live traffic.' : `Predicted route for ${departure.replace('T', ' ')} in the origin’s local time; based on historical traffic patterns.`} Comparison times sampled for ${date}. ${sampleResults.filter((result) => result.status === 'fulfilled').length} of ${sampleTimes.length} samples available.`,
             }
           } catch {
             resultBody = await fetchOsrmFallback(
@@ -1374,7 +1431,7 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
           }
         }
         const body = JSON.stringify(resultBody)
-        routeCache.set(cacheKey, {
+        routeCache.set(routeKey, {
           body,
           expiresAt: Date.now() + 2 * 60 * 1000,
         })
@@ -1478,37 +1535,21 @@ const placeSearchProxy = (): Plugin => {
 
     const query = (requestUrl.searchParams.get('q') ?? '').trim()
     const near = requestUrl.searchParams.get('near') ?? ''
+    const city = (requestUrl.searchParams.get('city') ?? '').trim()
+    const state = (requestUrl.searchParams.get('state') ?? '').trim()
     if (query.length < 3) {
       response.setHeader('Content-Type', 'application/json')
       response.end(JSON.stringify({ places: [] }))
       return
     }
 
-    const cacheKey = `${query.toLowerCase()}|${near}`
+    const params = placeSearchParams(query, near, city, state)
+    const cacheKey = params.toString()
     const cached = placeSearchCache.get(cacheKey)
     response.setHeader('Content-Type', 'application/json')
     if (cached && cached.expiresAt > Date.now()) {
       response.end(cached.body)
       return
-    }
-
-    const params = new URLSearchParams({
-      q: query,
-      format: 'jsonv2',
-      addressdetails: '0',
-      limit: '6',
-      countrycodes: 'us',
-    })
-    if (near) {
-      const [lat, lon] = near.split(',').map(Number)
-      if (Number.isFinite(lat) && Number.isFinite(lon)) {
-        const box = 0.6
-        params.set(
-          'viewbox',
-          `${lon - box},${lat + box},${lon + box},${lat - box}`,
-        )
-        params.set('bounded', '0')
-      }
     }
 
     try {
@@ -1603,6 +1644,7 @@ export default defineConfig(({ mode }) => {
       federalContractorsProxy(),
       majorHospitalsProxy(),
       trafficCommuteProxy(tomTomApiKey),
+      trafficTilesProxy(tomTomApiKey, env.ARCGIS_API_KEY || ''),
       placeSearchProxy(),
     ],
   }

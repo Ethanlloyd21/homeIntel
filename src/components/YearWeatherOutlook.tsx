@@ -21,8 +21,10 @@ const sourceLabel = (source: WeatherMonth['source']) =>
     : source === 'partial'
       ? 'Partial month'
       : source === 'forecast'
-        ? 'Seasonal forecast'
-        : 'Not available yet'
+        ? 'Weather forecast'
+        : source === 'typical'
+          ? 'Historical expectation'
+          : 'Not available yet'
 
 const displayTemperature = (value: number | null) =>
   value === null ? '—' : `${Math.round(value)}°F`
@@ -47,6 +49,8 @@ const WeatherIcon = ({ code }: { code: number | null }) => {
   if (code === 0) return <Sun size={20} aria-hidden="true" />
   if (code <= 3) return <CloudSun size={20} aria-hidden="true" />
   if (code <= 48) return <Cloud size={20} aria-hidden="true" />
+  if (code >= 71 && code <= 77)
+    return <CloudSnow size={20} aria-hidden="true" />
   if (code <= 82) return <CloudRain size={20} aria-hidden="true" />
   if (code <= 86) return <CloudSnow size={20} aria-hidden="true" />
   return <CloudLightning size={20} aria-hidden="true" />
@@ -77,7 +81,7 @@ const YearWeatherOutlook = ({
   const wettest = [...reportedMonths].sort(
     (a, b) => (b.precipitation ?? 0) - (a.precipitation ?? 0),
   )[0]
-  const currentMonthKey = `${outlook?.year}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+  const currentMonthKey = outlook?.today.slice(0, 7)
   const defaultMonth =
     months.find((month) => month.key === currentMonthKey) ??
     reportedMonths.at(-1) ??
@@ -90,7 +94,7 @@ const YearWeatherOutlook = ({
       <div className="section-heading monthly-weather-heading">
         <div>
           <small>MONTHLY WEATHER</small>
-          <h3>Monthly weather overview</h3>
+          <h3>Your year, day by day</h3>
         </div>
         {months.length > 0 && selectedMonth && (
           <label className="weather-month-select">
@@ -121,6 +125,29 @@ const YearWeatherOutlook = ({
         </div>
       ) : (
         <>
+          <div
+            className="weather-month-tabs"
+            role="group"
+            aria-label="Choose weather month"
+          >
+            {months.map((month) => (
+              <button
+                type="button"
+                key={month.key}
+                aria-pressed={month.key === selectedMonth.key}
+                onClick={() => setSelectedMonthKey(month.key)}
+              >
+                {month.label.slice(0, 3)}
+                <small>
+                  {month.source === 'typical'
+                    ? 'Expected'
+                    : month.source === 'observed'
+                      ? 'History'
+                      : 'Mixed'}
+                </small>
+              </button>
+            ))}
+          </div>
           {warmest && coolest && wettest && (
             <div className="year-weather-summary">
               <div>
@@ -160,12 +187,22 @@ const YearWeatherOutlook = ({
                   {sourceLabel(selectedMonth.source)}
                 </span>
                 <h4>
-                  {selectedMonth.label} {outlook?.year} daily forecast
+                  {selectedMonth.label} {outlook?.year} daily outlook
                 </h4>
               </div>
-              <div className="weather-calendar-legend" aria-label="Calendar legend">
-                <span><i data-source="observed" /> Observed</span>
-                <span><i data-source="forecast" /> Forecast</span>
+              <div
+                className="weather-calendar-legend"
+                aria-label="Calendar legend"
+              >
+                <span>
+                  <i data-source="observed" /> Observed
+                </span>
+                <span>
+                  <i data-source="forecast" /> Forecast
+                </span>
+                <span>
+                  <i data-source="typical" /> Historical expectation
+                </span>
               </div>
             </div>
 
@@ -173,7 +210,9 @@ const YearWeatherOutlook = ({
               <div className="weather-calendar">
                 <div className="weather-calendar-weekdays" aria-hidden="true">
                   {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-                    (day) => <span key={day}>{day}</span>,
+                    (day) => (
+                      <span key={day}>{day}</span>
+                    ),
                   )}
                 </div>
                 <div className="weather-calendar-days">
@@ -184,27 +223,38 @@ const YearWeatherOutlook = ({
                       ).getUTCDay(),
                     },
                     (_, index) => (
-                      <span className="weather-calendar-blank" key={`blank-${index}`} />
+                      <span
+                        className="weather-calendar-blank"
+                        key={`blank-${index}`}
+                      />
                     ),
                   )}
                   {selectedMonth.days.map((day) => {
-                    const isToday = day.date === new Date().toLocaleDateString('en-CA')
+                    const isToday = day.date === outlook?.today
                     return (
                       <article
                         className="weather-calendar-day"
                         data-source={day.source}
                         data-today={isToday || undefined}
                         key={day.date}
-                        aria-label={`${selectedMonth.label} ${day.day}: ${describeWeather(day.weatherCode)}, high ${displayTemperature(day.high)}, low ${displayTemperature(day.low)}, precipitation ${displayPrecipitation(day.precipitation)}`}
+                        aria-label={`${selectedMonth.label} ${day.day}: ${day.source === 'typical' ? 'Historical expectation, not a daily forecast' : describeWeather(day.weatherCode)}, high ${displayTemperature(day.high)}, low ${displayTemperature(day.low)}`}
                       >
                         <div className="weather-calendar-day-head">
                           <strong>{day.day}</strong>
                           {isToday && <span>Today</span>}
                         </div>
-                        <WeatherIcon code={day.weatherCode} />
-                        <small>{describeWeather(day.weatherCode)}</small>
+                        {day.source === 'typical' ? (
+                          <CloudSun size={20} aria-hidden="true" />
+                        ) : (
+                          <WeatherIcon code={day.weatherCode} />
+                        )}
+                        <small>
+                          {day.source === 'typical'
+                            ? 'Typical range'
+                            : describeWeather(day.weatherCode)}
+                        </small>
                         {day.source === 'unavailable' ? (
-                          <p>Awaiting forecast</p>
+                          <p>Insufficient data</p>
                         ) : (
                           <>
                             <div className="weather-calendar-temps">
@@ -213,7 +263,9 @@ const YearWeatherOutlook = ({
                             </div>
                             <div className="weather-calendar-rain">
                               <Droplets size={12} aria-hidden="true" />
-                              {displayPrecipitation(day.precipitation)}
+                              {day.source === 'typical'
+                                ? `${Math.round(day.wetChance ?? 0)}% wet days`
+                                : displayPrecipitation(day.precipitation)}
                             </div>
                           </>
                         )}
@@ -226,10 +278,14 @@ const YearWeatherOutlook = ({
           </div>
 
           <p className="year-weather-note">
-            Open-Meteo historical weather through{' '}
-            {outlook?.reportedThrough ?? 'the latest available date'}. Select a
-            month to see daily conditions. Open-Meteo provides daily forecasts
-            for the next 16 days; later dates remain marked as awaiting forecast.
+            Daily forecasts extend through{' '}
+            {outlook?.forecastThrough ?? 'the available forecast window'}. Later
+            dates use {outlook?.baseline} Open-Meteo historical reanalysis,
+            averaging dates within seven days of that calendar day. “Wet days”
+            is the historical share with at least 0.01 inch of precipitation.
+            These are planning expectations, not predictions of the exact
+            weather on that future date. Historical reanalysis is modeled
+            weather informed by observations.
           </p>
         </>
       )}

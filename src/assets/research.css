@@ -1,0 +1,713 @@
+.research-page {
+  max-width: 1540px;
+  margin: 0 auto;
+  padding-bottom: 36px;
+}
+.research-page .page-header {
+  margin: 14px 0 32px;
+}
+.research-page .page-header h2 {
+  font-size: clamp(30px, 3.1vw, 47px);
+  font-weight: 500;
+  letter-spacing: -1.8px;
+  max-width: 25ch;
+}
+.research-page .page-header-description {
+  max-width: 78ch;
+  font-size: 14px;
+}
+.research-page .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--coral);
+  font-size: 10px;
+  letter-spacing: 0.13em;
+}
+.research-intro-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  margin: 0 0 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.research-intro-strip > svg {
+  flex-shrink: 0;
+  color: var(--green);
+  margin-top: 3px;
+}
+.research-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 30px;
+}
+.research-stat-grid > article {
+  padding: 22px;
+  border-radius: 14px;
+  box-shadow: var(--elev-1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.research-stat-grid > article > span {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.research-stat-grid > article > span > svg {
+  color: var(--coral);
+}
+.research-stat-grid > article > strong {
+  color: var(--ink);
+  font:
+    500 clamp(24px, 2.3vw, 35px)/1.2 'Manrope',
+    sans-serif;
+  letter-spacing: -1.1px;
+  overflow-wrap: anywhere;
+}
+.research-stat-grid > article > small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.research-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.research-section-head h3,
+.research-panel > h3 {
+  color: var(--ink);
+  font:
+    500 clamp(22px, 2vw, 29px)/1.25 'Manrope',
+    sans-serif;
+  letter-spacing: -0.7px;
+  margin: 6px 0;
+}
+.research-section-head h4,
+.research-panel > h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 24px 0 12px;
+}
+.research-caption {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.research-caption a,
+.research-page details a {
+  color: var(--coral);
+  text-underline-offset: 3px;
+}
+.research-status {
+  color: var(--muted);
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  padding: 9px 13px;
+  font-size: 11px;
+}
+.research-status[data-live='true'] {
+  color: var(--tone-good);
+  background: var(--tone-good-soft);
+}
+.research-spaced {
+  margin-top: 36px;
+}
+.research-panel {
+  padding: clamp(20px, 2.1vw, 32px);
+  border-radius: 16px;
+  box-shadow: var(--elev-1);
+  min-width: 0;
+}
+.research-two-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+  gap: 22px;
+  margin-bottom: 28px;
+  align-items: start;
+}
+.research-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 9px;
+  background: var(--soft);
+}
+.research-toggle button {
+  padding: 8px 10px;
+  color: var(--muted);
+  border: 0;
+  border-radius: 6px;
+  font-size: 11px;
+  background: transparent;
+}
+.research-toggle button[aria-pressed='true'] {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 1px 4px var(--shadow);
+}
+.research-loading {
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  color: var(--muted);
+}
+.research-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--coral);
+  font-size: 12px;
+  margin-top: 18px;
+  text-underline-offset: 4px;
+}
+.research-meaning > div {
+  display: flex;
+  gap: 16px;
+  padding: 19px 0;
+  border-bottom: 1px solid var(--line);
+}
+.research-meaning > div > span {
+  font:
+    12px ui-monospace,
+    monospace;
+  color: var(--coral);
+  padding-top: 4px;
+}
+.research-meaning p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 0;
+}
+.research-meaning b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.hazard-chart {
+  margin: 24px 0;
+}
+.hazard-chart-row {
+  border-bottom: 1px solid var(--line);
+}
+.hazard-chart-row summary {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(60px, 1.4fr) 76px;
+  gap: 14px;
+  align-items: center;
+  cursor: pointer;
+  padding: 14px 0;
+  color: var(--ink);
+  font-size: 12px;
+  list-style: none;
+}
+.hazard-chart-row summary::-webkit-details-marker {
+  display: none;
+}
+.hazard-chart-row summary > span:first-child::before {
+  content: '+';
+  color: var(--muted);
+  padding-right: 8px;
+}
+.hazard-chart-row[open] summary > span:first-child::before {
+  content: '−';
+}
+.hazard-chart-row summary b {
+  text-align: right;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.hazard-bar-track {
+  height: 8px;
+  background: var(--soft);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.hazard-bar-track i {
+  display: block;
+  height: 100%;
+  background: var(--coral);
+  border-radius: inherit;
+}
+.hazard-explanation {
+  padding: 0 12px 14px 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.hazard-explanation p {
+  margin: 4px 0;
+}
+.storm-summary {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 16px;
+  margin: 28px 0;
+}
+.storm-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 20px;
+  background: var(--soft);
+  border-radius: 12px;
+}
+.storm-summary strong {
+  font:
+    500 29px 'Manrope',
+    sans-serif;
+  color: var(--ink);
+  letter-spacing: -0.6px;
+}
+.storm-summary svg {
+  color: var(--green);
+}
+.storm-summary span {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.storm-year-chart {
+  display: grid;
+  gap: 18px;
+  margin: 26px 0;
+}
+.storm-year-chart > div {
+  display: grid;
+  grid-template-columns: 50px minmax(60px, 1fr) 90px 95px;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--ink);
+}
+.storm-year-chart > div > div {
+  height: 18px;
+  border-radius: 3px;
+  background: var(--soft);
+}
+.storm-year-chart i {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: var(--green);
+}
+.storm-year-chart b {
+  text-align: right;
+  font-weight: 600;
+}
+.storm-year-chart small {
+  text-align: right;
+  color: var(--muted);
+}
+.storm-hazard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.storm-hazard-grid > div {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  padding: 15px;
+  border-radius: 10px;
+}
+.storm-hazard-grid b {
+  color: var(--ink);
+  font-size: 13px;
+}
+.storm-hazard-grid span,
+.storm-hazard-grid small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.storm-event-list details {
+  border-top: 1px solid var(--line);
+  padding: 16px 0;
+}
+.storm-event-list summary {
+  display: grid;
+  grid-template-columns: 115px minmax(0, 1fr) minmax(70px, 150px);
+  gap: 18px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+.storm-event-list time {
+  font-size: 11px;
+  color: var(--muted);
+}
+.storm-event-list summary span {
+  display: grid;
+  gap: 5px;
+}
+.storm-event-list summary b,
+.storm-event-list summary strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+.storm-event-list summary strong {
+  text-align: right;
+}
+.storm-event-list summary small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.storm-event-list details > p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.75;
+  max-width: 100ch;
+}
+.traffic-only {
+  margin-top: 28px;
+}
+.traffic-map-card {
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: var(--elev-1);
+}
+.traffic-map-card .traffic-network-map {
+  height: clamp(440px, 65vh, 720px);
+  border: 0;
+  border-radius: 0;
+}
+.traffic-network-map .leaflet-container {
+  cursor: grab;
+}
+.traffic-network-map .leaflet-dragging {
+  cursor: grabbing;
+}
+.traffic-network-map .traffic-roads-basemap {
+  filter: saturate(0.25) contrast(1.03);
+}
+:root[data-theme='dark'] .traffic-network-map .traffic-roads-basemap {
+  filter: invert(0.9) hue-rotate(180deg) saturate(0.25) brightness(0.8);
+}
+:root .traffic-network-map .traffic-flow-tiles {
+  filter: none;
+}
+.traffic-time-controls {
+  margin: 0;
+}
+.traffic-map-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.traffic-city-reset {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--elev-1);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font:
+    12px 'DM Sans',
+    sans-serif;
+}
+.traffic-network-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 15px 20px;
+}
+.traffic-network-footer p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0;
+}
+.traffic-speed-legend {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.traffic-speed-legend i {
+  width: 110px;
+  height: 6px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #268344, #dacb36, #e48b30, #c33a3a);
+}
+.traffic-unavailable {
+  position: absolute;
+  z-index: 600;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(400px, calc(100% - 48px));
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+  box-shadow: var(--elev-2);
+  text-align: center;
+}
+.traffic-unavailable > svg {
+  color: var(--coral);
+}
+.traffic-unavailable h4 {
+  color: var(--ink);
+  font-size: 18px;
+  margin: 14px 0;
+}
+.traffic-unavailable p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.traffic-map-card:fullscreen {
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+}
+.traffic-map-card:fullscreen .traffic-network-map {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+.environment-research .year-weather-outlook {
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: var(--elev-1);
+}
+.weather-month-tabs {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 5px;
+  margin: 18px 0 24px;
+}
+.weather-month-tabs button {
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  padding: 10px 3px;
+  font-size: 12px;
+}
+.weather-month-tabs button small {
+  display: block;
+  font-size: 8px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.weather-month-tabs button[aria-pressed='true'] {
+  color: var(--coral);
+  border-color: var(--coral);
+  background: var(--soft);
+}
+.weather-calendar-day[data-source='typical'] {
+  background: var(--soft);
+  border-color: var(--line);
+}
+.weather-calendar-day[data-source='typical'] > svg {
+  color: var(--green);
+}
+.weather-calendar-legend i[data-source='typical'] {
+  background: var(--green);
+}
+.monthly-weather-title > div > span[data-source='typical'] {
+  color: var(--green);
+  background: var(--tone-good-soft);
+}
+.season-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 28px;
+}
+.season-insight-grid article {
+  border-top: 1px solid var(--line);
+  padding: 24px 0;
+}
+.season-insight-grid svg {
+  color: var(--coral);
+  width: 22px;
+  height: 22px;
+}
+.season-insight-grid h4 {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 500;
+  margin: 14px 0 10px;
+}
+.season-insight-grid p {
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.75;
+  margin: 8px 0;
+}
+.season-insight-grid small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+  margin-top: 12px;
+}
+.season-table-scroll {
+  overflow-x: auto;
+}
+.season-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 770px;
+  font-size: 12px;
+}
+.season-table caption {
+  caption-side: bottom;
+  color: var(--muted);
+  text-align: left;
+  font-size: 11px;
+  padding-top: 14px;
+}
+.season-table th,
+.season-table td {
+  text-align: left;
+  padding: 15px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  line-height: 1.65;
+}
+.season-table thead th {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  background: var(--soft);
+}
+.season-table td:last-child {
+  color: var(--muted);
+  max-width: 420px;
+}
+.neighborhood-metric-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.neighborhood-metric-label .source-chip {
+  vertical-align: middle;
+}
+.neighborhood-remove {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.neighborhood-row-copy .sim-tooltip {
+  width: min(350px, 70vw);
+  white-space: normal;
+  line-height: 1.6;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.neighborhood-row-copy .sim-tooltip strong {
+  color: inherit;
+  font-size: inherit;
+}
+.neighborhood-column {
+  overflow: visible;
+}
+.neighborhood-row-copy small.neighborhood-metric-label {
+  overflow: visible;
+}
+@media (max-width: 1100px) {
+  .research-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .research-two-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .season-insight-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .weather-month-tabs {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  .research-page .page-header h2 {
+    font-size: 32px;
+    letter-spacing: -1.1px;
+  }
+  .research-stat-grid {
+    gap: 10px;
+  }
+  .research-stat-grid > article {
+    padding: 16px;
+  }
+  .research-stat-grid > article > strong {
+    font-size: 25px;
+  }
+  .storm-summary,
+  .storm-hazard-grid,
+  .season-insight-grid {
+    grid-template-columns: 1fr;
+  }
+  .storm-year-chart > div {
+    grid-template-columns: 36px minmax(30px, 1fr) 70px;
+    gap: 10px;
+  }
+  .storm-year-chart small {
+    display: none;
+  }
+  .storm-event-list summary {
+    grid-template-columns: 80px minmax(0, 1fr) 80px;
+    gap: 10px;
+  }
+  .hazard-chart-row summary {
+    grid-template-columns: minmax(110px, 1.1fr) minmax(30px, 1fr) 65px;
+    gap: 8px;
+    font-size: 11px;
+  }
+  .traffic-network-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .traffic-map-card .traffic-network-map {
+    height: 480px;
+  }
+  .traffic-time-controls {
+    padding: 12px;
+    gap: 12px;
+  }
+  .environment-research .year-weather-outlook {
+    padding: 16px;
+  }
+  .neighborhood-head {
+    flex-wrap: wrap;
+  }
+}

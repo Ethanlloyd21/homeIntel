@@ -13,6 +13,7 @@
     "format:check": "prettier . --check",
     "test": "node --test --test-isolation=none tests/*.test.mjs",
     "data:update": "node scripts/update-zillow-data.mjs",
+    "data:storms": "node scripts/build-storm-history.mjs",
     "build:with-data": "npm run data:update && npm run build",
     "validate": "node scripts/validate-homeintel.mjs",
     "validate:with-data": "node scripts/validate-homeintel.mjs"

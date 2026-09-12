@@ -6,6 +6,7 @@ import {
   School,
   ShieldAlert,
   TrainFront,
+  X,
 } from 'lucide-react'
 import LoadingSpinner from 'components/LoadingSpinner'
 import PlacePicker from 'components/PlacePicker'
@@ -23,6 +24,27 @@ import {
   trafficDelayPercent,
 } from 'services/traffic'
 import { useProfileStore, type GeoPoint } from 'store/useProfileStore'
+
+const metricHelp: Record<string, string> = {
+  Commute:
+    'Driving time follows the roads between your home and workplace. TomTom includes current traffic when available; OSRM is a baseline without live traffic. +20% means a trip takes one fifth longer than free-flow travel.',
+  'Commute in current traffic':
+    'Driving time between your pinned home and workplace. The percentage compares traffic-aware time with free-flow travel. It changes with conditions; it is not a guaranteed daily commute.',
+  'Commute (baseline)':
+    'Estimated road travel time between your pinned home and workplace, without live traffic. This is a fallback route, not evidence that roads are clear.',
+  'Hazard risk at this point':
+    'FEMA Expected Annual Loss score for the census tract containing the home point. This is a relative 0–100 index: higher means greater modeled annual loss compared with other tracts. A score of 40 is not a 40% chance of a disaster or 40% of your home value. FEMA combines hazard frequency, exposed assets, and historical loss ratios. It is not a property inspection.',
+  'Nearest major hospital':
+    'Straight-line distance from the city centre to the nearest hospital in the available HIFLD records. This metric is not recalculated from the home point. Driving distance can be longer. It does not measure wait times, quality, or emergency response time.',
+  'Nearest public school':
+    'Straight-line distance from your home point to the nearest public school in the returned NCES records. Proximity does not establish attendance boundaries, admission eligibility, or school quality.',
+  'Nearest college':
+    'Distance from the city centre to a college in the College Scorecard results. This metric is not recalculated from your home point and does not show admission eligibility.',
+  'Transit stops nearby':
+    'Count of mapped OpenStreetMap stops near either trip endpoint, within approximately 1.6 miles. This is not a route itinerary and does not indicate frequency, accessibility, fares, or current service.',
+  'Typical housing here':
+    'Citywide Zillow market indices or a Census fallback. These are typical market figures, not a listing price, a block-level estimate, or the rent for your pinned address.',
+}
 
 const Row = ({
   icon: Icon,
@@ -42,14 +64,23 @@ const Row = ({
       <Icon size={16} aria-hidden="true" />
     </span>
     <span className="neighborhood-row-copy">
-      <small>{label}</small>
+      <small className="neighborhood-metric-label">
+        {label}
+        <SourceChip source={label} detail={metricHelp[label]} />
+      </small>
       <strong>{value}</strong>
       {note && <em>{note}</em>}
     </span>
   </div>
 )
 
-const NeighborhoodColumn = ({ city }: { city: City }) => {
+const NeighborhoodColumn = ({
+  city,
+  onRemove,
+}: {
+  city: City
+  onRemove?: () => void
+}) => {
   const anchors = useProfileStore((state) => state.anchors[city.id])
   const setAnchor = useProfileStore((state) => state.setAnchor)
   const intel = useCityIntel(city)
@@ -115,11 +146,24 @@ const NeighborhoodColumn = ({ city }: { city: City }) => {
           <strong>{city.name}</strong>
           <small>{city.state}</small>
         </div>
+        {onRemove && (
+          <button
+            type="button"
+            className="ghost-button neighborhood-remove"
+            onClick={onRemove}
+            aria-label={`Remove comparison neighborhood ${city.name}`}
+          >
+            <X size={15} /> Reset city
+          </button>
+        )}
       </div>
 
       <PlacePicker
+        key={`${city.id}-home`}
         label="Home point"
-        hint="An address, block, or neighbourhood you would actually live in."
+        hint={`Search an address in ${city.name}, ${city.state}. Press Enter or Search.`}
+        city={city.name}
+        state={city.state}
         value={home}
         near={`${city.latitude},${city.longitude}`}
         onChange={(point) => setAnchor(city.id, 'home', point)}
@@ -133,6 +177,7 @@ const NeighborhoodColumn = ({ city }: { city: City }) => {
         }
       />
       <PlacePicker
+        key={`${city.id}-work`}
         label="Workplace"
         hint="Where you would commute to. Sets the routed commute everywhere in the app."
         value={work}
@@ -147,12 +192,16 @@ const NeighborhoodColumn = ({ city }: { city: City }) => {
           ) : route ? (
             <Row
               icon={Car}
-              label="Commute in current traffic"
+              label={
+                route.trafficAvailable
+                  ? 'Commute in current traffic'
+                  : 'Commute (baseline)'
+              }
               value={`${minutes(route.travelTimeSeconds)} min · ${(route.distanceMeters / 1609.344).toFixed(1)} mi`}
               note={
-                condition
+                condition && route.trafficAvailable
                   ? `${condition.label} traffic · ${Math.round(delay ?? 0)}% over free-flow · ${route.provider}`
-                  : route.provider
+                  : `${route.provider} baseline · live traffic unavailable`
               }
               tone={
                 minutes(route.travelTimeSeconds) >= 45
@@ -263,7 +312,7 @@ const NeighborhoodColumn = ({ city }: { city: City }) => {
               ? String(commute.data.transit.length)
               : 'Set a workplace'
           }
-          note="OpenStreetMap stops along the corridor"
+          note="OpenStreetMap stops near either endpoint"
           tone={(commute.data?.transit.length ?? 0) > 0 ? 'good' : 'caution'}
         />
 

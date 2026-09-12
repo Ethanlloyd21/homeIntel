@@ -9273,6 +9273,77 @@ footer .brand-button:hover {
   top: calc(100% + 6px);
 }
 
+.traffic-time-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.traffic-mode-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--soft);
+}
+.traffic-mode-toggle button {
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+}
+.traffic-mode-toggle button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--elev-1);
+}
+.traffic-time-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.traffic-time-controls select {
+  max-width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  background: var(--input);
+}
+.traffic-time-controls > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.traffic-layer-note {
+  padding: 0 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.traffic-map-legend .route-severe {
+  background: #c7473b;
+}
+.traffic-sample-time {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.traffic-sample-time[aria-pressed='true'] {
+  color: var(--coral);
+  font-weight: 700;
+}
+:root[data-theme='dark'] .leaflet-layer.traffic-flow-tiles {
+  filter: none;
+}
+
 /* ==========================================================================
    Simulator additions
    ========================================================================== */

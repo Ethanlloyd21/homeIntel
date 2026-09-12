@@ -10,6 +10,8 @@ const SearchBox = ({
   placeholder = 'Enter a city or ZIP code',
   initialValue = '',
   autoFocus = false,
+  countryCode,
+  ariaLabel = 'Search for a city',
 }: {
   onSelect: (city: City) => void
   compact?: boolean
@@ -17,11 +19,13 @@ const SearchBox = ({
   initialValue?: string
   /** Focus the field on mount, for searches opened by an explicit "edit" tap. */
   autoFocus?: boolean
+  countryCode?: string
+  ariaLabel?: string
 }) => {
   const [value, setValue] = useState(initialValue)
   const [editing, setEditing] = useState(false)
   const deferredValue = useDeferredValue(editing ? value.trim() : '')
-  const locationQuery = useLocationSearchQuery(deferredValue)
+  const locationQuery = useLocationSearchQuery(deferredValue, countryCode)
 
   const results = locationQuery.data ?? []
 
@@ -33,7 +37,7 @@ const SearchBox = ({
       <input
         value={value}
         autoFocus={autoFocus}
-        aria-label="Search for a city"
+        aria-label={ariaLabel}
         placeholder={placeholder}
         onChange={(event) => {
           setValue(event.target.value)
@@ -53,6 +57,7 @@ const SearchBox = ({
           ) : results.length ? (
             results.map((result) => (
               <button
+                type="button"
                 key={result.id}
                 onClick={() => {
                   onSelect(cityFromGeocoding(result))

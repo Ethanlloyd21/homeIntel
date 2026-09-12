@@ -1,8 +1,6 @@
 import { ArrowRight, MapPin, X } from 'lucide-react'
-import { useState } from 'react'
 import SearchBox from 'components/SearchBox'
 import type { City } from 'data/cities'
-import { useProfileStore } from 'store/useProfileStore'
 
 const Leg = ({
   label,
@@ -38,7 +36,12 @@ const Leg = ({
         </button>
       </div>
     ) : (
-      <SearchBox onSelect={onChange} placeholder={placeholder} />
+      <SearchBox
+        onSelect={onChange}
+        placeholder={placeholder}
+        countryCode="US"
+        ariaLabel={label}
+      />
     )}
   </div>
 )
@@ -51,13 +54,17 @@ const Leg = ({
  */
 const LandingRoutePicker = ({
   onStart,
+  originCity,
+  setOriginCity,
+  destination,
+  setDestination,
 }: {
   onStart: (destination: City) => void
+  originCity: City | null
+  setOriginCity: (city: City | null) => void
+  destination: City | null
+  setDestination: (city: City | null) => void
 }) => {
-  const originCity = useProfileStore((state) => state.originCity)
-  const setOriginCity = useProfileStore((state) => state.setOriginCity)
-  const [destination, setDestination] = useState<City | null>(null)
-
   return (
     <form
       className="landing-route"
@@ -70,7 +77,7 @@ const LandingRoutePicker = ({
         label="Where you live now"
         hint="Optional, but it unlocks every comparison"
         value={originCity}
-        placeholder="Your current city"
+        placeholder="Your current U.S. city"
         onChange={setOriginCity}
       />
       <span className="route-arrow" aria-hidden="true">
@@ -80,7 +87,7 @@ const LandingRoutePicker = ({
         label="Where you're thinking of moving"
         hint="The city you want to research"
         value={destination}
-        placeholder="Enter a city or ZIP code"
+        placeholder="U.S. city or ZIP code"
         onChange={setDestination}
       />
       <button type="submit" className="route-start" disabled={!destination}>

@@ -1,7 +1,6 @@
 import {
   Building2,
   BriefcaseBusiness,
-  ChevronDown,
   CloudSun,
   Database,
   DollarSign,
@@ -44,6 +43,8 @@ import EducationHouseholdComparison from 'components/EducationHouseholdCompariso
 import YearWeatherOutlook from 'components/YearWeatherOutlook'
 import TrafficCommute from 'components/TrafficCommute'
 import { useYearWeatherQuery } from 'hooks/useYearWeatherQuery'
+import EnvironmentPage from 'pages/EnvironmentPage'
+import RiskPage from 'pages/RiskPage'
 
 const ZHVI_SOURCE =
   'https://files.zillowstatic.com/research/public_csvs/zhvi/City_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv'
@@ -746,49 +747,11 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
           <section className="card wide-chart">
             <div className="section-heading">
               <div>
-                <small>5-YEAR TREND</small>
+                <small>DATA AVAILABILITY</small>
                 <h3>{type} outlook</h3>
               </div>
-              <button>
-                2020-2024 ACS <ChevronDown size={14} />
-              </button>
             </div>
-            <svg viewBox="0 0 800 270" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor={city.color} stopOpacity=".25" />
-                  <stop offset="1" stopColor={city.color} stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <g className="grid-lines">
-                <line x1="0" y1="35" x2="800" y2="35" />
-                <line x1="0" y1="100" x2="800" y2="100" />
-                <line x1="0" y1="165" x2="800" y2="165" />
-                <line x1="0" y1="230" x2="800" y2="230" />
-              </g>
-              <path
-                className="chart-area-enter"
-                d="M0 212 C80 205,110 190,165 194 S270 148,335 157 S430 126,500 133 S600 82,665 100 S745 58,800 52 L800 270 L0 270Z"
-                fill="url(#area)"
-              />
-              <path
-                className="chart-line-enter"
-                d="M0 212 C80 205,110 190,165 194 S270 148,335 157 S430 126,500 133 S600 82,665 100 S745 58,800 52"
-                fill="none"
-                stroke={city.color}
-                strokeWidth="4"
-              />
-            </svg>
-            <div className="chart-years">
-              <span>2019</span>
-              <span>2020</span>
-              <span>2021</span>
-              <span>2022</span>
-              <span>2023</span>
-              <span>2024</span>
-              <span>2025</span>
-              <span>2026</span>
-            </div>
+            <p>No historical series is available for this category.</p>
           </section>
         )}
         <aside className="card insight-list">
@@ -851,4 +814,13 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
   )
 }
 
-export default CategoryPage
+const CategoryRouter = ({ type, city }: { type: string; city: City }) =>
+  type === 'Environment' ? (
+    <EnvironmentPage key={city.id} city={city} />
+  ) : type === 'Risk' ? (
+    <RiskPage key={city.id} city={city} />
+  ) : (
+    <CategoryPage type={type} city={city} />
+  )
+
+export default CategoryRouter

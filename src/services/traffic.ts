@@ -10,6 +10,8 @@ export type TrafficProfile = {
 }
 
 export type TrafficRoute = {
+  departure?: string
+  fetchedAt?: string
   provider: 'TomTom' | 'OSRM'
   trafficAvailable: boolean
   distanceMeters: number
@@ -54,14 +56,23 @@ export const fetchCommuteData = async (
   origin: CommutePoint,
   destination: CommutePoint,
   signal: AbortSignal,
+  schedule?: { day: number; time: string; timeZone: string },
 ): Promise<CommuteData> => {
   const params = routeParams(origin, destination)
+  const trafficParams = new URLSearchParams(params)
+  if (schedule) {
+    trafficParams.set('day', String(schedule.day))
+    trafficParams.set('time', schedule.time)
+    trafficParams.set('timeZone', schedule.timeZone)
+  }
   const [routeResult, transitResult] = await Promise.allSettled([
-    fetch(`/api/traffic-route?${params}`, { signal }).then(async (response) => {
-      if (!response.ok)
-        throw new Error(await responseError(response, 'Routing unavailable.'))
-      return (await response.json()) as TrafficRoute
-    }),
+    fetch(`/api/traffic-route?${trafficParams}`, { signal }).then(
+      async (response) => {
+        if (!response.ok)
+          throw new Error(await responseError(response, 'Routing unavailable.'))
+        return (await response.json()) as TrafficRoute
+      },
+    ),
     fetch(`/api/transit-options?${params}`, { signal }).then(
       async (response) => {
         if (!response.ok)

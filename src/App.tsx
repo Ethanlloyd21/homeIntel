@@ -5,15 +5,13 @@ import {
   Gauge,
   Route,
   ShieldCheck,
-  Sparkles,
 } from 'lucide-react'
 import { Tabs } from 'radix-ui'
 import { useEffect, useState } from 'react'
 import Brand from 'components/Brand'
 import CommandPalette from 'components/CommandPalette'
 import Header from 'components/Header'
-import LandingGallery from 'components/LandingGallery'
-import LandingRoutePicker from 'components/LandingRoutePicker'
+import LandingAtlas from 'components/LandingAtlas'
 import SearchBox from 'components/SearchBox'
 import Sidebar from 'components/Sidebar'
 import BriefPage from 'pages/BriefPage'
@@ -25,7 +23,6 @@ import MovePlanPage from 'pages/MovePlanPage'
 import NeighborhoodPage from 'pages/NeighborhoodPage'
 import OverviewPage from 'pages/OverviewPage'
 import { useAppStore, viewFromPath } from 'store/useAppStore'
-import { greeting } from 'utils/greeting'
 import { useProfileStore } from 'store/useProfileStore'
 
 const sources = [
@@ -127,7 +124,7 @@ const App = () => {
 
   if (!city) {
     return (
-      <div className="app-shell location-entry">
+      <div className="app-shell location-entry landing-observatory">
         <main>
           <Header
             onMenu={() => undefined}
@@ -137,38 +134,19 @@ const App = () => {
             variant="landing"
           />
           <div className="page-content landing-page">
-            <section className="landing-hero">
-              <div className="landing-copy">
-                <p className="landing-eyebrow">
-                  <Sparkles size={13} aria-hidden="true" />
-                  {greeting()} — where are you thinking of moving?
-                </p>
-                <h2>Preview your life there, before you move.</h2>
-                <p className="landing-lede">
-                  HomeIntel simulates what a city would actually cost you, shows
-                  where regret would come from, and turns the answer into a plan
-                  &mdash; every number traced to a named public source.
-                </p>
-                <LandingRoutePicker onStart={selectCity} />
-                <p className="landing-next-step">
-                  Set both and HomeIntel measures the change: what your housing,
-                  pay, commute, weather, and distance from family would actually
-                  become. You can change either one later.
-                </p>
-                <div className="landing-sources">
-                  <span>
-                    <ShieldCheck size={13} aria-hidden="true" /> Built on public
-                    data
-                  </span>
-                  <ul>
-                    {sources.map((source) => (
-                      <li key={source}>{source}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              <LandingGallery theme={theme} />
-            </section>
+            <LandingAtlas onStart={selectCity} />
+
+            <div className="landing-sources">
+              <span>
+                <ShieldCheck size={13} aria-hidden="true" /> Built on public
+                data
+              </span>
+              <ul>
+                {sources.map((source) => (
+                  <li key={source}>{source}</li>
+                ))}
+              </ul>
+            </div>
 
             <section
               className="landing-proof"
@@ -184,8 +162,8 @@ const App = () => {
 
             <section className="landing-steps">
               <div className="landing-section-head">
-                <p className="eyebrow">HOW IT WORKS</p>
-                <h3>From a shortlist to a dated plan, in three passes.</h3>
+                <p className="eyebrow">FROM POSSIBILITY TO A PLAN</p>
+                <h3>A new place. The whole picture.</h3>
               </div>
               <ol>
                 {steps.map(({ icon: Icon, title, body, tools }, index) => (
@@ -211,39 +189,15 @@ const App = () => {
             <footer className="landing-footer">
               <Brand />
               <p className="photo-credit">
-                Light photos by{' '}
+                U.S. map boundaries via{' '}
                 <a
-                  href="https://www.pexels.com/photo/charming-suburban-home-in-spring-setting-32153568/"
+                  href="https://github.com/topojson/us-atlas"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Elena Golovchenko
-                </a>{' '}
-                and{' '}
-                <a
-                  href="https://www.pexels.com/photo/modern-cozy-living-room-interior-with-natural-light-30580637/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Karolina K
+                  U.S. Atlas
                 </a>
-                . Dark photos by{' '}
-                <a
-                  href="https://www.pexels.com/photo/residential-buildings-on-the-hill-after-dusk-16811460/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  David Brown
-                </a>{' '}
-                and{' '}
-                <a
-                  href="https://www.pexels.com/photo/modern-cozy-living-room-with-warm-lighting-29532546/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Cl&eacute;ment Proust
-                </a>{' '}
-                on Pexels.
+                .
               </p>
               <span>HomeIntel &copy; 2026</span>
             </footer>

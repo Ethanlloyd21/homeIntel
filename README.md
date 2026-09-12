@@ -191,20 +191,25 @@ The Neighbourhoods page needs a specific address rather than a city, so
 an identifying `User-Agent`, serialises requests to at most one per second, and
 caches each result for seven days, as Nominatim's usage policy requires.
 
-Results are biased toward the city being researched but not restricted to it,
-so a workplace in a neighbouring suburb is still findable.
+Address searches run when you press Enter or Search. Home-point searches include
+the selected city and state and are bounded to its surrounding area. Workplace
+searches retain a city bias so an address in a neighbouring suburb is still findable.
 
 ### OpenStreetMap
 
 The selected location is rendered with React Leaflet and OpenStreetMap tiles. Required map attribution remains visible.
 
-The Environment commute planner also queries nearby mapped bus stops, train stations, subway entrances, and tram stops through a same-origin Overpass proxy. These records indicate mapped infrastructure only; they do not provide timetables, fares, service alerts, accessibility, or a complete public-transit itinerary.
+The Neighborhood page queries mapped transit stops near the home/work endpoints. The Environment page is a road-traffic map with no route planner or point selection.
 
 ### TomTom traffic and routing
 
-When the optional server-only `TOMTOM_API_KEY` is configured, the Environment commute planner uses TomTom's Calculate Route API with traffic enabled. The current route response includes traffic-aware travel time, free-flow time, traffic delay, distance, and route geometry. Six future weekday departure samples—6:30, 7:30, and 8:30 AM plus 4:00, 5:00, and 6:00 PM—use TomTom's time-dependent historical traffic model to compare common rush-hour windows.
+The Environment traffic map displays TomTom live flow tiles over a muted OpenStreetMap road map. The overlay refreshes every two minutes. `/api/traffic-tiles/{z}/{x}/{y}.png` keeps credentials on the server, validates tile coordinates, and caches images for up to two minutes. `/api/traffic-status` reports live and historical-layer configuration separately.
 
-If the key is absent or TomTom is temporarily unavailable, the proxy requests an OSRM baseline road route. The interface labels this as **Baseline routing**, hides live congestion and rush-hour claims, and explains how to enable traffic data. Walking and cycling times are distance-only estimates and are not pedestrian- or bicycle-routed itineraries.
+The **Day & time** controls request a citywide historical traffic map through ArcGIS World Traffic's North America Traffic layer (7). Set a server-only `ARCGIS_API_KEY` with access to that service. The selected city's wall time is converted to UTC with daylight-saving rules, and a future occurrence 7–13 days away selects typical weekday speeds. When historical access is missing, the map shows an explicit unavailable state; it never substitutes current traffic or route predictions. The TomTom live key alone does not enable this layer.
+
+The Environment current-traffic card uses `/api/traffic-summary`, sampling up to five unique roads near the selected city centre through TomTom Flow Segment Data. It reports average delay relative to free flow for that small sample, explicitly not a citywide congestion index. The Neighborhood home/work pins continue to use the existing traffic-aware routing and baseline fallback.
+
+Production hosts must recreate the traffic tile, status, summary, and routing proxies. Missing live data is shown as unavailable. See [Environment and Risk data notes](docs/environment-risk-data.md) for weather and hazard methodology.
 
 ### Zillow Research
 

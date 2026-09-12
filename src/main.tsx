@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css'
 import App from 'App'
 import ErrorBoundary from 'components/ErrorBoundary'
 import 'styles.css'
+import 'assets/atlas.css'
+import 'assets/research.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {

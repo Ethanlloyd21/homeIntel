@@ -7,5 +7,11 @@
     "module": "ESNext",
     "moduleResolution": "Bundler"
   },
-  "include": ["vite.config.ts", "src/data/stateMinimumWages.ts"]
+  "include": [
+    "vite.config.ts",
+    "src/data/stateMinimumWages.ts",
+    "src/utils/placeSearch.ts",
+    "server/trafficTilesProxy.ts",
+    "src/utils/trafficTiming.ts"
+  ]
 }
