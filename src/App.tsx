@@ -1,4 +1,12 @@
-import { BarChart3, Compass, Route, Sparkles } from 'lucide-react'
+import {
+  BarChart3,
+  ClipboardCheck,
+  Compass,
+  Gauge,
+  Route,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react'
 import { Tabs } from 'radix-ui'
 import { useEffect, useState } from 'react'
 import Brand from 'components/Brand'
@@ -17,7 +25,47 @@ import MovePlanPage from 'pages/MovePlanPage'
 import NeighborhoodPage from 'pages/NeighborhoodPage'
 import OverviewPage from 'pages/OverviewPage'
 import { useAppStore, viewFromPath } from 'store/useAppStore'
+import { greeting } from 'utils/greeting'
 import { useProfileStore } from 'store/useProfileStore'
+
+const sources = [
+  'Census',
+  'FEMA',
+  'Zillow',
+  'BEA',
+  'BLS',
+  'NCES',
+  'HIFLD',
+  'Open-Meteo',
+]
+
+const proofPoints = [
+  { value: '10', label: 'regret factors scored' },
+  { value: '10', label: 'monthly cost lines itemised' },
+  { value: '5', label: 'decision tools' },
+  { value: '90', label: 'day move timeline' },
+]
+
+const steps = [
+  {
+    icon: Gauge,
+    title: 'Simulate the money',
+    body: 'Taxes, housing, utilities, transport, childcare, healthcare and a hazard reserve — itemised, with the formula behind every line.',
+    tools: ['Life simulator', 'Day in your life'],
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Check for regret',
+    body: 'Ten explainable factors, from housing shock and salary adjustment to climate mismatch, reported crime, and distance from the people you rely on.',
+    tools: ['Regret check', 'Decision brief'],
+  },
+  {
+    icon: ClipboardCheck,
+    title: 'Plan the move',
+    body: 'A research-trip itinerary for the hard season, a real move budget, and a 90-day timeline you can tick off.',
+    tools: ['Move plan'],
+  },
+]
 
 const decideViews = new Set([
   'Simulator',
@@ -86,93 +134,119 @@ const App = () => {
             theme={theme}
             onThemeChange={setTheme}
             onOpenPalette={() => setPaletteOpen(true)}
+            variant="landing"
           />
           <div className="page-content landing-page">
             <section className="landing-hero">
               <div className="landing-copy">
-                <p className="eyebrow">
-                  <Sparkles size={13} /> DON&rsquo;T JUST COMPARE CITIES
+                <p className="landing-eyebrow">
+                  <Sparkles size={13} aria-hidden="true" />
+                  {greeting()} — where are you thinking of moving?
                 </p>
                 <h2>Preview your life there, before you move.</h2>
-                <span>
+                <p className="landing-lede">
                   HomeIntel simulates what a city would actually cost you, shows
                   where regret would come from, and turns the answer into a plan
                   &mdash; every number traced to a named public source.
-                </span>
+                </p>
                 <LandingRoutePicker onStart={selectCity} />
-                <div className="landing-features">
-                  <span>Life simulator</span>
-                  <span>Regret check</span>
-                  <span>Day in your life</span>
-                  <span>Decision brief</span>
-                  <span>Move plan</span>
-                </div>
                 <p className="landing-next-step">
                   Set both and HomeIntel measures the change: what your housing,
                   pay, commute, weather, and distance from family would actually
                   become. You can change either one later.
                 </p>
+                <div className="landing-sources">
+                  <span>
+                    <ShieldCheck size={13} aria-hidden="true" /> Built on public
+                    data
+                  </span>
+                  <ul>
+                    {sources.map((source) => (
+                      <li key={source}>{source}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
               <LandingGallery theme={theme} />
             </section>
 
-            <section className="landing-pillars">
-              {[
-                {
-                  title: 'Simulate',
-                  body: 'Taxes, housing, utilities, transport, childcare, healthcare and a hazard reserve — itemised, with the formula behind every line.',
-                },
-                {
-                  title: 'Check for regret',
-                  body: 'Ten explainable factors, from housing shock and salary adjustment to climate mismatch, reported crime, and distance from the people you rely on.',
-                },
-                {
-                  title: 'Plan the move',
-                  body: 'A research-trip itinerary for the hard season, a real move budget, and a 90-day timeline you can tick off.',
-                },
-              ].map((pillar) => (
-                <article key={pillar.title}>
-                  <h3>{pillar.title}</h3>
-                  <p>{pillar.body}</p>
-                </article>
+            <section
+              className="landing-proof"
+              aria-label="What HomeIntel measures"
+            >
+              {proofPoints.map((point) => (
+                <div key={point.label}>
+                  <strong>{point.value}</strong>
+                  <span>{point.label}</span>
+                </div>
               ))}
             </section>
 
-            <p className="photo-credit">
-              Light photos by{' '}
-              <a
-                href="https://www.pexels.com/photo/charming-suburban-home-in-spring-setting-32153568/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Elena Golovchenko
-              </a>{' '}
-              and{' '}
-              <a
-                href="https://www.pexels.com/photo/modern-cozy-living-room-interior-with-natural-light-30580637/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Karolina K
-              </a>
-              . Dark photos by{' '}
-              <a
-                href="https://www.pexels.com/photo/residential-buildings-on-the-hill-after-dusk-16811460/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                David Brown
-              </a>{' '}
-              and{' '}
-              <a
-                href="https://www.pexels.com/photo/modern-cozy-living-room-with-warm-lighting-29532546/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Clément Proust
-              </a>{' '}
-              on Pexels
-            </p>
+            <section className="landing-steps">
+              <div className="landing-section-head">
+                <p className="eyebrow">HOW IT WORKS</p>
+                <h3>From a shortlist to a dated plan, in three passes.</h3>
+              </div>
+              <ol>
+                {steps.map(({ icon: Icon, title, body, tools }, index) => (
+                  <li key={title}>
+                    <span className="landing-step-index">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <span className="landing-step-icon" aria-hidden="true">
+                      <Icon size={19} />
+                    </span>
+                    <h4>{title}</h4>
+                    <p>{body}</p>
+                    <div className="landing-step-tools">
+                      {tools.map((tool) => (
+                        <span key={tool}>{tool}</span>
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <footer className="landing-footer">
+              <Brand />
+              <p className="photo-credit">
+                Light photos by{' '}
+                <a
+                  href="https://www.pexels.com/photo/charming-suburban-home-in-spring-setting-32153568/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Elena Golovchenko
+                </a>{' '}
+                and{' '}
+                <a
+                  href="https://www.pexels.com/photo/modern-cozy-living-room-interior-with-natural-light-30580637/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Karolina K
+                </a>
+                . Dark photos by{' '}
+                <a
+                  href="https://www.pexels.com/photo/residential-buildings-on-the-hill-after-dusk-16811460/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  David Brown
+                </a>{' '}
+                and{' '}
+                <a
+                  href="https://www.pexels.com/photo/modern-cozy-living-room-with-warm-lighting-29532546/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Cl&eacute;ment Proust
+                </a>{' '}
+                on Pexels.
+              </p>
+              <span>HomeIntel &copy; 2026</span>
+            </footer>
           </div>
         </main>
         {paletteOpen && (

@@ -1,75 +1,100 @@
-import { BrainCircuit, MapPin, Sparkles } from 'lucide-react'
-import { useRef, type PointerEvent } from 'react'
+import { ArrowDownRight, ArrowUpRight, ShieldCheck } from 'lucide-react'
 import homeAtDusk from 'assets/images/home-at-dusk.jpg'
 import cozyLivingRoom from 'assets/images/cozy-living-room.jpg'
 import sunnySuburbanHome from 'assets/images/sunny-suburban-home.jpg'
 import cozyLivingRoomNight from 'assets/images/cozy-living-room-night.jpg'
 
-const LandingGallery = ({ theme }: { theme: 'light' | 'dark' }) => {
-  const galleryRef = useRef<HTMLDivElement>(null)
+/**
+ * An illustrative brief, not live data — it shows the shape of the answer the
+ * app produces. The numbers are fixed on purpose and labelled as a sample so
+ * the page never implies a reading it has not taken.
+ */
+const sampleFactors = [
+  { label: 'Housing-cost shock', risk: 64, level: 'caution' },
+  { label: 'Salary adjustment', risk: 28, level: 'good' },
+  { label: 'Climate mismatch', risk: 47, level: 'neutral' },
+  { label: 'Commute shock', risk: 38, level: 'good' },
+  { label: 'Reported crime', risk: 55, level: 'caution' },
+  { label: 'Distance from family', risk: 78, level: 'alert' },
+]
 
-  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    const gallery = galleryRef.current
-    if (!gallery || event.pointerType === 'touch') return
-    const bounds = gallery.getBoundingClientRect()
-    const x = (event.clientX - bounds.left) / bounds.width
-    const y = (event.clientY - bounds.top) / bounds.height
-    gallery.style.setProperty('--pointer-x', `${x * 100}%`)
-    gallery.style.setProperty('--pointer-y', `${y * 100}%`)
-    gallery.style.setProperty('--tilt-x', `${(0.5 - y) * 7}deg`)
-    gallery.style.setProperty('--tilt-y', `${(x - 0.5) * 7}deg`)
-    gallery.style.setProperty('--shift-x', `${(x - 0.5) * 16}px`)
-    gallery.style.setProperty('--shift-y', `${(y - 0.5) * 16}px`)
-  }
+const LandingGallery = ({ theme }: { theme: 'light' | 'dark' }) => (
+  <div className="landing-dossier">
+    <div className="landing-dossier-glow" aria-hidden="true" />
 
-  const resetPointer = () => {
-    const gallery = galleryRef.current
-    if (!gallery) return
-    gallery.style.removeProperty('--tilt-x')
-    gallery.style.removeProperty('--tilt-y')
-    gallery.style.removeProperty('--shift-x')
-    gallery.style.removeProperty('--shift-y')
-  }
+    <figure className="landing-plate landing-plate-main">
+      <img
+        className="theme-image theme-image-light"
+        src={sunnySuburbanHome}
+        alt={
+          theme === 'light'
+            ? 'Welcoming suburban home surrounded by a sunny green garden'
+            : ''
+        }
+        aria-hidden={theme !== 'light'}
+      />
+      <img
+        className="theme-image theme-image-dark"
+        src={homeAtDusk}
+        alt={
+          theme === 'dark'
+            ? 'Warmly illuminated modern homes on a hillside at dusk'
+            : ''
+        }
+        aria-hidden={theme !== 'dark'}
+      />
+      <figcaption>
+        <span>Sample brief</span>
+        <strong>Mansfield, TX &rarr; Chula Vista, CA</strong>
+      </figcaption>
+    </figure>
 
-  return (
-    <div
-      ref={galleryRef}
-      className="landing-gallery"
-      aria-label="AI-powered city intelligence preview"
-      onPointerMove={handlePointerMove}
-      onPointerLeave={resetPointer}
-    >
-      <div className="landing-gallery-glow" aria-hidden="true" />
-      <figure className="landing-photo landing-photo-main">
-        <img
-          className="theme-image theme-image-light"
-          src={sunnySuburbanHome}
-          alt={
-            theme === 'light'
-              ? 'Welcoming suburban home surrounded by a sunny green garden'
-              : ''
-          }
-          aria-hidden={theme !== 'light'}
-        />
-        <img
-          className="theme-image theme-image-dark"
-          src={homeAtDusk}
-          alt={
-            theme === 'dark'
-              ? 'Warmly illuminated modern homes on a hillside at dusk'
-              : ''
-          }
-          aria-hidden={theme !== 'dark'}
-        />
-        <div className="landing-scan" aria-hidden="true" />
-        <figcaption>
-          <span>
-            <Sparkles size={14} /> Your moving decision
-          </span>
-          <strong>Compare the places on your shortlist</strong>
-        </figcaption>
-      </figure>
-      <figure className="landing-photo landing-photo-secondary">
+    <div className="landing-verdict">
+      <div className="landing-verdict-head">
+        <span className="landing-verdict-score">
+          72<small>/100</small>
+        </span>
+        <span>
+          <small>VERDICT</small>
+          <strong>Workable, with caution</strong>
+        </span>
+      </div>
+      <ul className="landing-verdict-factors">
+        {sampleFactors.map((factor) => (
+          <li key={factor.label} className={`is-${factor.level}`}>
+            <span>{factor.label}</span>
+            <i aria-hidden="true">
+              <b style={{ width: `${factor.risk}%` }} />
+            </i>
+          </li>
+        ))}
+      </ul>
+      <p>
+        <ShieldCheck size={13} aria-hidden="true" />
+        Ten factors, each traced to a named public source
+      </p>
+    </div>
+
+    <div className="landing-dossier-side">
+      <div className="landing-stat landing-stat-cost">
+        <small>MONTHLY CASH</small>
+        <strong>
+          <ArrowDownRight size={15} aria-hidden="true" />
+          &minus;$412
+        </strong>
+        <span>vs. today, same standard of living</span>
+      </div>
+
+      <div className="landing-stat landing-stat-pay">
+        <small>SALARY TO MATCH</small>
+        <strong>
+          <ArrowUpRight size={15} aria-hidden="true" />
+          $104,800
+        </strong>
+        <span>to hold your buying power</span>
+      </div>
+
+      <figure className="landing-plate landing-plate-inset">
         <img
           className="theme-image theme-image-light"
           src={cozyLivingRoom}
@@ -90,24 +115,9 @@ const LandingGallery = ({ theme }: { theme: 'light' | 'dark' }) => {
           }
           aria-hidden={theme !== 'dark'}
         />
-        <figcaption>Research what everyday life could look like</figcaption>
       </figure>
-      <div className="landing-data-card landing-data-location">
-        <MapPin size={16} />
-        <span>
-          <small>CITY RESEARCH</small>
-          <strong>Housing, people &amp; jobs</strong>
-        </span>
-      </div>
-      <div className="landing-data-card landing-data-ai">
-        <BrainCircuit size={17} />
-        <span>
-          <small>COMPARE CITIES</small>
-          <strong>Make a confident move</strong>
-        </span>
-      </div>
     </div>
-  )
-}
+  </div>
+)
 
 export default LandingGallery
