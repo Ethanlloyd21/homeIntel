@@ -7,6 +7,7 @@ import ErrorBoundary from 'components/ErrorBoundary'
 import 'styles.css'
 import 'assets/atlas.css'
 import 'assets/research.css'
+import 'assets/consistency.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {

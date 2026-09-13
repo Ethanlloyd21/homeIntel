@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
+import CardHeading from 'components/CardHeading'
 
 const PanelCard = ({
   eyebrow,
@@ -27,18 +28,7 @@ const PanelCard = ({
       accent ? ({ '--panel-accent': accent } as React.CSSProperties) : undefined
     }
   >
-    <div className="panel-card-heading">
-      {Icon && (
-        <span className="panel-card-icon">
-          <Icon size={18} aria-hidden="true" />
-        </span>
-      )}
-      <div>
-        {eyebrow && <small>{eyebrow}</small>}
-        <h3>{title}</h3>
-      </div>
-      {action && <div className="panel-card-action">{action}</div>}
-    </div>
+    <CardHeading eyebrow={eyebrow} title={title} icon={Icon} action={action} />
     {children}
   </section>
 )

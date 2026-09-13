@@ -1,14 +1,18 @@
 import {
   ArrowRight,
-  Check,
   GraduationCap,
   Home,
-  Info,
+  MapPin,
+  Compass,
+  Calculator,
+  ShieldCheck,
+  Sun,
   Sparkles,
   TrendingUp,
   WalletCards,
 } from 'lucide-react'
 import CityMap from 'components/CityMap'
+import SourceChip from 'components/SourceChip'
 import MetricCard from 'components/MetricCard'
 import LoadingSpinner from 'components/LoadingSpinner'
 import ScoreRing from 'components/ScoreRing'
@@ -55,29 +59,98 @@ const OverviewPage = ({ city, setView }: OverviewPageProps) => {
   const trendLabel = (value: number | null) =>
     value === null ? 'N/A' : `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`
 
+  const historyPeriod = (values: { date: string }[] | undefined) => {
+    if (!values || values.length < 2) return 'Historical change unavailable'
+    const format = (date: string) =>
+      new Date(date).toLocaleDateString('en-US', {
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'UTC',
+      })
+    return `${format(values[0].date)} to ${format(values.at(-1)!.date)}`
+  }
+  const exploreRoutes = [
+    {
+      view: 'Housing',
+      icon: Home,
+      title: 'Find your price range',
+      description: 'Explore home values, rent, and the local housing market.',
+      label: 'Explore housing',
+    },
+    {
+      view: 'DayInLife',
+      icon: Sun,
+      title: 'Picture an ordinary day',
+      description: 'See how the seasons and your routine could fit together.',
+      label: 'Explore daily life',
+    },
+    {
+      view: 'Neighborhoods',
+      icon: Compass,
+      title: 'Get closer to the street',
+      description: 'Check commute routes, schools, and nearby essentials.',
+      label: 'Explore neighborhoods',
+    },
+  ]
+
   return (
-    <>
-      <div className="hero-row">
-        <div className="intro">
-          <p>Explore a location</p>
-          <h2>
-            See the whole picture,
+    <div className="overview-page">
+      <section className="overview-hero" aria-labelledby="overview-title">
+        <div className="overview-hero-copy">
+          <p className="eyebrow">
+            <MapPin size={14} aria-hidden="true" /> {city.name}, {city.state}
+          </p>
+          <h2 id="overview-title">
+            A place to live.
             <br />
-            before you make a move.
+            <span>A life to imagine.</span>
           </h2>
-          <span>
-            Decision-grade housing, people, employment, risk and environment
-            insights—together in one place.
-          </span>
+          <p className="overview-hero-description">
+            Get to know {city.name} beyond the address. Explore what it costs,
+            how it feels, and what to consider before your next move.
+          </p>
+          <div className="overview-hero-actions">
+            <button
+              type="button"
+              className="overview-primary-action"
+              onClick={() => setView('Simulator')}
+            >
+              <Calculator size={17} aria-hidden="true" /> Build my life here{' '}
+              <ArrowRight size={16} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="overview-secondary-action"
+              onClick={() => setView('Compare')}
+            >
+              Compare cities <ArrowRight size={16} aria-hidden="true" />
+            </button>
+          </div>
+          <div className="overview-topics">
+            <span>Housing & costs</span>
+            <span>People & work</span>
+            <span>Everyday life</span>
+          </div>
         </div>
         <div className="overview-weather">
           <WeatherCard
             city={city}
             onViewEnvironment={() => setView('Environment')}
           />
+          <p className="overview-weather-caption">
+            A moment in {city.name}. Explore Environment for the bigger seasonal
+            picture.
+          </p>
         </div>
-      </div>
+      </section>
 
+      <div className="section-title overview-section-title">
+        <div>
+          <p className="eyebrow">YOUR CITY, IN CONTEXT</p>
+          <h2>Start with the essentials</h2>
+        </div>
+        <p>A sense of the place and the people who call it home.</p>
+      </div>
       <div className="overview-grid">
         <CityMap city={city} />
         <div className="snapshot card">
@@ -86,9 +159,17 @@ const OverviewPage = ({ city, setView }: OverviewPageProps) => {
               <small>CITY SNAPSHOT</small>
               <h3>{city.name} at a glance</h3>
             </div>
-            <span className="quality">
-              <Check size={12} /> Census ACS
-            </span>
+            <SourceChip
+              source="Census ACS demographics"
+              detail="Household income, age, and employment are survey estimates. Population may include a more recent estimate; see the note below."
+              level={
+                demographicsQuery.isPending
+                  ? 'Loading'
+                  : demographics
+                    ? undefined
+                    : 'Unavailable'
+              }
+            />
           </div>
           <div className="snapshot-grid">
             <div>
@@ -146,23 +227,27 @@ const OverviewPage = ({ city, setView }: OverviewPageProps) => {
           <h2>What stands out</h2>
         </div>
         <button onClick={() => setView('Housing')}>
-          View all metrics <ArrowRight size={15} />
+          Explore housing <ArrowRight size={15} />
         </button>
       </div>
       <div className="metrics">
         <MetricCard
           label="Typical home value"
           value={housing ? money(housing.medianHomeValue) : housingPendingValue}
-          note="since Jun 2023"
-          trend={trendLabel(homeValueChange)}
+          note={historyPeriod(housing?.homeValueHistory)}
+          source={housing?.homeValueNote}
+          trend={
+            homeValueChange === null ? undefined : trendLabel(homeValueChange)
+          }
           icon={Home}
           color="#d65e45"
         />
         <MetricCard
           label="Typical market rent"
           value={housing ? money(housing.medianRent) : housingPendingValue}
-          note="since Jun 2023"
-          trend={trendLabel(rentChange)}
+          note={historyPeriod(housing?.rentHistory)}
+          source={housing?.rentNote}
+          trend={rentChange === null ? undefined : trendLabel(rentChange)}
           icon={WalletCards}
           color="#be8a42"
         />
@@ -177,7 +262,7 @@ const OverviewPage = ({ city, setView }: OverviewPageProps) => {
           trend={
             demographics
               ? trendLabel(demographics.estimatedCurrentGrowthPercent)
-              : 'N/A'
+              : undefined
           }
           icon={TrendingUp}
           color="#2e7da1"
@@ -236,7 +321,11 @@ const OverviewPage = ({ city, setView }: OverviewPageProps) => {
             )}
           </div>
           <p className="risk-note">
-            <Info size={14} /> FEMA Expected Annual Loss score (0–100)
+            <SourceChip
+              source="FEMA Expected Annual Loss score"
+              detail="A relative score from 0 to 100; higher scores indicate greater expected annual loss. This is area-level context, not a property-specific assessment."
+            />{' '}
+            FEMA Expected Annual Loss score (0–100)
             {risk
               ? ` · ${risk.county} County, Census tract ${risk.tract} · ${risk.version}`
               : ''}
@@ -295,7 +384,65 @@ const OverviewPage = ({ city, setView }: OverviewPageProps) => {
           </div>
         </section>
       </div>
-    </>
+      <section
+        className="overview-explore"
+        aria-labelledby="overview-explore-title"
+      >
+        <div className="section-title overview-section-title">
+          <div>
+            <p className="eyebrow">MAKE IT PERSONAL</p>
+            <h2 id="overview-explore-title">
+              What matters in your next chapter?
+            </h2>
+          </div>
+        </div>
+        <div className="overview-route-grid">
+          {exploreRoutes.map(
+            ({ view, icon: Icon, title, description, label }, index) => (
+              <button
+                type="button"
+                className="card overview-route-card"
+                key={view}
+                onClick={() => setView(view)}
+              >
+                <span className="overview-route-top">
+                  <span className="overview-route-icon">
+                    <Icon size={21} aria-hidden="true" />
+                  </span>
+                  <span className="overview-route-number">0{index + 1}</span>
+                </span>
+                <h3>{title}</h3>
+                <p>{description}</p>
+                <span className="overview-route-link">
+                  {label}
+                  <ArrowRight size={16} aria-hidden="true" />
+                </span>
+              </button>
+            ),
+          )}
+        </div>
+      </section>
+      <section className="card overview-next-step">
+        <span className="overview-route-icon">
+          <ShieldCheck size={24} aria-hidden="true" />
+        </span>
+        <div>
+          <p className="eyebrow">FROM RESEARCH TO A DECISION</p>
+          <h3>Bring the whole picture together.</h3>
+          <p>
+            Your decision brief brings costs, trade-offs, and data confidence
+            into one place.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="overview-secondary-action"
+          onClick={() => setView('Brief')}
+        >
+          Open decision brief <ArrowRight size={16} aria-hidden="true" />
+        </button>
+      </section>
+    </div>
   )
 }
 

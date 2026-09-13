@@ -2211,7 +2211,7 @@ header h1 {
   gap: 10px;
   margin-bottom: 10px;
 }
-.metric-head > span {
+.metric-head > .metric-icon {
   width: 34px;
   height: 34px;
   border-radius: 8px;
@@ -5271,7 +5271,7 @@ footer > span {
     0 20px 50px rgb(0 0 0 / 30%),
     0 0 28px rgb(117 82 255 / 10%);
 }
-:root[data-theme='dark'] .metric-head > span,
+:root[data-theme='dark'] .metric-head > .metric-icon,
 :root[data-theme='dark'] .category-icon {
   background: linear-gradient(135deg, #7157ff, #31c8d9) !important;
   color: #fff !important;
@@ -9444,19 +9444,6 @@ footer .brand-button:hover {
 }
 
 /* --- refinements after live review --- */
-
-/* An icon-only chip needs to stay a circle, not a squashed pill. */
-.source-chip > button:not(:has(*:not(svg))) {
-  gap: 0;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  justify-content: center;
-}
-.source-chip > button:hover {
-  color: var(--tone-neutral);
-  border-color: color-mix(in oklab, var(--tone-neutral) 40%, var(--line));
-}
 
 /* Eleven nav entries plus two group labels must fit without a scrollbar. */
 .sidebar {

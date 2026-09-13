@@ -1,10 +1,11 @@
+import CardHeading from 'components/CardHeading'
+import PageHeader from 'components/PageHeader'
 import {
   AlertTriangle,
   BriefcaseBusiness,
   BookOpen,
   Calculator,
   Check,
-  CircleHelp,
   ClipboardCheck,
   Database,
   HeartHandshake,
@@ -14,10 +15,11 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import CitySelect from 'components/CitySelect'
 import LoadingSpinner from 'components/LoadingSpinner'
 import SourceChip from 'components/SourceChip'
+import HelpTip from 'components/HelpTip'
 import type { City } from 'data/cities'
 import { useCityIntel } from 'hooks/useCityIntel'
 import { useDecision } from 'hooks/useDecision'
@@ -107,47 +109,30 @@ const confidenceHelp: Record<string, string> = {
     'No verified source value was returned. Do not rely on this category until the missing information is confirmed.',
 }
 
-const HelpTip = ({ label, text }: { label: string; text: string }) => {
-  const id = useId()
-  return (
-    <span className="sim-help">
-      <button type="button" aria-label={`About ${label}`} aria-describedby={id}>
-        <CircleHelp size={14} aria-hidden="true" />
-      </button>
-      <span className="sim-tooltip" id={id} role="tooltip">
-        {text}
-      </span>
-    </span>
-  )
-}
-
 const FieldLabel = ({ label }: { label: string }) => (
   <span className="sim-field-label">
     {label}
     <HelpTip
-      label={label}
+      label={`About ${label}`}
       text={fieldHelp[label] ?? `Information about ${label}.`}
     />
   </span>
 )
 
 const ConfidenceBadge = ({ level }: { level: string }) => {
-  const id = useId()
   const description = confidenceHelp[level] ?? confidenceHelp.Estimated
   return (
-    <span className="confidence-help">
-      <button
-        type="button"
-        className={`confidence-${level.toLowerCase()}`}
-        aria-label={`${level} data confidence. ${description}`}
-        aria-describedby={id}
-      >
-        {level} <CircleHelp size={12} aria-hidden="true" />
-      </button>
-      <span className="sim-tooltip" id={id} role="tooltip">
-        <strong>{level} confidence.</strong> {description}
-      </span>
-    </span>
+    <HelpTip
+      className="confidence-help"
+      buttonClassName={`confidence-${level.toLowerCase()}`}
+      label={`${level} data confidence`}
+      badge={level}
+      text={
+        <>
+          <strong>{level} confidence.</strong> {description}
+        </>
+      }
+    />
   )
 }
 
@@ -331,28 +316,27 @@ const LifeSimulatorPage = ({
 
   return (
     <div className="simulator-page">
-      <div className="simulator-hero">
-        <div>
-          <p className="eyebrow">LIFE SIMULATOR</p>
-          <h2>Preview your life in {city.name}</h2>
-          <span>
-            Change an assumption and every cost, requirement, and score updates
-            instantly. No AI is used in these calculations.
-          </span>
-        </div>
-        <div className="simulator-hero-actions">
-          {pending && <LoadingSpinner label="Refreshing verified city data" />}
-          <button
-            type="button"
-            className="sim-guide-toggle"
-            aria-expanded={guideOpen}
-            aria-controls="simulator-guide"
-            onClick={toggleGuide}
-          >
-            <BookOpen size={17} /> {guideOpen ? 'Hide guide' : 'How to use'}
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="LIFE SIMULATOR"
+        title={`Preview your life in ${city.name}`}
+        description="Change an assumption and every cost, requirement, and score updates instantly."
+        actions={
+          <div className="simulator-hero-actions">
+            {pending && (
+              <LoadingSpinner label="Refreshing verified city data" />
+            )}
+            <button
+              type="button"
+              className="sim-guide-toggle"
+              aria-expanded={guideOpen}
+              aria-controls="simulator-guide"
+              onClick={toggleGuide}
+            >
+              <BookOpen size={17} /> {guideOpen ? 'Hide guide' : 'How to use'}
+            </button>
+          </div>
+        }
+      />
 
       {guideOpen && (
         <section className="card simulator-guide" id="simulator-guide">
@@ -418,15 +402,11 @@ const LifeSimulatorPage = ({
       )}
 
       <section className="card simulator-assumptions" id="sim-household">
-        <div className="sim-section-heading">
-          <span>
-            <SlidersHorizontal size={19} />
-          </span>
-          <div>
-            <small>YOUR HOUSEHOLD</small>
-            <h3>Monthly assumptions</h3>
-          </div>
-        </div>
+        <CardHeading
+          icon={SlidersHorizontal}
+          eyebrow="YOUR HOUSEHOLD"
+          title="Monthly assumptions"
+        />
         <div className="sim-form-grid">
           <CurrencyInput
             label="Annual household income"
@@ -539,15 +519,11 @@ const LifeSimulatorPage = ({
 
       <div className="sim-result-grid" id="sim-results">
         <section className="card sim-budget-card">
-          <div className="sim-section-heading">
-            <span>
-              <Calculator size={19} />
-            </span>
-            <div>
-              <small>MONTHLY OUTCOME</small>
-              <h3>Disposable income</h3>
-            </div>
-          </div>
+          <CardHeading
+            icon={Calculator}
+            eyebrow="MONTHLY OUTCOME"
+            title="Disposable income"
+          />
           <div className="sim-budget-summary">
             <div>
               <span>Gross income</span>
@@ -590,15 +566,11 @@ const LifeSimulatorPage = ({
 
         <div className="sim-side-stack">
           <section className="card sim-scores-card">
-            <div className="sim-section-heading">
-              <span>
-                <Target size={19} />
-              </span>
-              <div>
-                <small>EXPLAINABLE RESULT</small>
-                <h3>Fit and regret check</h3>
-              </div>
-            </div>
+            <CardHeading
+              icon={Target}
+              eyebrow="EXPLAINABLE RESULT"
+              title="Fit and regret check"
+            />
             <div className="sim-score-grid">
               <SimulatorScore
                 label="City fit"
@@ -639,15 +611,11 @@ const LifeSimulatorPage = ({
           </section>
 
           <section className="card sim-exposure-card">
-            <div className="sim-section-heading">
-              <span>
-                <Home size={19} />
-              </span>
-              <div>
-                <small>TRUE HOUSING COST</small>
-                <h3>Total housing exposure</h3>
-              </div>
-            </div>
+            <CardHeading
+              icon={Home}
+              eyebrow="TRUE HOUSING COST"
+              title="Total housing exposure"
+            />
             <strong>
               {money(Math.round(leftResult.housingExposure))}
               <small>/month</small>
@@ -661,15 +629,11 @@ const LifeSimulatorPage = ({
       </div>
 
       <section className="card sim-dealbreakers" id="sim-rules">
-        <div className="sim-section-heading">
-          <span>
-            <AlertTriangle size={19} />
-          </span>
-          <div>
-            <small>NON-NEGOTIABLES</small>
-            <h3>Deal-breaker engine</h3>
-          </div>
-        </div>
+        <CardHeading
+          icon={AlertTriangle}
+          eyebrow="NON-NEGOTIABLES"
+          title="Deal-breaker engine"
+        />
         <div className="sim-rules-grid">
           <CurrencyInput
             label="Maximum housing"
@@ -750,15 +714,11 @@ const LifeSimulatorPage = ({
       </section>
 
       <section className="card sim-career-card">
-        <div className="sim-section-heading">
-          <span>
-            <BriefcaseBusiness size={19} />
-          </span>
-          <div>
-            <small>CAREER COMPATIBILITY</small>
-            <h3>Does the local economy fit your work?</h3>
-          </div>
-        </div>
+        <CardHeading
+          icon={BriefcaseBusiness}
+          eyebrow="CAREER COMPATIBILITY"
+          title="Does the local economy fit your work?"
+        />
         <div className="sim-career-controls">
           <label className="sim-field">
             <FieldLabel label="Your industry keyword" />
@@ -808,15 +768,11 @@ const LifeSimulatorPage = ({
       </section>
 
       <section className="card sim-consensus-card" id="sim-consensus">
-        <div className="sim-section-heading">
-          <span>
-            <HeartHandshake size={19} />
-          </span>
-          <div>
-            <small>HOUSEHOLD CONSENSUS</small>
-            <h3>Find the compromise, not just the winner</h3>
-          </div>
-        </div>
+        <CardHeading
+          icon={HeartHandshake}
+          eyebrow="HOUSEHOLD CONSENSUS"
+          title="Find the compromise, not just the winner"
+        />
         <div className="sim-consensus-layout">
           <WeightControls
             name="Your priorities"
@@ -858,19 +814,15 @@ const LifeSimulatorPage = ({
 
       <div className="sim-bottom-grid">
         <section className="card sim-confidence-card">
-          <div className="sim-section-heading">
-            <span>
-              <Database size={19} />
-            </span>
-            <div>
-              <small>DATA CONFIDENCE</small>
-              <h3>Know what to trust</h3>
-              <p>
-                High confidence is good—it means the source is stronger, not
-                that the city scored higher.
-              </p>
-            </div>
-          </div>
+          <CardHeading
+            icon={Database}
+            eyebrow="DATA CONFIDENCE"
+            title="Know what to trust"
+          />
+          <p>
+            High confidence is good—it means the source is stronger, not that
+            the city scored higher.
+          </p>
           <div className="confidence-list">
             {confidence.map((item) => (
               <div key={item.label}>
@@ -885,17 +837,15 @@ const LifeSimulatorPage = ({
         </section>
 
         <section className="card sim-checklist-card">
-          <div className="sim-section-heading">
-            <span>
-              <ClipboardCheck size={19} />
-            </span>
-            <div>
-              <small>MOVE READINESS</small>
-              <h3>
+          <CardHeading
+            icon={ClipboardCheck}
+            eyebrow="MOVE READINESS"
+            title={
+              <>
                 {completed.length} of {checklistItems.length} verified
-              </h3>
-            </div>
-          </div>
+              </>
+            }
+          />
           <div className="checklist-progress">
             <i
               style={{

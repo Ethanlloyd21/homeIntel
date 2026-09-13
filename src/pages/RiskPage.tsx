@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   ShieldAlert,
+  Users,
   ShieldCheck,
   History,
   ArrowUpRight,
@@ -8,7 +9,7 @@ import {
 } from 'lucide-react'
 import type { City } from 'data/cities'
 import PageHeader from 'components/PageHeader'
-import SourceChip from 'components/SourceChip'
+import MetricCard from 'components/MetricCard'
 import LoadingSpinner from 'components/LoadingSpinner'
 import { useRiskQuery } from 'hooks/useRiskQuery'
 import { useStormHistoryQuery } from 'hooks/useStormHistoryQuery'
@@ -100,66 +101,58 @@ const RiskPage = ({ city }: { city: City }) => {
         </div>
       ) : null}
       <div className="research-stat-grid">
-        <article className="card">
-          <span>
-            Relative annual loss
-            <SourceChip
-              source="FEMA Expected Annual Loss score"
-              detail="A relative 0–100 index of modeled loss potential across census tracts. It is not a disaster probability, a percentage of your home value, or a safety grade. Higher means greater relative loss potential."
-            />
-          </span>
-          <strong>{risk ? `${risk.score}/100` : 'Unavailable'}</strong>
-          <small>
-            {risk?.rating ?? 'FEMA tract score'} · higher means more loss
-            potential
-          </small>
-        </article>
-        <article className="card">
-          <span>
-            Expected loss per year
-            <SourceChip
-              source="Modeled annual loss, not historical damage"
-              detail="FEMA combines hazard frequency, exposed assets, and historical loss ratios. The total includes building and agricultural loss plus a statistical dollar equivalent of population impacts. It is a long-run expectation for the entire tract, not an insurance quote."
-            />
-          </span>
-          <strong>{dollars(risk?.annualLoss)}</strong>
-          <small>Whole tract · includes valued population impacts</small>
-        </article>
-        <article className="card">
-          <span>
-            Community resilience
-            <SourceChip
-              source="FEMA community resilience"
-              detail="Modeled capacity to prepare for, adapt to, and recover from hazards. Higher scores indicate greater resilience. This is a community measure, not a rating of your house or proof of a fast recovery."
-            />
-          </span>
-          <strong>
-            {risk?.resilienceScore != null
+        <MetricCard
+          label="Relative annual loss"
+          icon={ShieldAlert}
+          value={risk ? `${risk.score}/100` : 'Unavailable'}
+          note={
+            <>
+              {risk?.rating ?? 'FEMA tract score'} · higher means more loss
+              potential
+            </>
+          }
+          source="FEMA Expected Annual Loss score"
+          detail="A relative 0–100 index of modeled loss potential across census tracts. It is not a disaster probability, a percentage of your home value, or a safety grade. Higher means greater relative loss potential."
+        />
+        <MetricCard
+          label="Expected loss per year"
+          icon={CircleDollarSign}
+          value={dollars(risk?.annualLoss)}
+          note={<>Whole tract · includes valued population impacts</>}
+          source="Modeled annual loss, not historical damage"
+          detail="FEMA combines hazard frequency, exposed assets, and historical loss ratios. The total includes building and agricultural loss plus a statistical dollar equivalent of population impacts. It is a long-run expectation for the entire tract, not an insurance quote."
+        />
+        <MetricCard
+          label="Community resilience"
+          icon={ShieldCheck}
+          value={
+            risk?.resilienceScore != null
               ? `${risk.resilienceScore}/100`
-              : 'Unavailable'}
-          </strong>
-          <small>
-            {risk?.resilienceRating ?? 'No resilience rating'} · higher means
-            greater resilience
-          </small>
-        </article>
-        <article className="card">
-          <span>
-            Social vulnerability
-            <SourceChip
-              source="FEMA social vulnerability"
-              detail="Community characteristics associated with difficulty preparing for and recovering from hazards. Higher scores indicate greater modeled vulnerability. This describes an area and must not be used to label an individual household."
-            />
-          </span>
-          <strong>
-            {risk?.socialVulnerabilityScore != null
+              : 'Unavailable'
+          }
+          note={
+            <>
+              {risk?.resilienceRating ?? 'No resilience rating'} · higher means
+              greater resilience
+            </>
+          }
+          source="FEMA community resilience"
+          detail="Modeled capacity to prepare for, adapt to, and recover from hazards. Higher scores indicate greater resilience. This is a community measure, not a rating of your house or proof of a fast recovery."
+        />
+        <MetricCard
+          label="Social vulnerability"
+          icon={Users}
+          value={
+            risk?.socialVulnerabilityScore != null
               ? `${risk.socialVulnerabilityScore}/100`
-              : 'Unavailable'}
-          </strong>
-          <small>
-            {risk?.socialVulnerabilityRating ?? 'No vulnerability rating'}
-          </small>
-        </article>
+              : 'Unavailable'
+          }
+          note={
+            <>{risk?.socialVulnerabilityRating ?? 'No vulnerability rating'}</>
+          }
+          source="FEMA social vulnerability"
+          detail="Community characteristics associated with difficulty preparing for and recovering from hazards. Higher scores indicate greater modeled vulnerability. This describes an area and must not be used to label an individual household."
+        />
       </div>
       <div className="research-two-column">
         <section className="card research-panel">

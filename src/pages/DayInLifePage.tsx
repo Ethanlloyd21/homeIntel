@@ -1,3 +1,4 @@
+import CardHeading from 'components/CardHeading'
 import {
   CloudRain,
   Droplets,
@@ -96,7 +97,11 @@ const DayInLifePage = ({ city }: { city: City }) => {
 
       <section className="card comfort-card">
         <div>
-          <strong>Your comfortable temperature range</strong>
+          <CardHeading
+            icon={Thermometer}
+            eyebrow="YOUR PREFERENCES"
+            title="Your comfortable temperature range"
+          />
           <p>
             Everything below — comfortable days, climate mismatch, and the
             season worth visiting in — recalculates against this band.

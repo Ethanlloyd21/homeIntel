@@ -1,5 +1,4 @@
-import { Info } from 'lucide-react'
-import { useId } from 'react'
+import HelpTip from 'components/HelpTip'
 
 /**
  * Every derived number in HomeIntel carries its provenance. This is the one
@@ -14,26 +13,18 @@ const SourceChip = ({
   detail?: string
   level?: 'High' | 'Medium' | 'Estimated' | 'Loading' | 'Unavailable'
 }) => {
-  const id = useId()
   return (
-    <span
+    <HelpTip
       className={`source-chip ${level ? `source-chip-${level.toLowerCase()}` : ''}`}
-    >
-      <button
-        type="button"
-        aria-describedby={id}
-        aria-label={`Source: ${source}`}
-      >
-        <Info size={11} aria-hidden="true" />
-        {/* Without a confidence level the icon carries it on its own: a page
-            where every statement shouts "SOURCE" is noise, not provenance. */}
-        {level}
-      </button>
-      <span className="sim-tooltip" id={id} role="tooltip">
-        <strong>{source}</strong>
-        {detail ? <> {detail}</> : null}
-      </span>
-    </span>
+      label={`Source: ${source}`}
+      badge={level}
+      text={
+        <>
+          <strong>{source}</strong>
+          {detail ? <> {detail}</> : null}
+        </>
+      }
+    />
   )
 }
 

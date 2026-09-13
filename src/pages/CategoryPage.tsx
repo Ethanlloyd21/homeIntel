@@ -28,7 +28,8 @@ import { useHousingQuery } from 'hooks/useHousingQuery'
 import { useRiskQuery } from 'hooks/useRiskQuery'
 import { useWeatherQuery } from 'hooks/useWeatherQuery'
 import { fmt, money } from 'utils/formatters'
-import AnimatedValue from 'components/AnimatedValue'
+import MetricCard from 'components/MetricCard'
+import PageHeader from 'components/PageHeader'
 import HousingMetricCard from 'components/HousingMetricCard'
 import NearbyColleges from 'components/NearbyColleges'
 import { useNearbyCollegesQuery } from 'hooks/useNearbyCollegesQuery'
@@ -645,18 +646,12 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
   }
   return (
     <div className={`category-page category-${type.toLowerCase()}`}>
-      <div className="category-hero">
-        <div className="category-icon">
-          <Icon size={25} />
-        </div>
-        <div>
-          <p className="eyebrow">
-            {city.name.toUpperCase()}, {city.state}
-          </p>
-          <h2>{c.title}</h2>
-          <span>{c.intro}</span>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={`${city.name.toUpperCase()}, ${city.state}`}
+        icon={Icon}
+        title={c.title}
+        description={c.intro}
+      />
       <div className="category-stats">
         {c.stats.map(([label, value, note], index) => {
           const details = detailSets[type as keyof typeof detailSets]
@@ -672,13 +667,14 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
               icon={'icon' in details[index] ? details[index].icon : undefined}
             />
           ) : (
-            <article className="card" key={label}>
-              <p>{label}</p>
-              <strong>
-                <AnimatedValue value={value} />
-              </strong>
-              <small>{note}</small>
-            </article>
+            <MetricCard
+              key={label}
+              label={label}
+              value={value}
+              note={note}
+              icon={Icon}
+              color={city.color}
+            />
           )
         })}
       </div>

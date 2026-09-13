@@ -1,6 +1,7 @@
 import { ArrowRight, CloudSun } from 'lucide-react'
 import type { City } from 'data/cities'
 import LoadingSpinner from 'components/LoadingSpinner'
+import HelpTip from 'components/HelpTip'
 import { useWeatherQuery } from 'hooks/useWeatherQuery'
 
 const describeWeather = (code: number) => {
@@ -102,12 +103,15 @@ const WeatherCard = ({
             <CloudSun className="weather-icon" aria-hidden="true" />
           </div>
           {comfort && (
-            <div
-              className={`comfort-scale comfort-${comfort.tone}`}
-              title="HomeIntel estimate based on apparent temperature, humidity, wind, precipitation, and storm conditions."
-            >
+            <div className={`comfort-scale comfort-${comfort.tone}`}>
               <div className="comfort-scale-heading">
-                <span>Outdoor comfort</span>
+                <span>
+                  Outdoor comfort{' '}
+                  <HelpTip
+                    label="About outdoor comfort"
+                    text="HomeIntel estimate based on apparent temperature, humidity, wind, precipitation, and storm conditions."
+                  />
+                </span>
                 <b>
                   {comfort.label} · {comfort.score}/100
                 </b>

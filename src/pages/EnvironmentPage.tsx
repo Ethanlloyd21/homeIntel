@@ -1,3 +1,4 @@
+import CardHeading from 'components/CardHeading'
 import {
   CloudSun,
   Sun,
@@ -16,6 +17,7 @@ import { useTrafficSummaryQuery } from 'hooks/useTrafficSummaryQuery'
 import { trafficCondition } from 'services/traffic'
 import type { ClimateMonth } from 'services/weatherOutlook'
 import PageHeader from 'components/PageHeader'
+import MetricCard from 'components/MetricCard'
 import SourceChip from 'components/SourceChip'
 import YearWeatherOutlook from 'components/YearWeatherOutlook'
 import TrafficCommute from 'components/TrafficCommute'
@@ -78,62 +80,59 @@ const EnvironmentPage = ({ city }: { city: City }) => {
         description="The daily weather, the roads you’ll use, and the seasonal conditions worth considering before a move."
       />
       <div className="research-stat-grid">
-        <article className="card">
-          <span>
-            <Droplets size={16} /> Humidity now
-            <SourceChip
-              source="Current relative humidity"
-              detail="Moisture in the air relative to saturation at the current temperature. This varies through the day; it is not the city's annual humidity."
-            />
-          </span>
-          <strong>{rounded(current?.current.relative_humidity_2m, '%')}</strong>
-          <small>
-            {currentQuery.isPending
-              ? 'Loading current conditions'
-              : 'Open-Meteo · modeled conditions'}
-          </small>
-        </article>
-        <article className="card">
-          <span>
-            <Sun size={16} /> Today’s high / low
-          </span>
-          <strong>
-            {current
+        <MetricCard
+          label="Humidity now"
+          icon={Droplets}
+          value={rounded(current?.current.relative_humidity_2m, '%')}
+          note={
+            <>
+              {currentQuery.isPending
+                ? 'Loading current conditions'
+                : 'Open-Meteo · modeled conditions'}
+            </>
+          }
+          source="Current relative humidity"
+          detail="Moisture in the air relative to saturation at the current temperature. This varies through the day; it is not the city's annual humidity."
+        />
+        <MetricCard
+          label="Today’s high / low"
+          icon={Sun}
+          value={
+            current
               ? `${rounded(current.daily.temperature_2m_max[0], '°')} / ${rounded(current.daily.temperature_2m_min[0], '°')}`
-              : 'Unavailable'}
-          </strong>
-          <small>Degrees Fahrenheit · local day</small>
-        </article>
-        <article className="card">
-          <span>
-            <Wind size={16} /> Wind now
-          </span>
-          <strong>{rounded(current?.current.wind_speed_10m, ' mph')}</strong>
-          <small>Modeled speed at 10 metres above ground</small>
-        </article>
-        <article className="card">
-          <span>
-            <TrafficCone size={16} /> Current traffic
-            <SourceChip
-              source="TomTom nearby road samples"
-              detail="Average delay relative to free flow on up to five unique sampled roads around the city centre. It is a small local sample, not a citywide congestion index. The map shows wider road coverage."
-            />
-          </span>
-          <strong>
-            {traffic
+              : 'Unavailable'
+          }
+          note={<>Degrees Fahrenheit · local day</>}
+        />
+        <MetricCard
+          label="Wind now"
+          icon={Wind}
+          value={rounded(current?.current.wind_speed_10m, ' mph')}
+          note={<>Modeled speed at 10 metres above ground</>}
+        />
+        <MetricCard
+          label="Current traffic"
+          icon={TrafficCone}
+          value={
+            traffic
               ? trafficCondition(traffic.delayPercent).label
               : trafficQuery.isPending
                 ? 'Loading…'
-                : 'Unavailable'}
-          </strong>
-          <small>
-            {traffic
-              ? `+${Math.round(traffic.delayPercent)}% delay · ${traffic.sampleCount} nearby roads`
-              : 'Live traffic summary'}
-            {traffic &&
-              ` · ${new Date(traffic.updatedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: city.timezone })}`}
-          </small>
-        </article>
+                : 'Unavailable'
+          }
+          note={
+            <>
+              {traffic
+                ? `+${Math.round(traffic.delayPercent)}% delay · ${traffic.sampleCount} nearby roads`
+                : 'Live traffic summary'}
+              {traffic &&
+                ` · ${new Date(traffic.updatedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: city.timezone })}`}
+            </>
+          }
+          source="TomTom nearby road samples"
+          detail="Average delay relative to free flow on up to five unique sampled roads around the city centre. It is a small local sample, not a citywide congestion index. The map shows wider road coverage."
+          valueKind="text"
+        />
       </div>
       <TrafficCommute key={city.id} city={city} />
       <div className="research-section-head research-spaced">
@@ -153,16 +152,17 @@ const EnvironmentPage = ({ city }: { city: City }) => {
         isError={outlookQuery.isError}
       />
       <section className="card research-panel research-spaced">
-        <div className="research-section-head">
-          <div>
-            <p className="eyebrow">WHAT THIS MEANS</p>
-            <h3>The seasons that shape daily life.</h3>
-          </div>
-          <SourceChip
-            source="Historical climate and NOAA event records"
-            detail="Climate statistics use the previous ten complete calendar years of Open-Meteo reanalysis. Storm season summaries use the downloaded NOAA county and current forecast-zone records. These are retrospective patterns, not future event or traffic forecasts."
-          />
-        </div>
+        <CardHeading
+          icon={CloudSun}
+          eyebrow="WHAT THIS MEANS"
+          title="The seasons that shape daily life."
+          action={
+            <SourceChip
+              source="Historical climate and NOAA event records"
+              detail="Climate statistics use the previous ten complete calendar years of Open-Meteo reanalysis. Storm season summaries use the downloaded NOAA county and current forecast-zone records. These are retrospective patterns, not future event or traffic forecasts."
+            />
+          }
+        />
         {outlookQuery.isPending ? (
           <LoadingSpinner label="Finding seasonal patterns" />
         ) : (

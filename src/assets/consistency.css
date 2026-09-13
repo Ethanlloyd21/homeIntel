@@ -1,0 +1,869 @@
+/* Shared research surfaces: one card, heading, and help treatment across pages. */
+:root {
+  --research-card-radius: 16px;
+  --research-card-padding: 22px;
+  --ui-gap: 20px;
+  --ui-control-height: 44px;
+  --ui-control-radius: 10px;
+  --ui-label-size: 13px;
+  --ui-caption-size: 13px;
+  --ui-heading-size: 19px;
+  --help-accent: #7653ca;
+}
+:root[data-theme='dark'] {
+  --help-accent: #b39aff;
+}
+.app-shell:not(.location-entry) .card {
+  min-width: 0;
+  border-radius: var(--research-card-radius);
+  background: var(--surface);
+  box-shadow: var(--elev-1);
+}
+.app-shell:not(.location-entry) .card:hover {
+  transform: none;
+}
+.app-shell:not(.location-entry)
+  :is(
+    .panel-card,
+    .metric-card,
+    .housing-stat-card,
+    .snapshot,
+    .risk-panel,
+    .industries,
+    .research-panel
+  ) {
+  padding: var(--research-card-padding);
+}
+.app-shell:not(.location-entry)
+  :is(.section-heading, .panel-card-heading, .sim-section-heading)
+  h3 {
+  color: var(--ink);
+  font-family: 'Manrope', sans-serif;
+  font-size: 19px;
+  line-height: 1.35;
+  letter-spacing: -0.5px;
+}
+.app-shell:not(.location-entry)
+  :is(.section-heading, .panel-card-heading, .sim-section-heading)
+  small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+}
+.app-shell:not(.location-entry)
+  :is(.page-header, .category-hero, .simulator-hero, .compare-title)
+  h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(28px, 3.2vw, 38px);
+  line-height: 1.16;
+  letter-spacing: -1.2px;
+  color: var(--ink);
+}
+.app-shell:not(.location-entry)
+  :is(.category-hero, .simulator-hero, .page-header, .compare-title) {
+  margin-bottom: 28px;
+}
+.app-shell:not(.location-entry)
+  :is(
+    .panel-card-icon,
+    .sim-section-heading > span,
+    .metric-head > .metric-icon,
+    .housing-metric-icon
+  ) {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 10px;
+}
+.app-shell:not(.location-entry)
+  :is(.metrics, .category-stats, .detail-grid, .overview-grid) {
+  gap: 20px;
+}
+.app-shell:not(.location-entry) :is(.metrics, .category-stats) .card::before {
+  display: none;
+}
+.app-shell:not(.location-entry) :is(.metric-card, .housing-stat-card) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.app-shell:not(.location-entry) :is(.metric-head > p, .housing-metric-title p) {
+  font-size: 13px;
+  letter-spacing: 0;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.app-shell:not(.location-entry)
+  :is(.metric-value strong, .housing-stat-card > strong) {
+  font:
+    600 clamp(24px, 2.4vw, 30px)/1.25 'Manrope',
+    sans-serif;
+  letter-spacing: -1px;
+  color: var(--ink);
+}
+.app-shell:not(.location-entry) :is(.metric-card, .housing-stat-card) > small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.app-shell:not(.location-entry)
+  :is(.metric-card, .housing-stat-card)
+  > .housing-detail-trigger {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.app-shell:not(.location-entry)
+  :is(button, a, input, select, summary):focus-visible {
+  outline: 2px solid var(--help-accent);
+  outline-offset: 3px;
+}
+
+/* Portals keep help above charts and outside cards that clip their contents. */
+.help-tip {
+  display: inline-flex;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.help-tip > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 24px;
+  min-height: 24px;
+  height: auto;
+  padding: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--help-accent);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+  cursor: help;
+}
+.help-tip > button:hover,
+.help-tip > button:focus-visible {
+  background: color-mix(in srgb, var(--help-accent) 12%, transparent);
+}
+.help-tip[class*='source-chip-'] > button,
+.help-tip.confidence-help > button {
+  padding-inline: 8px;
+  background: var(--soft);
+  color: var(--muted);
+}
+.help-tip.source-chip-high > button,
+.help-tip.confidence-help > .confidence-high {
+  color: var(--tone-good);
+  background: var(--tone-good-soft);
+}
+.help-tip.source-chip-medium > button,
+.help-tip.confidence-help > .confidence-medium {
+  color: var(--tone-neutral);
+  background: var(--tone-neutral-soft);
+}
+.help-tip:is(.source-chip-estimated, .source-chip-loading) > button,
+.help-tip.confidence-help > :is(.confidence-estimated, .confidence-loading) {
+  color: var(--tone-caution);
+  background: var(--tone-caution-soft);
+}
+.help-tip.source-chip-unavailable > button,
+.help-tip.confidence-help > .confidence-unavailable {
+  color: var(--tone-alert);
+  background: var(--tone-alert-soft);
+}
+.help-tooltip {
+  position: fixed;
+  z-index: 10000;
+  width: min(300px, calc(100vw - 32px));
+  max-height: min(180px, calc(100dvh - 32px));
+  overflow-y: auto;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--help-accent) 35%, var(--line));
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: var(--elev-2);
+  font:
+    500 12px/1.6 'DM Sans',
+    sans-serif;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.help-tooltip strong {
+  color: inherit;
+}
+
+/* Overview borrows the landing page's open, editorial hierarchy. */
+.overview-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+  align-items: center;
+  gap: clamp(24px, 4vw, 64px);
+  padding: 20px 0 36px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 32px;
+}
+.overview-hero-copy {
+  min-width: 0;
+}
+.app-shell main .overview-hero .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+.overview-hero h2 {
+  margin: 0;
+  font:
+    500 clamp(36px, 4.1vw, 62px)/1.1 'Manrope',
+    sans-serif;
+  letter-spacing: -0.06em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.overview-hero h2 > span {
+  color: var(--muted);
+}
+.app-shell main .overview-hero-description {
+  max-width: 55ch;
+  margin: 22px 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+.overview-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.app-shell main :is(.overview-primary-action, .overview-secondary-action) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 11px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+.app-shell main .overview-primary-action {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.app-shell
+  main
+  :is(.overview-primary-action, .overview-secondary-action):hover {
+  border-color: var(--help-accent);
+  box-shadow: var(--elev-1);
+}
+.overview-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.overview-topics span::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin: 0 7px 2px 0;
+  border-radius: 50%;
+  background: var(--coral);
+}
+.app-shell main .overview-weather .weather {
+  padding: var(--research-card-padding);
+}
+.app-shell main .overview-weather-caption {
+  margin: 12px 4px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.overview-section-title {
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.app-shell main .overview-section-title > p {
+  max-width: 34ch;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+.overview-page .section-title {
+  margin-top: 30px;
+  margin-bottom: 18px;
+}
+.overview-page .section-title h2 {
+  font:
+    600 clamp(22px, 2.3vw, 28px)/1.25 'Manrope',
+    sans-serif;
+  letter-spacing: -0.8px;
+}
+.overview-page .overview-grid {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+.overview-page .detail-grid {
+  margin-top: 24px;
+}
+.overview-page .risk-note {
+  flex-wrap: wrap;
+}
+.overview-route-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.app-shell main .overview-route-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  padding: var(--research-card-padding);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.app-shell main .overview-route-card:hover {
+  border-color: var(--help-accent);
+  box-shadow: var(--elev-2);
+}
+.overview-route-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.overview-route-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--coral);
+  background: color-mix(in srgb, var(--coral) 10%, transparent);
+}
+.overview-route-number {
+  color: var(--muted);
+  font-size: 12px;
+}
+.overview-route-card h3,
+.overview-next-step h3 {
+  font:
+    600 18px/1.4 'Manrope',
+    sans-serif;
+  letter-spacing: -0.5px;
+  margin: 0;
+  color: var(--ink);
+}
+.app-shell main .overview-route-card p,
+.app-shell main .overview-next-step p:not(.eyebrow) {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.overview-route-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: auto;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.overview-next-step {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 24px;
+  margin-top: 24px;
+}
+.overview-next-step > div {
+  flex: 1 1 280px;
+}
+.overview-next-step h3 {
+  margin-bottom: 6px;
+}
+.app-shell main .overview-next-step .eyebrow {
+  margin: 0 0 8px;
+  font-size: 10px;
+}
+@media (max-width: 1100px) {
+  .overview-hero {
+    grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr);
+    gap: 24px;
+  }
+  .overview-page .overview-grid {
+    grid-template-columns: 1fr;
+  }
+  .overview-route-grid {
+    gap: 14px;
+  }
+}
+@media (max-width: 760px) {
+  :root {
+    --research-card-padding: 18px;
+  }
+  .overview-hero {
+    grid-template-columns: 1fr;
+    padding-top: 8px;
+  }
+  .overview-hero h2 {
+    font-size: clamp(36px, 8vw, 52px);
+  }
+  .overview-route-grid {
+    grid-template-columns: 1fr;
+  }
+  .overview-page .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .overview-hero-actions > button {
+    flex: 1 1 190px;
+  }
+  .overview-page .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .overview-next-step {
+    padding: 18px;
+  }
+  .overview-next-step > button {
+    width: 100%;
+  }
+}
+@media (max-width: 440px) {
+  .overview-page .metrics {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell:not(.location-entry) .card,
+  .overview-hero-actions > button {
+    transition: none;
+  }
+}
+
+/* Keep specialized layouts, while sharing their typography and spacing. */
+.app-shell:not(.location-entry)
+  :is(.simulator-page, .sim-result-grid, .sim-side-stack, .sim-bottom-grid)
+  > .card,
+.app-shell:not(.location-entry)
+  :is(
+    .research-stat-grid > .card,
+    .compare-section,
+    .compare-picker,
+    .compare-sources,
+    .compare-faq
+  ) {
+  padding: var(--research-card-padding);
+}
+.app-shell:not(.location-entry)
+  :is(.research-section-head, .compare-section-heading)
+  h3,
+.app-shell:not(.location-entry) .research-panel > h3 {
+  font:
+    600 19px/1.35 'Manrope',
+    sans-serif;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+}
+.app-shell:not(.location-entry)
+  :is(
+    .page-header-description,
+    .category-hero > div > span,
+    .simulator-hero > div > span,
+    .compare-title > span
+  ) {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.app-shell main .help-tip > button {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Component roles take precedence over the legacy page-wide type rules. */
+.app-shell:not(.location-entry) .page-header {
+  margin: 0 0 28px;
+}
+.app-shell:not(.location-entry) .page-header h2 {
+  font-weight: 600;
+  max-width: none;
+}
+.app-shell:not(.location-entry) :is(.page-header, .card) .eyebrow,
+.app-shell:not(.location-entry)
+  :is(
+    .section-heading,
+    .panel-card-heading,
+    .research-section-head,
+    .compare-section-heading,
+    .sim-guide-heading,
+    .education-dropdown-trigger
+  )
+  :is(small, .eyebrow) {
+  display: block;
+  margin: 0 0 4px;
+  color: var(--muted);
+  font:
+    600 11px/1.5 'DM Sans',
+    sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.app-shell:not(.location-entry) .page-header .eyebrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.app-shell:not(.location-entry)
+  :is(
+    .section-heading,
+    .panel-card-heading,
+    .research-section-head,
+    .compare-section-heading,
+    .sim-guide-heading,
+    .education-dropdown-trigger
+  )
+  h3 {
+  margin: 0;
+  color: var(--ink);
+  font:
+    600 var(--ui-heading-size)/1.35 'Manrope',
+    sans-serif;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+.app-shell:not(.location-entry)
+  :is(.section-heading, .panel-card-heading, .research-section-head) {
+  gap: 12px;
+  align-items: center;
+  margin-bottom: var(--ui-gap);
+}
+.app-shell:not(.location-entry) .panel-card {
+  gap: var(--ui-gap);
+}
+.app-shell:not(.location-entry) .panel-card > .panel-card-heading {
+  margin-bottom: 0;
+}
+.app-shell:not(.location-entry) .panel-card-heading-copy {
+  flex: 1;
+  min-width: 0;
+}
+.app-shell:not(.location-entry) .panel-card-heading > .panel-card-action {
+  flex: 0 1 auto;
+  margin-left: auto;
+}
+.app-shell:not(.location-entry) :is(.panel-card-icon, .metric-icon) {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+  border-radius: 10px;
+  color: var(--metric-accent, var(--panel-accent, var(--green)));
+  background: color-mix(in srgb, currentColor 9%, transparent);
+}
+.app-shell:not(.location-entry)
+  :is(
+    .wide-chart,
+    .insight-list,
+    .comfort-card,
+    .neighborhood-column,
+    .compare-verdict,
+    .compare-empty,
+    .origin-prompt,
+    .verdict-card,
+    .education-dropdown
+  ) {
+  padding: var(--research-card-padding);
+}
+.app-shell:not(.location-entry)
+  :is(.metrics, .category-stats, .research-stat-grid) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ui-gap);
+  align-items: stretch;
+}
+.app-shell:not(.location-entry) .metric-card {
+  min-height: 216px;
+  gap: 0;
+  padding: var(--research-card-padding);
+}
+.app-shell:not(.location-entry) .metric-head {
+  min-height: 36px;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.app-shell:not(.location-entry) .metric-head > p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--ink);
+  font:
+    600 var(--ui-label-size)/1.4 'DM Sans',
+    sans-serif;
+  letter-spacing: 0;
+}
+.app-shell:not(.location-entry) .metric-head > .help-tip {
+  margin: 0;
+  flex: 0 0 auto;
+}
+.app-shell:not(.location-entry) .metric-value {
+  min-height: 38px;
+  align-items: center;
+}
+.app-shell:not(.location-entry) .metric-value strong {
+  display: block;
+  max-width: 100%;
+  font:
+    600 30px/1.25 'Manrope',
+    sans-serif;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.app-shell:not(.location-entry) .metric-value-text strong {
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+.app-shell:not(.location-entry) .metric-card > small {
+  min-height: 39px;
+  margin: 4px 0 16px;
+  font-size: var(--ui-caption-size);
+  line-height: 1.5;
+}
+.app-shell:not(.location-entry) .housing-detail-trigger {
+  min-height: 36px;
+  margin-top: auto;
+  padding: 12px 0 0;
+  font:
+    600 var(--ui-label-size)/1.5 'DM Sans',
+    sans-serif;
+  color: var(--muted);
+  cursor: pointer;
+}
+.app-shell:not(.location-entry) .housing-detail-trigger:hover {
+  color: var(--ink);
+}
+.metric-details-open,
+.metric-card[data-state='open'] .metric-details-closed {
+  display: none;
+}
+.metric-card[data-state='open'] .metric-details-open {
+  display: inline;
+}
+.metric-card[data-state='open'] .housing-detail-trigger > svg {
+  transform: rotate(180deg);
+}
+.app-shell:not(.location-entry) .housing-detail-content :is(p, li, a) {
+  font-size: var(--ui-caption-size);
+  line-height: 1.6;
+}
+.app-shell:not(.location-entry) .housing-detail-content p {
+  margin: 0;
+}
+.app-shell:not(.location-entry) .compare-sections {
+  display: grid;
+  gap: var(--ui-gap);
+}
+.app-shell:not(.location-entry)
+  :is(
+    .brief-columns,
+    .brief-sections,
+    .moveplan-grid,
+    .neighborhood-grid,
+    .day-layout,
+    .sim-result-grid,
+    .sim-side-stack,
+    .sim-bottom-grid,
+    .research-two-column,
+    .category-content,
+    .climate-stats
+  ) {
+  gap: var(--ui-gap);
+}
+.app-shell:not(.location-entry) .research-spaced {
+  margin-top: 24px;
+}
+.app-shell:not(.location-entry) .overview-hero h2 {
+  font-size: clamp(28px, 3.2vw, 38px);
+  font-weight: 600;
+  line-height: 1.16;
+  letter-spacing: -1.2px;
+}
+.app-shell:not(.location-entry) .overview-hero-description {
+  font-size: 14px;
+  line-height: 1.65;
+}
+.app-shell:not(.location-entry) .climate-stat {
+  padding: var(--research-card-padding);
+  border-radius: var(--research-card-radius);
+  background: var(--surface);
+}
+.app-shell:not(.location-entry) .climate-stat strong {
+  font:
+    600 30px/1.25 'Manrope',
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell:not(.location-entry) .climate-stat small {
+  font-size: var(--ui-caption-size);
+  line-height: 1.5;
+}
+.app-shell:not(.location-entry) .compare-section + .compare-section {
+  border-top: 1px solid var(--line);
+}
+.app-shell:not(.location-entry) .compare-section-heading {
+  margin: 0 0 var(--ui-gap);
+  padding: 0;
+  background: transparent;
+}
+.app-shell:not(.location-entry) .season-insight-grid h4 {
+  font:
+    600 16px/1.4 'Manrope',
+    sans-serif;
+  margin: 12px 0 8px;
+}
+.app-shell:not(.location-entry) .season-insight-grid p {
+  font-size: 14px;
+  line-height: 1.65;
+}
+.app-shell:not(.location-entry)
+  :is(
+    .season-insight-grid small,
+    .research-caption,
+    .panel-lede,
+    .empty-note,
+    .simulator-disclaimer,
+    .budget-note,
+    .place-picker-head small
+  ) {
+  color: var(--muted);
+  font-size: var(--ui-caption-size);
+  line-height: 1.6;
+}
+.app-shell:not(.location-entry)
+  :is(
+    .sim-field > span,
+    .place-picker-head strong,
+    .budget-lines strong,
+    .comfort-slider > span,
+    .traffic-time-controls label
+  ) {
+  color: var(--muted);
+  font-size: var(--ui-label-size);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+.app-shell:not(.location-entry)
+  :is(
+    .sim-field > input,
+    .sim-field > select,
+    .sim-number-input,
+    .budget-input,
+    .place-picker-search,
+    .traffic-time-controls select
+  ) {
+  min-height: var(--ui-control-height);
+  height: var(--ui-control-height);
+  border: 1px solid var(--line);
+  border-radius: var(--ui-control-radius);
+  background: var(--input);
+  color: var(--ink);
+}
+.app-shell:not(.location-entry)
+  :is(
+    .sim-field input,
+    .sim-field select,
+    .budget-input input,
+    .place-picker-search input,
+    .traffic-time-controls select
+  ) {
+  font:
+    400 15px/1.5 'DM Sans',
+    sans-serif;
+}
+.app-shell:not(.location-entry)
+  :is(.sim-number-input, .budget-input, .place-picker-search):focus-within {
+  border-color: var(--help-accent);
+  outline: 2px solid var(--help-accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.app-shell:not(.location-entry)
+  :is(.ghost-button, .pill-button, .sim-guide-toggle) {
+  min-height: var(--ui-control-height);
+  border-radius: var(--ui-control-radius);
+  font:
+    600 var(--ui-label-size)/1.5 'DM Sans',
+    sans-serif;
+}
+@media (max-width: 1280px) {
+  .app-shell:not(.location-entry)
+    :is(.metrics, .category-stats, .research-stat-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  :root {
+    --ui-gap: 16px;
+  }
+  .app-shell:not(.location-entry) .panel-card-heading {
+    flex-wrap: wrap;
+  }
+  .app-shell:not(.location-entry) .panel-card-heading > .panel-card-action {
+    max-width: 100%;
+  }
+  .app-shell:not(.location-entry)
+    :is(
+      .sim-field input,
+      .sim-field select,
+      .budget-input input,
+      .place-picker-search input,
+      .traffic-time-controls select
+    ) {
+    font-size: 16px;
+  }
+}
+@media (max-width: 540px) {
+  .app-shell:not(.location-entry)
+    :is(.metrics, .category-stats, .research-stat-grid) {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .housing-detail-content,
+  .housing-detail-trigger svg {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,3 +1,5 @@
+import CardHeading from 'components/CardHeading'
+import PageHeader from 'components/PageHeader'
 import {
   ArrowDown,
   BadgeDollarSign,
@@ -92,15 +94,7 @@ const ComparisonSection = ({
 }) => {
   return (
     <section className="card compare-section">
-      <div className="compare-section-heading">
-        <span>
-          <Icon size={17} aria-hidden="true" />
-        </span>
-        <div>
-          <small>{eyebrow}</small>
-          <h3>{title}</h3>
-        </div>
-      </div>
+      <CardHeading icon={Icon} eyebrow={eyebrow} title={title} />
       <div className="compare-section-labels" aria-hidden="true">
         <span>Metric</span>
         <span>{leftName}</span>
@@ -190,14 +184,16 @@ const ComparePage = ({
   if (!right) {
     return (
       <div className="compare-page">
-        <div className="compare-title">
-          <p className="eyebrow">CITY VS CITY</p>
-          <h2>Which place fits your next move?</h2>
-          <span>
-            Keep {left.name} as City A or search for a different starting city,
-            then enter City B to begin.
-          </span>
-        </div>
+        <PageHeader
+          eyebrow="CITY VS CITY"
+          title="Which place fits your next move?"
+          description={
+            <>
+              Keep {left.name} as City A or search for a different starting
+              city, then enter City B to begin.
+            </>
+          }
+        />
         <ComparePicker
           left={left}
           right={null}
@@ -414,14 +410,16 @@ const ComparePage = ({
 
   return (
     <div className="compare-page">
-      <div className="compare-title">
-        <p className="eyebrow">CITY VS CITY</p>
-        <h2>Which place fits your next move?</h2>
-        <span>
-          Compare housing, people, opportunity, and natural-hazard risk using
-          the latest available public data.
-        </span>
-      </div>
+      <PageHeader
+        eyebrow="CITY VS CITY"
+        title="Which place fits your next move?"
+        description={
+          <>
+            Compare housing, people, opportunity, and natural-hazard risk using
+            the latest available public data.
+          </>
+        }
+      />
 
       <ComparePicker
         left={left}

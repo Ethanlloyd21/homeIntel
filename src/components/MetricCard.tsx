@@ -1,8 +1,8 @@
-import { ChevronDown, Home } from 'lucide-react'
+import { ChevronDown, type LucideIcon } from 'lucide-react'
 import { Collapsible } from 'radix-ui'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import AnimatedValue from 'components/AnimatedValue'
-import MiniTrend from 'components/MiniTrend'
+import SourceChip from 'components/SourceChip'
 
 const MetricCard = ({
   label,
@@ -12,49 +12,91 @@ const MetricCard = ({
   color,
   trend,
   source,
+  help,
+  detail,
+  sources,
+  valueKind = 'number',
 }: {
   label: string
   value: ReactNode
-  note: string
-  icon: typeof Home
-  color: string
+  note: ReactNode
+  icon: LucideIcon
+  color?: string
   trend?: string
   source?: string
+  help?: ReactNode
+  detail?: ReactNode
+  sources?: { label: string; href: string }[]
+  valueKind?: 'number' | 'text'
 }) => {
+  const displayKind =
+    typeof value === 'string' && !/\d/.test(value) ? 'text' : valueKind
   return (
     <Collapsible.Root asChild>
-      <article className="metric-card card group relative transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl focus-within:ring-2 focus-within:ring-violet-400/50">
+      <article
+        className="metric-card card"
+        style={
+          color ? ({ '--metric-accent': color } as CSSProperties) : undefined
+        }
+      >
         <div className="metric-head">
-          <span style={{ background: `${color}14`, color }}>
+          <span className="metric-icon">
             <Icon size={18} aria-hidden="true" />
           </span>
           <p>{label}</p>
+          {help ??
+            (source && (
+              <SourceChip
+                source={source}
+                detail={typeof detail === 'string' ? detail : undefined}
+              />
+            ))}
         </div>
-        <div className="metric-value">
+        <div className={`metric-value metric-value-${displayKind}`}>
           <strong>
             <AnimatedValue value={value} />
           </strong>
-          <MiniTrend color={color} invert={trend?.startsWith('-')} />
         </div>
         <small>
           {trend && (
             <b className={trend.startsWith('+') ? 'up' : 'neutral'}>{trend}</b>
-          )}{' '}
+          )}
+          {trend && ' '}
           {note}
         </small>
-        <Collapsible.Trigger className="mt-3 flex w-full items-center justify-between rounded-lg border-0 bg-transparent px-0 py-1 text-[11px] font-semibold text-slate-500 outline-none transition-colors hover:text-violet-500 focus-visible:ring-2 focus-visible:ring-violet-400/60">
-          <span>View details</span>
-          <ChevronDown
-            size={14}
-            className="transition-transform duration-200 group-data-[state=open]:rotate-180"
-          />
+        <Collapsible.Trigger className="housing-detail-trigger">
+          <span>
+            <span className="metric-details-closed">View details</span>
+            <span className="metric-details-open">Hide details</span>
+            <span className="sr-only">: {label}</span>
+          </span>
+          <ChevronDown size={14} aria-hidden="true" />
         </Collapsible.Trigger>
-        <Collapsible.Content className="overflow-hidden data-[state=closed]:animate-[collapse-up_180ms_ease-out] data-[state=open]:animate-[collapse-down_180ms_ease-out]">
-          <div className="mt-2 border-t border-slate-200/70 pt-3 text-xs leading-relaxed text-slate-500">
-            <p className="m-0">
-              {trend ? `${trend} ${note}` : note}
-              {source ? ` Source: ${source}.` : ''}
+        <Collapsible.Content className="housing-detail-content">
+          <div>
+            <p>
+              {detail ?? (
+                <>
+                  {trend && `${trend} `}
+                  {note}
+                </>
+              )}
+              {source && ` Source: ${source}.`}
             </p>
+            {sources && sources.length > 0 && (
+              <>
+                <span>Sources</span>
+                <ul>
+                  {sources.map((entry) => (
+                    <li key={entry.href}>
+                      <a href={entry.href} target="_blank" rel="noreferrer">
+                        {entry.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         </Collapsible.Content>
       </article>
