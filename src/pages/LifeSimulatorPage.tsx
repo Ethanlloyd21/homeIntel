@@ -23,6 +23,7 @@ import HelpTip from 'components/HelpTip'
 import type { City } from 'data/cities'
 import { useCityIntel } from 'hooks/useCityIntel'
 import { useDecision } from 'hooks/useDecision'
+import { gasPricePeriodLabel, useGasPriceQuery } from 'hooks/useGasPriceQuery'
 import {
   calculateConsensusScore,
   calculateLifeSimulation,
@@ -141,11 +142,13 @@ const CurrencyInput = ({
   value,
   onChange,
   min = 0,
+  step = 50,
 }: {
   label: string
   value: number
   onChange: (value: number) => void
   min?: number
+  step?: number
 }) => (
   <label className="sim-field">
     <FieldLabel label={label} />
@@ -154,7 +157,7 @@ const CurrencyInput = ({
       <input
         type="number"
         min={min}
-        step="50"
+        step={step}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
       />
@@ -265,6 +268,11 @@ const LifeSimulatorPage = ({
   )
 
   const decision = useDecision(city)
+  const gasPriceQuery = useGasPriceQuery(city)
+  const gasPrice = gasPriceQuery.data
+  const suggestedGasPrice = gasPrice
+    ? Math.round(gasPrice.price * 100) / 100
+    : null
   const rightIntel = useCityIntel(comparisonCity)
 
   const leftResult = decision?.simulation ?? null
@@ -511,8 +519,45 @@ const LifeSimulatorPage = ({
             <CurrencyInput
               label="Gas price per gallon"
               value={inputs.gasPrice}
+              step={0.01}
               onChange={(value) => updateInput('gasPrice', value)}
             />
+          </div>
+          <div className="sim-gas-price-reference" role="status">
+            {gasPriceQuery.isPending ? (
+              <span>Loading the latest EIA regular-gas average…</span>
+            ) : gasPrice ? (
+              <>
+                <span>
+                  <b>${gasPrice.price.toFixed(2)}/gal</b> · {gasPrice.area} ·{' '}
+                  week of {gasPricePeriodLabel(gasPrice.period)}
+                </span>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() =>
+                    updateInput(
+                      'gasPrice',
+                      suggestedGasPrice ?? gasPrice.price,
+                    )
+                  }
+                  disabled={inputs.gasPrice === suggestedGasPrice}
+                >
+                  {inputs.gasPrice === suggestedGasPrice
+                    ? 'Using this price'
+                    : 'Use this price'}
+                </button>
+                <SourceChip
+                  source="U.S. EIA weekly regular gasoline"
+                  detail={`Average retail price including taxes for the ${gasPrice.area} reporting geography; not a station quote.`}
+                />
+              </>
+            ) : (
+              <span>
+                EIA regular-gas average unavailable. Keep or edit your planning
+                assumption.
+              </span>
+            )}
           </div>
         </details>
       </section>

@@ -385,6 +385,19 @@
 .traffic-only {
   margin-top: 28px;
 }
+.weather-load-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.weather-load-status p {
+  margin: 0 0 4px;
+}
 .traffic-map-card {
   border-radius: 16px;
   padding: 0;
@@ -418,6 +431,10 @@
   display: flex;
   gap: 6px;
   margin-left: auto;
+}
+.traffic-visibility-toggle {
+  gap: 7px;
+  white-space: nowrap;
 }
 .traffic-city-reset {
   position: absolute;

@@ -110,13 +110,6 @@
   margin-bottom: 14px;
 }
 .app-shell:not(.location-entry)
-  :is(.metric-card, .housing-stat-card)
-  > .housing-detail-trigger {
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-}
-.app-shell:not(.location-entry)
   :is(button, a, input, select, summary):focus-visible {
   outline: 2px solid var(--help-accent);
   outline-offset: 3px;
@@ -196,6 +189,20 @@
 }
 .help-tooltip strong {
   color: inherit;
+}
+.metric-help-content,
+.metric-help-sources {
+  display: grid;
+  gap: 8px;
+}
+.metric-help-sources {
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+.metric-help-sources a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 /* Overview borrows the landing page's open, editorial hierarchy. */
@@ -612,8 +619,13 @@
   gap: var(--ui-gap);
   align-items: stretch;
 }
+@media (min-width: 1281px) {
+  .app-shell:not(.location-entry) .environment-stat-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
 .app-shell:not(.location-entry) .metric-card {
-  min-height: 216px;
+  min-height: 184px;
   gap: 0;
   padding: var(--research-card-padding);
 }
@@ -656,39 +668,9 @@
 }
 .app-shell:not(.location-entry) .metric-card > small {
   min-height: 39px;
-  margin: 4px 0 16px;
+  margin: 4px 0 0;
   font-size: var(--ui-caption-size);
   line-height: 1.5;
-}
-.app-shell:not(.location-entry) .housing-detail-trigger {
-  min-height: 36px;
-  margin-top: auto;
-  padding: 12px 0 0;
-  font:
-    600 var(--ui-label-size)/1.5 'DM Sans',
-    sans-serif;
-  color: var(--muted);
-  cursor: pointer;
-}
-.app-shell:not(.location-entry) .housing-detail-trigger:hover {
-  color: var(--ink);
-}
-.metric-details-open,
-.metric-card[data-state='open'] .metric-details-closed {
-  display: none;
-}
-.metric-card[data-state='open'] .metric-details-open {
-  display: inline;
-}
-.metric-card[data-state='open'] .housing-detail-trigger > svg {
-  transform: rotate(180deg);
-}
-.app-shell:not(.location-entry) .housing-detail-content :is(p, li, a) {
-  font-size: var(--ui-caption-size);
-  line-height: 1.6;
-}
-.app-shell:not(.location-entry) .housing-detail-content p {
-  margin: 0;
 }
 .app-shell:not(.location-entry) .compare-sections {
   display: grid;
@@ -858,12 +840,5 @@
   .app-shell:not(.location-entry)
     :is(.metrics, .category-stats, .research-stat-grid) {
     grid-template-columns: 1fr;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .housing-detail-content,
-  .housing-detail-trigger svg {
-    animation: none !important;
-    transition: none !important;
   }
 }

@@ -738,6 +738,11 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
             outlook={yearWeatherQuery.data}
             isLoading={yearWeatherQuery.isPending}
             isError={yearWeatherQuery.isError}
+            isFetching={yearWeatherQuery.isFetching}
+            errorMessage={yearWeatherQuery.error?.message}
+            historyLoaded={yearWeatherQuery.historyLoaded}
+            historyTotal={yearWeatherQuery.historyTotal}
+            onRetry={() => void yearWeatherQuery.refetch()}
           />
         ) : (
           <section className="card wide-chart">

@@ -678,36 +678,6 @@
   color: var(--tone-neutral);
 }
 
-/* ---------- proof band ---------- */
-
-.landing-proof {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--line);
-}
-.landing-proof > div {
-  display: grid;
-  gap: 4px;
-  padding: 20px 22px;
-  background: var(--surface);
-}
-.landing-page .landing-proof strong {
-  font-family: 'Manrope';
-  font-size: 30px;
-  line-height: 1;
-  letter-spacing: -1.6px;
-  color: var(--ink);
-}
-.landing-page .landing-proof span {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
 /* ---------- how it works ---------- */
 
 .landing-steps {
@@ -3353,77 +3323,6 @@ footer > span {
   border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
   border-radius: 9px;
   background: color-mix(in srgb, currentColor 10%, transparent);
-}
-.housing-detail-trigger {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: 22px;
-  padding: 8px 0 0;
-  border: 0;
-  border-top: 1px solid var(--line);
-  background: transparent;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
-}
-.housing-detail-trigger svg {
-  transition: transform 200ms ease;
-}
-.housing-stat-card[data-state='open'] .housing-detail-trigger svg {
-  transform: rotate(180deg);
-}
-.housing-detail-trigger:hover {
-  color: var(--coral);
-}
-.housing-detail-trigger:focus-visible {
-  border-radius: 4px;
-  outline: 2px solid rgb(139 108 255 / 55%);
-  outline-offset: 3px;
-}
-.housing-detail-content {
-  overflow: hidden;
-}
-.housing-detail-content[data-state='open'] {
-  animation: collapse-down 260ms ease-out;
-}
-.housing-detail-content[data-state='closed'] {
-  animation: collapse-up 200ms ease-out;
-}
-.housing-detail-content > div {
-  margin-top: 10px;
-  padding-top: 11px;
-  border-top: 1px solid var(--line);
-}
-.housing-detail-content p {
-  margin: 0 0 10px;
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.55;
-}
-.housing-detail-content span {
-  color: var(--ink);
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.housing-detail-content ul {
-  margin: 6px 0 0;
-  padding-left: 15px;
-}
-.housing-detail-content li {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 9px;
-}
-.housing-detail-content a {
-  color: var(--coral);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
 }
 .category-content {
   display: grid;
@@ -6151,6 +6050,23 @@ footer > span {
 .sim-advanced .sim-form-grid {
   margin-top: 14px;
 }
+.sim-gas-price-reference {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sim-gas-price-reference b {
+  color: var(--ink);
+}
+.sim-gas-price-reference .ghost-button {
+  min-height: 32px;
+  padding: 5px 10px;
+}
 .sim-result-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(330px, 0.8fr);
@@ -7202,10 +7118,6 @@ footer > span {
 .comfort-scale-heading,
 .category-stats small,
 .metric-card > small,
-.housing-detail-content p,
-.housing-detail-content li,
-.housing-detail-content a,
-.housing-detail-trigger,
 .deep-dive,
 .section-heading button {
   font-size: 14px;

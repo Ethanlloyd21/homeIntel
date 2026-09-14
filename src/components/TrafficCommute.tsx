@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 import {
   Expand,
+  Eye,
+  EyeOff,
   LocateFixed,
   RefreshCw,
   TrafficCone,
@@ -36,6 +38,7 @@ const timeLabel = (time: string) => {
 }
 const TrafficCommute = ({ city }: { city: City }) => {
   const [mode, setMode] = useState<'live' | 'typical'>('live')
+  const [trafficVisible, setTrafficVisible] = useState(true)
   const [day, setDay] = useState(1),
     [time, setTime] = useState('09:00')
   const [refresh, setRefresh] = useState(() => Date.now())
@@ -92,14 +95,19 @@ const TrafficCommute = ({ city }: { city: City }) => {
             map for a closer look.
           </p>
         </div>
-        <span className="research-status" data-live={mode === 'live' && loaded}>
-          {mode === 'typical'
-            ? selectedLabel
-            : loaded
-              ? 'Live traffic'
-              : failed
-                ? 'Traffic unavailable'
-                : 'Loading traffic'}
+        <span
+          className="research-status"
+          data-live={trafficVisible && mode === 'live' && loaded}
+        >
+          {!trafficVisible
+            ? 'Traffic hidden'
+            : mode === 'typical'
+              ? selectedLabel
+              : loaded
+                ? 'Live traffic'
+                : failed
+                  ? 'Traffic unavailable'
+                  : 'Loading traffic'}
         </span>
       </div>
       <div className="card traffic-map-card" ref={mapShell}>
@@ -161,6 +169,15 @@ const TrafficCommute = ({ city }: { city: City }) => {
           <div className="traffic-map-actions">
             <button
               type="button"
+              className="ghost-button traffic-visibility-toggle"
+              aria-pressed={trafficVisible}
+              onClick={() => setTrafficVisible((visible) => !visible)}
+            >
+              {trafficVisible ? <EyeOff size={15} /> : <Eye size={15} />}
+              {trafficVisible ? 'Hide traffic' : 'Show traffic'}
+            </button>
+            <button
+              type="button"
               className="ghost-button"
               aria-label="Refresh traffic"
               onClick={() => {
@@ -197,7 +214,7 @@ const TrafficCommute = ({ city }: { city: City }) => {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
-            {configured && (
+            {trafficVisible && configured && (
               <TileLayer
                 key={key}
                 className="traffic-flow-tiles"
@@ -223,7 +240,7 @@ const TrafficCommute = ({ city }: { city: City }) => {
             )}
             <MapTools city={city} />
           </MapContainer>
-          {!status.isPending && (!configured || failed) && (
+          {trafficVisible && !status.isPending && (!configured || failed) && (
             <div className="traffic-unavailable" role="status">
               <Clock3 size={24} />
               <h4>
@@ -249,20 +266,24 @@ const TrafficCommute = ({ city }: { city: City }) => {
           )}
         </div>
         <div className="traffic-network-footer">
-          <div
-            className="traffic-speed-legend"
-            aria-label="Road traffic speed legend"
-          >
-            <span>Faster</span>
-            <i />
-            <span>Slower</span>
-          </div>
+          {trafficVisible && (
+            <div
+              className="traffic-speed-legend"
+              aria-label="Road traffic speed legend"
+            >
+              <span>Faster</span>
+              <i />
+              <span>Slower</span>
+            </div>
+          )}
           <p role="status">
-            {mode === 'live'
-              ? 'Current road speeds · refreshes every 2 minutes'
-              : configured
-                ? 'Typical road speeds for the selected weekday and local time. Historical averages, not a prediction of a specific incident.'
-                : 'Typical traffic requires a connected historical traffic data service.'}
+            {!trafficVisible
+              ? 'Traffic layer hidden · base map only'
+              : mode === 'live'
+                ? 'Current road speeds · refreshes every 2 minutes'
+                : configured
+                  ? 'Typical road speeds for the selected weekday and local time. Historical averages, not a prediction of a specific incident.'
+                  : 'Typical traffic requires a connected historical traffic data service.'}
           </p>
         </div>
       </div>

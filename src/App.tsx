@@ -36,13 +36,6 @@ const sources = [
   'Open-Meteo',
 ]
 
-const proofPoints = [
-  { value: '10', label: 'regret factors scored' },
-  { value: '10', label: 'monthly cost lines itemised' },
-  { value: '5', label: 'decision tools' },
-  { value: '90', label: 'day move timeline' },
-]
-
 const steps = [
   {
     icon: Gauge,
@@ -147,18 +140,6 @@ const App = () => {
                 ))}
               </ul>
             </div>
-
-            <section
-              className="landing-proof"
-              aria-label="What HomeIntel measures"
-            >
-              {proofPoints.map((point) => (
-                <div key={point.label}>
-                  <strong>{point.value}</strong>
-                  <span>{point.label}</span>
-                </div>
-              ))}
-            </section>
 
             <section className="landing-steps">
               <div className="landing-section-head">

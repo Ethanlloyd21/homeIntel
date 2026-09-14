@@ -4,6 +4,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import { placeSearchParams } from './src/utils/placeSearch.ts'
 import { trafficTilesProxy } from './server/trafficTilesProxy.ts'
+import { gasPriceProxy } from './server/gasPriceProxy.ts'
 import { trafficDeparture } from './src/utils/trafficTiming.ts'
 import {
   MINIMUM_WAGE_EFFECTIVE_DATE,
@@ -1645,6 +1646,7 @@ export default defineConfig(({ mode }) => {
       majorHospitalsProxy(),
       trafficCommuteProxy(tomTomApiKey),
       trafficTilesProxy(tomTomApiKey, env.ARCGIS_API_KEY || ''),
+      gasPriceProxy(env.EIA_API_KEY || apiKey),
       placeSearchProxy(),
     ],
   }

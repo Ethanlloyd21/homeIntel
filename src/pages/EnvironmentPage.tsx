@@ -4,6 +4,7 @@ import {
   Sun,
   Snowflake,
   Droplets,
+  Fuel,
   TrafficCone,
   CalendarDays,
   Wind,
@@ -14,6 +15,7 @@ import { useYearWeatherQuery } from 'hooks/useYearWeatherQuery'
 import { useRiskQuery } from 'hooks/useRiskQuery'
 import { useStormHistoryQuery } from 'hooks/useStormHistoryQuery'
 import { useTrafficSummaryQuery } from 'hooks/useTrafficSummaryQuery'
+import { gasPricePeriodLabel, useGasPriceQuery } from 'hooks/useGasPriceQuery'
 import { trafficCondition } from 'services/traffic'
 import type { ClimateMonth } from 'services/weatherOutlook'
 import PageHeader from 'components/PageHeader'
@@ -46,6 +48,8 @@ const EnvironmentPage = ({ city }: { city: City }) => {
     outlook = outlookQuery.data
   const trafficQuery = useTrafficSummaryQuery(city),
     traffic = trafficQuery.data
+  const gasPriceQuery = useGasPriceQuery(city),
+    gasPrice = gasPriceQuery.data
   const risk = useRiskQuery(city),
     storms = useStormHistoryQuery(city, risk.data)
   const climate = outlook?.climate ?? []
@@ -79,7 +83,7 @@ const EnvironmentPage = ({ city }: { city: City }) => {
         title="Picture every season of your life here."
         description="The daily weather, the roads you’ll use, and the seasonal conditions worth considering before a move."
       />
-      <div className="research-stat-grid">
+      <div className="research-stat-grid environment-stat-grid">
         <MetricCard
           label="Humidity now"
           icon={Droplets}
@@ -133,6 +137,36 @@ const EnvironmentPage = ({ city }: { city: City }) => {
           detail="Average delay relative to free flow on up to five unique sampled roads around the city centre. It is a small local sample, not a citywide congestion index. The map shows wider road coverage."
           valueKind="text"
         />
+        <MetricCard
+          label="Regular gas"
+          icon={Fuel}
+          value={
+            gasPrice
+              ? `$${gasPrice.price.toFixed(2)}`
+              : gasPriceQuery.isPending
+                ? 'Loading…'
+                : 'Unavailable'
+          }
+          note={
+            gasPriceQuery.isPending
+              ? 'Loading EIA weekly price'
+              : gasPrice
+                ? `${gasPrice.area} · week of ${gasPricePeriodLabel(gasPrice.period)}`
+                : 'Weekly price unavailable'
+          }
+          source="U.S. EIA weekly regular gasoline"
+          detail={
+            gasPrice
+              ? `Average retail price including taxes for the ${gasPrice.area} reporting geography. EIA does not publish a city series for every location, so this is not a station quote.`
+              : 'EIA weekly regular-gas averages are shown at the most specific supported metro, state, or regional geography. No unverified local value is substituted when the source is unavailable.'
+          }
+          sources={[
+            {
+              label: 'EIA weekly retail gasoline prices',
+              href: 'https://www.eia.gov/petroleum/gasdiesel/',
+            },
+          ]}
+        />
       </div>
       <TrafficCommute key={city.id} city={city} />
       <div className="research-section-head research-spaced">
@@ -143,13 +177,22 @@ const EnvironmentPage = ({ city }: { city: City }) => {
           <h3>Plan beyond the forecast window.</h3>
         </div>
         <span className="research-status">
-          {outlook?.baseline ?? 'Loading history'} climate baseline
+          {outlook?.historicalYears
+            ? `${outlook.historicalYears} years loaded · ${outlook.baseline}`
+            : outlookQuery.isFetching
+              ? 'Loading climate history'
+              : 'Climate history unavailable'}
         </span>
       </div>
       <YearWeatherOutlook
         outlook={outlook}
         isLoading={outlookQuery.isPending}
         isError={outlookQuery.isError}
+        isFetching={outlookQuery.isFetching}
+        errorMessage={outlookQuery.error?.message}
+        historyLoaded={outlookQuery.historyLoaded}
+        historyTotal={outlookQuery.historyTotal}
+        onRetry={() => void outlookQuery.refetch()}
       />
       <section className="card research-panel research-spaced">
         <CardHeading
@@ -159,7 +202,7 @@ const EnvironmentPage = ({ city }: { city: City }) => {
           action={
             <SourceChip
               source="Historical climate and NOAA event records"
-              detail="Climate statistics use the previous ten complete calendar years of Open-Meteo reanalysis. Storm season summaries use the downloaded NOAA county and current forecast-zone records. These are retrospective patterns, not future event or traffic forecasts."
+              detail="Climate statistics use available Open-Meteo history from the previous ten calendar years; the loaded year count is shown above. Storm season summaries use the downloaded NOAA county and current forecast-zone records. These are retrospective patterns, not future event or traffic forecasts."
             />
           }
         />

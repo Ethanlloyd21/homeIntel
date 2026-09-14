@@ -731,27 +731,6 @@
   font-size: 10px;
   font-weight: 400;
 }
-.landing-observatory .landing-proof {
-  border-radius: 0;
-  border-width: 1px 0;
-  background: transparent;
-  gap: 0;
-}
-.landing-observatory .landing-proof > div {
-  background: transparent;
-  padding: 28px 24px;
-  border-right: 1px solid var(--line);
-}
-.landing-observatory .landing-proof > div:last-child {
-  border: 0;
-}
-.landing-observatory .landing-proof strong {
-  font-weight: 400;
-  font-size: 34px;
-}
-.landing-observatory .landing-proof span {
-  font-size: 11px;
-}
 .landing-observatory .landing-steps {
   padding: 65px 0;
 }
@@ -1037,18 +1016,6 @@
   }
   .atlas-picker-note svg {
     flex-shrink: 0;
-  }
-  .landing-observatory .landing-proof {
-    grid-template-columns: 1fr 1fr;
-  }
-  .landing-observatory .landing-proof > div {
-    padding: 22px 14px;
-  }
-  .landing-observatory .landing-proof > div:nth-child(2) {
-    border-right: 0;
-  }
-  .landing-observatory .landing-proof > div:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--line);
   }
   .landing-observatory .landing-steps ol {
     grid-template-columns: 1fr;

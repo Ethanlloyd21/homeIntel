@@ -12,6 +12,7 @@
     "src/data/stateMinimumWages.ts",
     "src/utils/placeSearch.ts",
     "server/trafficTilesProxy.ts",
+    "server/gasPriceProxy.ts",
     "src/utils/trafficTiming.ts"
   ]
 }

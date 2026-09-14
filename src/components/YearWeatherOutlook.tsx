@@ -60,17 +60,25 @@ const YearWeatherOutlook = ({
   outlook,
   isLoading,
   isError,
+  isFetching = false,
+  errorMessage,
+  onRetry,
+  historyLoaded = 0,
+  historyTotal = 0,
 }: {
   outlook?: YearWeatherData
   isLoading: boolean
   isError: boolean
+  isFetching?: boolean
+  errorMessage?: string
+  onRetry?: () => void
+  historyLoaded?: number
+  historyTotal?: number
 }) => {
   const [selectedMonthKey, setSelectedMonthKey] = useState('')
   const months = outlook?.months ?? []
   const reportedMonths = months.filter(
-    (month) =>
-      (month.source === 'observed' || month.source === 'partial') &&
-      month.high !== null,
+    (month) => month.daysReported === month.days.length && month.high !== null,
   )
   const warmest = [...reportedMonths].sort(
     (a, b) => (b.high ?? 0) - (a.high ?? 0),
@@ -78,9 +86,9 @@ const YearWeatherOutlook = ({
   const coolest = [...reportedMonths].sort(
     (a, b) => (a.low ?? 0) - (b.low ?? 0),
   )[0]
-  const wettest = [...reportedMonths].sort(
-    (a, b) => (b.precipitation ?? 0) - (a.precipitation ?? 0),
-  )[0]
+  const wettest = reportedMonths
+    .filter((month) => month.precipitation !== null)
+    .sort((a, b) => (b.precipitation ?? 0) - (a.precipitation ?? 0))[0]
   const currentMonthKey = outlook?.today.slice(0, 7)
   const defaultMonth =
     months.find((month) => month.key === currentMonthKey) ??
@@ -115,11 +123,45 @@ const YearWeatherOutlook = ({
         )}
       </div>
 
-      {isLoading ? (
+      {(isError || isFetching) && (
+        <div className="weather-load-status" role="status">
+          <div>
+            {isError && (
+              <p>{errorMessage ?? 'Some weather data could not load.'}</p>
+            )}
+            {isFetching && (
+              <p>
+                Loading weather history
+                {historyTotal
+                  ? ` (${historyLoaded} of ${historyTotal} years loaded)`
+                  : ''}
+                …
+              </p>
+            )}
+            {outlook && (
+              <p>
+                Available weather is shown below. Missing dates will fill in as
+                data loads.
+              </p>
+            )}
+          </div>
+          {isError && onRetry && (
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={onRetry}
+              disabled={isFetching}
+            >
+              {isFetching ? 'Loading…' : 'Retry missing weather'}
+            </button>
+          )}
+        </div>
+      )}
+      {isLoading && !outlook ? (
         <div className="loading-panel">
           <LoadingSpinner size={34} label="Loading monthly weather" />
         </div>
-      ) : isError || months.length === 0 || !selectedMonth ? (
+      ) : months.length === 0 || !selectedMonth ? (
         <div className="loading-panel">
           <p>Monthly weather is temporarily unavailable.</p>
         </div>
@@ -143,7 +185,11 @@ const YearWeatherOutlook = ({
                     ? 'Expected'
                     : month.source === 'observed'
                       ? 'History'
-                      : 'Mixed'}
+                      : month.source === 'pending'
+                        ? 'Unavailable'
+                        : month.source === 'forecast'
+                          ? 'Forecast'
+                          : 'Mixed'}
                 </small>
               </button>
             ))}
@@ -237,7 +283,7 @@ const YearWeatherOutlook = ({
                         data-source={day.source}
                         data-today={isToday || undefined}
                         key={day.date}
-                        aria-label={`${selectedMonth.label} ${day.day}: ${day.source === 'typical' ? 'Historical expectation, not a daily forecast' : describeWeather(day.weatherCode)}, high ${displayTemperature(day.high)}, low ${displayTemperature(day.low)}`}
+                        aria-label={`${selectedMonth.label} ${day.day}: ${day.source === 'unavailable' ? 'Insufficient data' : day.source === 'typical' ? 'Historical expectation, not a daily forecast' : describeWeather(day.weatherCode)}, high ${displayTemperature(day.high)}, low ${displayTemperature(day.low)}`}
                       >
                         <div className="weather-calendar-day-head">
                           <strong>{day.day}</strong>
@@ -264,7 +310,9 @@ const YearWeatherOutlook = ({
                             <div className="weather-calendar-rain">
                               <Droplets size={12} aria-hidden="true" />
                               {day.source === 'typical'
-                                ? `${Math.round(day.wetChance ?? 0)}% wet days`
+                                ? day.wetChance === null
+                                  ? 'Rain data unavailable'
+                                  : `${Math.round(day.wetChance)}% wet days`
                                 : displayPrecipitation(day.precipitation)}
                             </div>
                           </>
@@ -278,14 +326,23 @@ const YearWeatherOutlook = ({
           </div>
 
           <p className="year-weather-note">
-            Daily forecasts extend through{' '}
-            {outlook?.forecastThrough ?? 'the available forecast window'}. Later
-            dates use {outlook?.baseline} Open-Meteo historical reanalysis,
-            averaging dates within seven days of that calendar day. “Wet days”
-            is the historical share with at least 0.01 inch of precipitation.
-            These are planning expectations, not predictions of the exact
-            weather on that future date. Historical reanalysis is modeled
-            weather informed by observations.
+            {outlook?.forecastThrough
+              ? `Daily forecasts extend through ${outlook.forecastThrough}. `
+              : 'The short-term forecast is unavailable. '}
+            {outlook && outlook.historicalYears >= 3 ? (
+              <>
+                Dates outside the available records use{' '}
+                {outlook.historicalYears} years of available {outlook.baseline}{' '}
+                Open-Meteo historical reanalysis, averaging dates within seven
+                days of that calendar day. “Wet days” is the historical share
+                with at least 0.01 inch of precipitation. These are planning
+                expectations, not predictions of the exact weather on that
+                future date. Historical reanalysis is modeled weather informed
+                by observations.
+              </>
+            ) : (
+              'Historical expectations need at least three years of usable history. Dates without enough data are marked unavailable.'
+            )}
           </p>
         </>
       )}

@@ -80,7 +80,11 @@ export const buildWeatherOutlook = (
 ): WeatherOutlook => {
   const year = Number(today.slice(0, 4))
   const baseline = archive.time.flatMap((date, i) =>
-    Number(date.slice(0, 4)) < year ? [i] : [],
+    Number(date.slice(0, 4)) < year &&
+    valid(archive.temperature_2m_max[i]) &&
+    valid(archive.temperature_2m_min[i])
+      ? [i]
+      : [],
   )
   const years = new Set(baseline.map((i) => archive.time[i].slice(0, 4)))
   const actual = new Map<string, WeatherDay>()
@@ -170,22 +174,29 @@ export const buildWeatherOutlook = (
         const rain = nearby
           .map((i) => archive.precipitation_sum[i])
           .filter(valid)
+        const enoughHistory =
+          nearby.length >= 30 &&
+          new Set(nearby.map((i) => archive.time[i].slice(0, 4))).size >= 3
         return {
           date,
           day: index + 1,
-          high: mean(nearby.map((i) => archive.temperature_2m_max[i])),
-          low: mean(nearby.map((i) => archive.temperature_2m_min[i])),
-          precipitation: mean(rain),
-          humidity: mean(
-            nearby.map((i) => archive.relative_humidity_2m_mean?.[i]),
-          ),
-          weatherCode: null,
-          wetChance: rain.length
-            ? (rain.filter((p) => p >= 0.01).length / rain.length) * 100
+          high: enoughHistory
+            ? mean(nearby.map((i) => archive.temperature_2m_max[i]))
             : null,
+          low: enoughHistory
+            ? mean(nearby.map((i) => archive.temperature_2m_min[i]))
+            : null,
+          precipitation: enoughHistory ? mean(rain) : null,
+          humidity: enoughHistory
+            ? mean(nearby.map((i) => archive.relative_humidity_2m_mean?.[i]))
+            : null,
+          weatherCode: null,
+          wetChance:
+            enoughHistory && rain.length
+              ? (rain.filter((p) => p >= 0.01).length / rain.length) * 100
+              : null,
           samples: nearby.length,
-          source:
-            nearby.length >= 30 && years.size >= 3 ? 'typical' : 'unavailable',
+          source: enoughHistory ? 'typical' : 'unavailable',
         }
       },
     )
@@ -239,12 +250,11 @@ export const buildWeatherOutlook = (
     coldestDay: extreme('temperature_2m_min', false),
   }
 }
-export const fetchWeatherOutlook = async (
+export const weatherOutlookRequests = (
   city: { latitude: number; longitude: number; timezone: string },
-  signal: AbortSignal,
+  today = localDate(city.timezone),
 ) => {
-  const today = localDate(city.timezone),
-    year = Number(today.slice(0, 4))
+  const year = Number(today.slice(0, 4))
   const end = new Date(`${today}T12:00:00Z`)
   end.setUTCDate(end.getUTCDate() - 7)
   const shared = {
@@ -255,13 +265,6 @@ export const fetchWeatherOutlook = async (
     wind_speed_unit: 'mph',
     timezone: city.timezone,
   }
-  const params = new URLSearchParams({
-    ...shared,
-    daily:
-      'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,relative_humidity_2m_mean,snowfall_sum,wind_gusts_10m_max',
-    start_date: `${year - 10}-01-01`,
-    end_date: end.toISOString().slice(0, 10),
-  })
   const forecastParams = new URLSearchParams({
     ...shared,
     daily:
@@ -269,23 +272,145 @@ export const fetchWeatherOutlook = async (
     past_days: '7',
     forecast_days: '16',
   })
-  const [archive, forecast] = await Promise.all([
-    fetch(`https://archive-api.open-meteo.com/v1/archive?${params}`, {
-      signal,
-    }).then(async (r) => {
-      if (!r.ok) throw new Error('Historical weather unavailable')
-      return (await r.json()) as { daily: DailyWeather }
-    }),
-    fetch(`https://api.open-meteo.com/v1/forecast?${forecastParams}`, {
-      signal,
+  const archiveEnd = end.toISOString().slice(0, 10)
+  // Recent years load first; completed years keep stable cache keys across days.
+  const history = Array.from({ length: 11 }, (_, index) => year - index)
+    .filter((y) => `${y}-01-01` <= archiveEnd)
+    .map((y) => {
+      const endDate = `${y}-12-31` < archiveEnd ? `${y}-12-31` : archiveEnd
+      const params = new URLSearchParams({
+        ...shared,
+        daily:
+          'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,relative_humidity_2m_mean,snowfall_sum,wind_gusts_10m_max',
+        start_date: `${y}-01-01`,
+        end_date: endDate,
+      })
+      return {
+        year: y,
+        complete: endDate === `${y}-12-31`,
+        url: `https://archive-api.open-meteo.com/v1/archive?${params}`,
+      }
     })
-      .then(async (r) =>
-        r.ok ? ((await r.json()) as { daily: DailyWeather }) : undefined,
+  return {
+    history,
+    forecastUrl: `https://api.open-meteo.com/v1/forecast?${forecastParams}`,
+  }
+}
+
+const dailyFields = [
+  'temperature_2m_max',
+  'temperature_2m_min',
+  'precipitation_sum',
+  'weather_code',
+  'relative_humidity_2m_mean',
+  'snowfall_sum',
+  'wind_gusts_10m_max',
+] as const
+
+/** Sort independent yearly responses and retain nulls when optional fields are absent. */
+export const mergeWeatherHistory = (parts: DailyWeather[]): DailyWeather => {
+  const rows = parts
+    .flatMap((part) => part.time.map((date, index) => ({ date, index, part })))
+    .sort((a, b) => a.date.localeCompare(b.date))
+  return {
+    time: rows.map(({ date }) => date),
+    ...Object.fromEntries(
+      dailyFields.map((field) => [
+        field,
+        rows.map(({ part, index }) => part[field]?.[index] ?? null),
+      ]),
+    ),
+  } as DailyWeather
+}
+
+// Bound archive work across cities so the yearly requests don't arrive in a burst.
+let archiveActive = 0
+const archiveQueue: (() => void)[] = []
+const acquireArchive = async (signal: AbortSignal) => {
+  signal.throwIfAborted()
+  if (archiveActive < 2) {
+    archiveActive++
+    return
+  }
+  await new Promise<void>((resolve, reject) => {
+    const start = () => {
+      signal.removeEventListener('abort', abort)
+      resolve()
+    }
+    const abort = () => {
+      const index = archiveQueue.indexOf(start)
+      if (index >= 0) archiveQueue.splice(index, 1)
+      reject(signal.reason)
+    }
+    signal.addEventListener('abort', abort, { once: true })
+    archiveQueue.push(start)
+  })
+}
+
+export const fetchWeatherDaily = async (
+  url: string,
+  signal: AbortSignal,
+  archive = false,
+  timeoutMs = 20_000,
+): Promise<DailyWeather> => {
+  if (archive) await acquireArchive(signal)
+  const timeout = AbortSignal.timeout(timeoutMs)
+  try {
+    signal.throwIfAborted()
+    const response = await fetch(url, {
+      signal: AbortSignal.any([signal, timeout]),
+    })
+    if (!response.ok) {
+      if (response.status === 429)
+        throw new Error(
+          'Open-Meteo is limiting weather requests. Please try again in a few minutes.',
+        )
+      throw new Error(
+        `Open-Meteo could not load weather (HTTP ${response.status}). Please try again.`,
       )
-      .catch(() => undefined),
-  ])
-  if (signal.aborted) throw signal.reason
-  if (!archive.daily?.time.length)
-    throw new Error('No historical weather records')
-  return buildWeatherOutlook(archive.daily, forecast?.daily, today)
+    }
+    let payload: { daily?: DailyWeather }
+    try {
+      payload = await response.json()
+    } catch (cause) {
+      throw new Error(
+        'Open-Meteo returned an incomplete weather response. Please try again shortly.',
+        { cause },
+      )
+    }
+    const daily = payload.daily
+    if (
+      !daily?.time?.length ||
+      !Array.isArray(daily.temperature_2m_max) ||
+      !Array.isArray(daily.temperature_2m_min) ||
+      !Array.isArray(daily.precipitation_sum) ||
+      !daily.time.some(
+        (_, i) =>
+          valid(daily.temperature_2m_max[i]) &&
+          valid(daily.temperature_2m_min[i]),
+      )
+    )
+      throw new Error(
+        'Open-Meteo returned no usable weather records. Please try again.',
+      )
+    return daily
+  } catch (error) {
+    if (signal.aborted) throw signal.reason
+    if (timeout.aborted)
+      throw new Error('The weather request timed out. Please try again.', {
+        cause: error,
+      })
+    if (error instanceof TypeError)
+      throw new Error(
+        'Could not connect to Open-Meteo. Check your connection and try again.',
+        { cause: error },
+      )
+    throw error
+  } finally {
+    if (archive) {
+      const next = archiveQueue.shift()
+      if (next) next()
+      else archiveActive--
+    }
+  }
 }
