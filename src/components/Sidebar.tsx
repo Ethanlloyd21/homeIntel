@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Brand from 'components/Brand'
 import SearchBox from 'components/SearchBox'
 import type { City } from 'data/cities'
@@ -167,9 +167,60 @@ const Sidebar = ({
     null,
   )
   const stopEditing = () => setEditingLeg(null)
+  const drawer = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!open || !window.matchMedia('(max-width: 820px)').matches) return
+    const previousFocus = document.activeElement
+    const previousOverflow = document.body.style.overflow
+    const main = drawer.current?.parentElement?.querySelector('main')
+    const previousInert = main?.inert ?? false
+    document.body.style.overflow = 'hidden'
+    if (main) main.inert = true
+    drawer.current?.querySelector<HTMLButtonElement>('.mobile-close')?.focus()
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        close()
+      }
+      if (event.key !== 'Tab') return
+      const items = Array.from(
+        drawer.current?.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), [tabindex="0"]',
+        ) ?? [],
+      ).filter((element) => element.getClientRects().length > 0)
+      const first = items[0]
+      const last = items.at(-1)
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last?.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first?.focus()
+      }
+    }
+    const breakpoint = window.matchMedia('(max-width: 820px)')
+    const onBreakpoint = () => close()
+    breakpoint.addEventListener('change', onBreakpoint)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      if (main) main.inert = previousInert
+      breakpoint.removeEventListener('change', onBreakpoint)
+      document.removeEventListener('keydown', onKeyDown)
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
+        previousFocus.focus()
+    }
+  }, [open, close])
 
   return (
-    <aside className={`sidebar ${open ? 'open' : ''}`}>
+    <aside
+      ref={drawer}
+      id="primary-navigation"
+      aria-label="Primary navigation"
+      className={`sidebar ${open ? 'open' : ''}`}
+    >
       <div className="sidebar-top">
         <Brand onReset={onReset} />
         <button

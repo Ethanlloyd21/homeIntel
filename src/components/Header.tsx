@@ -1,4 +1,4 @@
-import { Menu, Moon, Search, Sun } from 'lucide-react'
+import { Coffee, Menu, Moon, Search, Sun } from 'lucide-react'
 import { Switch } from 'radix-ui'
 import Brand from 'components/Brand'
 import { greeting } from 'utils/greeting'
@@ -9,6 +9,7 @@ const Header = ({
   onThemeChange,
   onOpenPalette,
   variant = 'app',
+  menuOpen = false,
 }: {
   onMenu: () => void
   theme: 'light' | 'dark'
@@ -19,8 +20,14 @@ const Header = ({
    * the user about, so it flies the brand in the bar instead of the greeting.
    */
   variant?: 'app' | 'landing'
+  menuOpen?: boolean
 }) => {
   const landing = variant === 'landing'
+  const kofiUrl =
+    import.meta.env.VITE_KOFI_URL?.trim() || 'https://ko-fi.com/ethanlloyd21'
+  const hasKofiAccount = /^https:\/\/ko-fi\.com\/[a-z0-9_-]+\/?$/i.test(
+    kofiUrl ?? '',
+  )
 
   return (
     <header className={landing ? 'header-landing' : undefined}>
@@ -32,10 +39,12 @@ const Header = ({
             className="menu rounded-lg transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
             onClick={onMenu}
             aria-label="Open navigation"
+            aria-expanded={menuOpen}
+            aria-controls="primary-navigation"
           >
             <Menu />
           </button>
-          <div>
+          <div className="header-greeting">
             <p className="eyebrow">RELOCATION INTELLIGENCE</p>
             <h1>{greeting()}. Where are you thinking of moving?</h1>
           </div>
@@ -72,6 +81,19 @@ const Header = ({
           </Switch.Root>
           <Moon size={15} aria-hidden="true" />
         </div>
+        {hasKofiAccount && (
+          <a
+            className="coffee-support"
+            href={kofiUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Buy me a coffee on Ko-fi (opens in a new tab)"
+            title="Support HomeIntel on Ko-fi (opens in a new tab)"
+          >
+            <Coffee size={19} aria-hidden="true" />
+            <span>Buy me a coffee</span>
+          </a>
+        )}
       </div>
     </header>
   )

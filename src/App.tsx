@@ -260,6 +260,7 @@ const App = () => {
       <main>
         <Header
           onMenu={() => setMobileNavOpen(true)}
+          menuOpen={mobileNavOpen}
           theme={theme}
           onThemeChange={setTheme}
           onOpenPalette={() => setPaletteOpen(true)}

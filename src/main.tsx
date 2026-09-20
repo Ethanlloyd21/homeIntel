@@ -8,6 +8,7 @@ import 'styles.css'
 import 'assets/atlas.css'
 import 'assets/research.css'
 import 'assets/consistency.css'
+import 'assets/mobile.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {
