@@ -153,6 +153,26 @@ service role supplies deployment credentials; Lambda uses its execution role.
 
 ## Validation notes
 
+### Amplify bundled-dependency lockfile workaround
+
+The locked Amplify construct releases ship inconsistent nested dependencies.
+This can make `npm ci` reject a lockfile produced by a successful `npm install`,
+with Zod/semver mismatches and missing OpenTelemetry entries. See
+[npm issue #9821](https://github.com/npm/cli/issues/9821).
+
+The committed lockfile includes the eight corrected entries. After running
+`npm install` or `npm audit fix`, check the lockfile before pushing:
+
+```powershell
+node scripts/repair-amplify-lockfile.mjs
+npm.cmd ci --dry-run --ignore-scripts --no-audit --no-fund
+```
+
+The repair is deliberately limited to the affected package versions and stops
+if those versions change. Review and remove the workaround when upgrading to
+fixed upstream packages. Keep `npm ci` in Amplify; do not replace it with an
+unlocked install to bypass validation.
+
 Local builds and mocked API tests do not replace the live checks above. The
 backend has not been deployed to an AWS account as part of this change.
 
