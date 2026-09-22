@@ -206,7 +206,7 @@ const PeopleProfileChart = ({
         Official Census Population Estimates are shown for 2023, 2024, and 2025.
         The 2022 backcast and {demographics.estimateYear} value come from a
         least-squares linear trend fitted to those three official estimates;
-        they are HomeIntel calculations, not official Census estimates.
+        they are ReloIntel calculations, not official Census estimates.
       </p>
     </section>
   )

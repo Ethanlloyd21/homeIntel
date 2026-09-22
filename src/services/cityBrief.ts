@@ -109,7 +109,7 @@ export const buildCityBrief = (context: BriefContext): CityBrief => {
         monthlyDelta >= 0
           ? `Moving from ${originName} would leave roughly ${usd(monthlyDelta)} more in your pocket each month at the same standard of living.`
           : `Moving from ${originName} would cost roughly ${usd(monthlyDelta)} more each month at the same standard of living.`,
-      source: 'HomeIntel simulator · Zillow, Census ACS, BEA price levels',
+      source: 'ReloIntel simulator · Zillow, Census ACS, BEA price levels',
     }
     ;(monthlyDelta >= 0 ? fits : concerns).push(statement)
   }
@@ -117,37 +117,37 @@ export const buildCityBrief = (context: BriefContext): CityBrief => {
   if (simulation.disposableIncome >= 0) {
     fits.push({
       text: `After every modeled cost you keep ${usd(simulation.disposableIncome)} a month, or ${((simulation.disposableIncome / (simulation.grossMonthlyIncome || 1)) * 100).toFixed(1)}% of gross income.`,
-      source: 'HomeIntel simulator · your household inputs',
+      source: 'ReloIntel simulator · your household inputs',
     })
   } else {
     concerns.push({
       text: `Modeled costs exceed income by ${usd(simulation.disposableIncome)} a month at these assumptions.`,
-      source: 'HomeIntel simulator · your household inputs',
+      source: 'ReloIntel simulator · your household inputs',
     })
   }
 
   if (simulation.housingBurdenPercent <= 35) {
     fits.push({
       text: `Total housing exposure is ${simulation.housingBurdenPercent.toFixed(1)}% of gross income, inside the conventional affordability range.`,
-      source: 'Zillow ZHVI/ZORI or Census ACS · HomeIntel exposure model',
+      source: 'Zillow ZHVI/ZORI or Census ACS · ReloIntel exposure model',
     })
   } else {
     concerns.push({
       text: `Total housing exposure reaches ${simulation.housingBurdenPercent.toFixed(1)}% of gross income once utilities, transport and hazard reserve are counted.`,
-      source: 'Zillow ZHVI/ZORI or Census ACS · HomeIntel exposure model',
+      source: 'Zillow ZHVI/ZORI or Census ACS · ReloIntel exposure model',
     })
   }
 
   for (const factor of regret.topRisks) {
     concerns.push({
       text: `${factor.label}: ${factor.headline}.`,
-      source: factor.evidence[0] ?? 'HomeIntel regret engine',
+      source: factor.evidence[0] ?? 'ReloIntel regret engine',
     })
   }
   for (const factor of regret.strengths) {
     fits.push({
       text: `${factor.label}: ${factor.headline}.`,
-      source: factor.evidence[0] ?? 'HomeIntel regret engine',
+      source: factor.evidence[0] ?? 'ReloIntel regret engine',
     })
   }
 
@@ -158,11 +158,11 @@ export const buildCityBrief = (context: BriefContext): CityBrief => {
       statements: [
         {
           text: `Gross ${usd(simulation.grossMonthlyIncome)}/mo − modeled costs ${usd(simulation.totalMonthlyCosts)}/mo = ${usd(simulation.disposableIncome)}${simulation.disposableIncome < 0 ? ' short' : ' remaining'}.`,
-          source: 'HomeIntel simulator',
+          source: 'ReloIntel simulator',
         },
         {
           text: `Housing ${usd(simulation.costs.find((cost) => cost.key === 'housing')?.value ?? 0)}/mo, transportation ${usd(simulation.costs.find((cost) => cost.key === 'transportation')?.value ?? 0)}/mo, hazard reserve ${usd(simulation.costs.find((cost) => cost.key === 'hazard')?.value ?? 0)}/mo.`,
-          source: 'HomeIntel simulator cost lines',
+          source: 'ReloIntel simulator cost lines',
         },
         {
           text: `Taxes use your ${inputs.effectiveTaxRate.toFixed(1)}% effective-rate assumption, not a filed return.`,
@@ -201,7 +201,7 @@ export const buildCityBrief = (context: BriefContext): CityBrief => {
             inputs.housingMode === 'buy'
               ? `Modeled at ${inputs.downPaymentPercent}% down and a ${inputs.mortgageRate.toFixed(2)}% 30-year rate, plus a 1.8%/yr tax-and-insurance allowance.`
               : 'Modeled on the typical market rent, so a specific unit may differ materially.',
-          source: 'Your input · HomeIntel mortgage model',
+          source: 'Your input · ReloIntel mortgage model',
         },
       ],
     },

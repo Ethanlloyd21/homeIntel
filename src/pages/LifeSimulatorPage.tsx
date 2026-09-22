@@ -103,7 +103,7 @@ const confidenceHelp: Record<string, string> = {
   Medium:
     'Useful but less precise. The source may be broader than the city, older, or a fallback rather than the preferred dataset.',
   Estimated:
-    'Use cautiously. HomeIntel is applying a transparent planning estimate because a more precise city value is unavailable.',
+    'Use cautiously. ReloIntel is applying a transparent planning estimate because a more precise city value is unavailable.',
   Loading:
     'The source is still loading. The rating may change when it arrives.',
   Unavailable:

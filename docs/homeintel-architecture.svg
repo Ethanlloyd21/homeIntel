@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="940" viewBox="0 0 1600 940" role="img" aria-labelledby="title desc">
-  <title id="title">HomeIntel application architecture</title>
+  <title id="title">ReloIntel application architecture</title>
   <desc id="desc">Diagram showing the React browser application, Vite server integration boundary, local data, external APIs, and the BLS fallback path.</desc>
   <defs>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#172033" flood-opacity=".09"/></filter>
@@ -10,7 +10,7 @@
     </style>
   </defs>
   <rect width="1600" height="940" fill="#f8fafc"/>
-  <text x="42" y="48" class="title">HomeIntel application architecture</text>
+  <text x="42" y="48" class="title">ReloIntel application architecture</text>
   <rect x="40" y="80" width="450" height="805" rx="20" fill="#f4f6ff" stroke="#7c83ff" stroke-width="2"/><text x="65" y="115" class="group" fill="#39469c">BROWSER / REACT APPLICATION</text>
   <rect x="525" y="80" width="440" height="805" rx="20" fill="#f6f2ff" stroke="#8b6cff" stroke-width="2"/><text x="550" y="115" class="group" fill="#5c3fa0">SERVER INTEGRATION BOUNDARY</text>
   <rect x="1000" y="80" width="560" height="805" rx="20" fill="#effaf7" stroke="#25a77a" stroke-width="2"/><text x="1025" y="115" class="group" fill="#197858">EXTERNAL DATA PROVIDERS</text>

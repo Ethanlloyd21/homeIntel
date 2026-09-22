@@ -23,10 +23,10 @@ const Header = ({
   menuOpen?: boolean
 }) => {
   const landing = variant === 'landing'
-  const kofiUrl =
-    import.meta.env.VITE_KOFI_URL?.trim() || 'https://ko-fi.com/ethanlloyd21'
-  const hasKofiAccount = /^https:\/\/ko-fi\.com\/[a-z0-9_-]+\/?$/i.test(
-    kofiUrl ?? '',
+  const coffeeUrl =
+    import.meta.env.VITE_KOFI_URL?.trim() || 'https://ko-fi.com/relointel'
+  const hasCoffeeAccount = /^https:\/\/ko-fi\.com\/[a-z0-9_-]+\/?$/i.test(
+    coffeeUrl,
   )
 
   return (
@@ -81,14 +81,14 @@ const Header = ({
           </Switch.Root>
           <Moon size={15} aria-hidden="true" />
         </div>
-        {hasKofiAccount && (
+        {hasCoffeeAccount && (
           <a
             className="coffee-support"
-            href={kofiUrl}
+            href={coffeeUrl}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Buy me a coffee on Ko-fi (opens in a new tab)"
-            title="Support HomeIntel on Ko-fi (opens in a new tab)"
+            title="Support ReloIntel on Ko-fi (opens in a new tab)"
           >
             <Coffee size={19} aria-hidden="true" />
             <span>Buy me a coffee</span>

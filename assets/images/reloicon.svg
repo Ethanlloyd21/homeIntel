@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>ReloIntel</title>
+  <rect width="64" height="64" rx="15" fill="#101a2c"/>
+  <path d="M13 30 32 13l19 17M19 27v23h12" stroke="#f2a26e" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M30 40h20m-8-8 8 8-8 8" stroke="#f2a26e" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

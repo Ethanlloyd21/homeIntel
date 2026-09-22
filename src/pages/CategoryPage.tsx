@@ -195,7 +195,7 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
         ? [
             {
               title: 'City population trend.',
-              detail: `The average annual city growth rate across 2023 to 2024 and 2024 to 2025 was ${demographics.annualPopulationGrowthPercent >= 0 ? '+' : ''}${demographics.annualPopulationGrowthPercent.toFixed(1)}%. HomeIntel fits a least-squares linear trend to the official 2023, 2024, and 2025 estimates to calculate the ${demographics.estimateYear} value.`,
+              detail: `The average annual city growth rate across 2023 to 2024 and 2024 to 2025 was ${demographics.annualPopulationGrowthPercent >= 0 ? '+' : ''}${demographics.annualPopulationGrowthPercent.toFixed(1)}%. ReloIntel fits a least-squares linear trend to the official 2023, 2024, and 2025 estimates to calculate the ${demographics.estimateYear} value.`,
             },
             {
               title: 'Age profile.',
@@ -461,7 +461,7 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
     },
     {
       detail:
-        'Owner occupied is the share of occupied housing units whose occupants own the home. HomeIntel divides owner-occupied units by all owner- and renter-occupied units for the selected Census place.',
+        'Owner occupied is the share of occupied housing units whose occupants own the home. ReloIntel divides owner-occupied units by all owner- and renter-occupied units for the selected Census place.',
       sources: [
         {
           label: 'Census ACS table B25003 — housing tenure',
@@ -471,7 +471,7 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
     },
     {
       detail:
-        'HomeIntel matches the selected Census place to locally stored Zillow Research city series when available. Census ACS 2020–2024 five-year estimates provide housing tenure and serve as the fallback for value or rent.',
+        'ReloIntel matches the selected Census place to locally stored Zillow Research city series when available. Census ACS 2020–2024 five-year estimates provide housing tenure and serve as the fallback for value or rent.',
       sources: [
         {
           label: 'Zillow Research housing data',
@@ -758,7 +758,7 @@ const CategoryPage = ({ type, city }: { type: string; city: City }) => {
         <aside className="card insight-list">
           <div className="section-heading">
             <div>
-              <small>HOMEINTEL BRIEF</small>
+              <small>RELOINTEL BRIEF</small>
               <h3>What this means</h3>
             </div>
             <Sparkles size={18} />

@@ -317,7 +317,7 @@ const loadStateSchools = (fips: string) => {
       const result = await fetch(next, {
         headers: {
           Accept: 'application/json',
-          'User-Agent': 'Mozilla/5.0 HomeIntel/0.1',
+          'User-Agent': 'Mozilla/5.0 ReloIntel/0.1',
         },
         signal: AbortSignal.timeout(30_000),
       })
@@ -916,7 +916,7 @@ const majorEmployersProxy = (): Plugin => {
       const result = await timedFetch(upstream, {
         headers: {
           Accept: 'application/sparql-results+json',
-          'User-Agent': 'HomeIntel/0.1 (city research application)',
+          'User-Agent': 'ReloIntel/0.1 (city research application)',
         },
       })
       const body = await result.text()
@@ -1458,7 +1458,7 @@ const trafficCommuteProxy = (tomTomApiKey: string): Plugin => {
       const upstream = new URL('https://overpass-api.de/api/interpreter')
       upstream.searchParams.set('data', query)
       const result = await timedFetch(upstream, {
-        headers: { 'User-Agent': 'HomeIntel/0.1 transit-discovery' },
+        headers: { 'User-Agent': 'ReloIntel/0.1 transit-discovery' },
         signal: AbortSignal.timeout(22_000),
       })
       if (!result.ok) throw new Error('Transit discovery failed.')
@@ -1559,7 +1559,7 @@ const placeSearchProxy = (): Plugin => {
           `https://nominatim.openstreetmap.org/search?${params}`,
           {
             headers: {
-              'User-Agent': 'HomeIntel/0.1 (relocation research tool)',
+              'User-Agent': 'ReloIntel/0.1 (relocation research tool)',
               'Accept-Language': 'en',
             },
           },

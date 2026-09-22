@@ -1,10 +1,10 @@
-<mxfile host="app.diagrams.net" modified="2026-08-13T15:00:00.000Z" agent="HomeIntel" version="24.7.17">
-  <diagram id="homeintel-architecture" name="HomeIntel Architecture">
+<mxfile host="app.diagrams.net" modified="2026-08-13T15:00:00.000Z" agent="ReloIntel" version="24.7.17">
+  <diagram id="homeintel-architecture" name="ReloIntel Architecture">
     <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="title" value="HomeIntel application architecture" style="text;html=1;fontSize=26;fontStyle=1;fontColor=#172033;align=left;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="600" height="45" as="geometry" /></mxCell>
+        <mxCell id="title" value="ReloIntel application architecture" style="text;html=1;fontSize=26;fontStyle=1;fontColor=#172033;align=left;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="600" height="45" as="geometry" /></mxCell>
         <mxCell id="browser" value="BROWSER / REACT APPLICATION" style="swimlane;html=1;rounded=1;startSize=38;fillColor=#f7f9ff;strokeColor=#6f7cff;fontColor=#27315e;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="85" width="440" height="760" as="geometry" /></mxCell>
         <mxCell id="ui" value="Pages &amp; components&#xa;Dashboard, charts, maps, cards, tabs, pagination" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9aa5ff;fontColor=#172033;fontSize=14;" vertex="1" parent="browser"><mxGeometry x="35" y="70" width="370" height="85" as="geometry" /></mxCell>
         <mxCell id="zustand" value="Zustand&#xa;Selected city, comparison city, route and UI state" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef0ff;strokeColor=#7c83ff;fontColor=#172033;fontSize=14;" vertex="1" parent="browser"><mxGeometry x="35" y="190" width="175" height="95" as="geometry" /></mxCell>

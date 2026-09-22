@@ -1,12 +1,12 @@
-import { Home } from 'lucide-react'
+import reloIcon from '/assets/images/reloicon.svg'
 
 const mark = (
   <>
     <div className="brand-mark">
-      <Home size={17} strokeWidth={2.4} />
+      <img src={reloIcon} alt="" width={31} height={31} />
     </div>
     <span>
-      home<span>intel</span>
+      Relo<span>Intel</span>
     </span>
   </>
 )
@@ -25,7 +25,7 @@ const Brand = ({ onReset }: { onReset?: () => void }) => {
       className="brand brand-button"
       onClick={onReset}
       title="Start over — clears the cities you selected"
-      aria-label="HomeIntel home. Start over and clear the selected cities."
+      aria-label="ReloIntel home. Start over and clear the selected cities."
     >
       {mark}
     </button>

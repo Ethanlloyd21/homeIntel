@@ -49,7 +49,7 @@ const NeighborhoodPage = ({
 
     <p className="simulator-disclaimer">
       Hazard risk is the FEMA National Risk Index value for the census tract
-      containing each pinned point. Housing figures stay city-level: HomeIntel
+      containing each pinned point. Housing figures stay city-level: ReloIntel
       does not model block-level prices, and says so rather than guessing.
     </p>
   </div>

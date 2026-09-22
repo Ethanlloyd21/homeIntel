@@ -180,7 +180,16 @@ const App = () => {
                 </a>
                 .
               </p>
-              <span>HomeIntel &copy; 2026</span>
+              <span className="footer-copyright">
+                <a
+                  href="https://lloydmarcelino.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  lloydmarcelino.com
+                </a>{' '}
+                &copy; 2026
+              </span>
             </footer>
           </div>
         </main>
@@ -301,11 +310,16 @@ const App = () => {
         <div className="page-content">{renderView()}</div>
         <footer>
           <Brand onReset={startOver} />
-          <p>
-            Every figure is traced to a named public source. Calculations are
-            deterministic planning estimates, not professional advice.
-          </p>
-          <span>HomeIntel © 2026</span>
+          <span className="footer-copyright">
+            <a
+              href="https://lloydmarcelino.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              lloydmarcelino.com
+            </a>{' '}
+            &copy; 2026
+          </span>
         </footer>
       </main>
       {mobileNavOpen && (

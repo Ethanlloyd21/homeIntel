@@ -16,7 +16,7 @@ class ErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromError = (error: Error): State => ({ error })
 
   componentDidCatch = (error: Error, info: ErrorInfo) => {
-    console.error('HomeIntel render error', error, info.componentStack)
+    console.error('ReloIntel render error', error, info.componentStack)
   }
 
   render = () => {
