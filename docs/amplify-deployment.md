@@ -153,6 +153,14 @@ service role supplies deployment credentials; Lambda uses its execution role.
 
 ## Validation notes
 
+### Lambda packaging without Docker
+
+`esbuild` is an explicit development dependency. Its pinned install script is
+approved in `package.json` for npm 11, and `amplify.yml` checks the native binary
+before deploying. CDK can then bundle Lambda locally instead of falling back to
+Docker, which is unavailable in the standard Amplify Hosting build environment.
+If this check fails, inspect the esbuild installation rather than installing Docker.
+
 ### Amplify bundled-dependency lockfile workaround
 
 The locked Amplify construct releases ship inconsistent nested dependencies.
