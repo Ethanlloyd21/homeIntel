@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import type { City } from 'data/cities'
 
 type SchoolApiRecord = {
@@ -264,7 +265,7 @@ export const fetchNearbySchools = async (
     latitude: String(city.latitude),
     longitude: String(city.longitude),
   })
-  const response = await fetch(`/api/nearby-schools?${params}`, {
+  const response = await fetch(apiUrl(`/api/nearby-schools?${params}`), {
     signal: AbortSignal.any([signal, AbortSignal.timeout(35_000)]),
   })
   if (!response.ok) throw new Error('Unable to load public schools.')

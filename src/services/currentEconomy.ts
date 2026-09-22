@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import type { City } from 'data/cities'
 
 export type CurrentEconomyData = {
@@ -54,7 +55,9 @@ export const fetchCurrentEconomy = async (city: City, signal: AbortSignal) => {
     latitude: String(city.latitude),
     longitude: String(city.longitude),
   })
-  const response = await fetch(`/api/current-economy?${params}`, { signal })
+  const response = await fetch(apiUrl(`/api/current-economy?${params}`), {
+    signal,
+  })
   if (!response.ok) throw new Error('Unable to load current economic data.')
   return (await response.json()) as CurrentEconomyData
 }

@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import type { City } from 'data/cities'
 import { stateFipsByName } from 'data/stateFips'
 
@@ -179,10 +180,6 @@ export const fetchDemographics = async (
     throw new Error('Census demographics are available for U.S. cities only.')
   }
 
-  const apiKey = import.meta.env.VITE_CENSUS_API_KEY
-  if (!apiKey) throw new Error('Census API key is not configured.')
-
-  const key = `&key=${encodeURIComponent(apiKey)}`
   const requestSignal = () =>
     AbortSignal.any([signal, AbortSignal.timeout(12_000)])
   const stateFips = stateFipsByName[city.state]
@@ -195,7 +192,9 @@ export const fetchDemographics = async (
     { signal: requestSignal() },
   ).catch(() => null)
   const placesResponse = await fetch(
-    `https://api.census.gov/data/2024/acs/acs5?get=${variables}&for=place:*&in=state:${stateFips}${key}`,
+    apiUrl(
+      `/api/census/2024/acs/acs5?get=${variables}&for=place:*&in=state:${stateFips}`,
+    ),
     { signal: requestSignal() },
   )
   if (!placesResponse.ok) throw new Error('Unable to load Census demographics.')
@@ -221,15 +220,21 @@ export const fetchDemographics = async (
   const detailResults = includeDetails
     ? await Promise.allSettled([
         fetch(
-          `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=state:${stateFips}${key}`,
+          apiUrl(
+            `/api/census/2024/acs/acs5?get=${comparisonVariables}&for=state:${stateFips}`,
+          ),
           { signal: requestSignal() },
         ),
         fetch(
-          `https://api.census.gov/data/2024/acs/acs5?get=${comparisonVariables}&for=us:*${key}`,
+          apiUrl(
+            `/api/census/2024/acs/acs5?get=${comparisonVariables}&for=us:*`,
+          ),
           { signal: requestSignal() },
         ),
         fetch(
-          `https://api.census.gov/data/2019/pep/population?get=POP&for=place:${placeCode}&in=state:${stateFips}&DATE_CODE=12${key}`,
+          apiUrl(
+            `/api/census/2019/pep/population?get=POP&for=place:${placeCode}&in=state:${stateFips}&DATE_CODE=12`,
+          ),
           { signal: requestSignal() },
         ),
       ])

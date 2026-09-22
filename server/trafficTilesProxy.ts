@@ -1,3 +1,4 @@
+import { upstreamFetch } from './upstreamFetch.ts'
 import type { Plugin } from 'vite'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { typicalTrafficInstant } from '../src/utils/trafficTiming.ts'
@@ -77,7 +78,7 @@ export const trafficTilesProxy = (
           upstream.searchParams.set('key', apiKey)
           upstream.searchParams.set('point', `${lat + dy},${lon + dx}`)
           upstream.searchParams.set('unit', 'MPH')
-          const r = await fetch(upstream, {
+          const r = await upstreamFetch(upstream, {
             signal: AbortSignal.timeout(10000),
           })
           if (!r.ok) continue
@@ -202,7 +203,7 @@ export const trafficTilesProxy = (
             token: historicalKey,
           }).forEach(([key, value]) => historical.searchParams.set(key, value))
         }
-        const result = await fetch(typical ? historical : upstream, {
+        const result = await upstreamFetch(typical ? historical : upstream, {
           signal: AbortSignal.timeout(15_000),
         })
         if (

@@ -9,6 +9,7 @@
   },
   "include": [
     "vite.config.ts",
+    "server/**/*.ts",
     "src/data/stateMinimumWages.ts",
     "src/utils/placeSearch.ts",
     "server/trafficTilesProxy.ts",

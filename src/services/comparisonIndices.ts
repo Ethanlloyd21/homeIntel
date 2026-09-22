@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import type { City } from 'data/cities'
 
 const stateCodes: Record<string, { abbreviation: string; fips: string }> = {
@@ -137,7 +138,9 @@ export const fetchComparisonIndices = async (
       crimeGeography: '',
     }
 
-  const crimeUrl = `/api/fbi-crime?state=${encodeURIComponent(code.abbreviation)}`
+  const crimeUrl = apiUrl(
+    `/api/fbi-crime?state=${encodeURIComponent(code.abbreviation)}`,
+  )
 
   const crimeResult = (await fetch(crimeUrl, { signal })
     .then((response) => (response.ok ? response.json() : Promise.reject()))

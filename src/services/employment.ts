@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import type { City } from 'data/cities'
 import { stateFipsByName } from 'data/stateFips'
 
@@ -70,16 +71,15 @@ export const fetchEmploymentData = async (
   if (city.country !== 'United States') {
     throw new Error('Census employment data is available for U.S. cities only.')
   }
-  const apiKey = import.meta.env.VITE_CENSUS_API_KEY
-  if (!apiKey) throw new Error('Census API key is not configured.')
-  const key = `&key=${encodeURIComponent(apiKey)}`
   const requestSignal = () =>
     AbortSignal.any([signal, AbortSignal.timeout(12_000)])
   const stateFips = stateFipsByName[city.state]
   if (!stateFips) throw new Error('No Census state matched this location.')
 
   const placesResponse = await fetch(
-    `https://api.census.gov/data/2024/acs/acs5/profile?get=${variables}&for=place:*&in=state:${stateFips}${key}`,
+    apiUrl(
+      `/api/census/2024/acs/acs5/profile?get=${variables}&for=place:*&in=state:${stateFips}`,
+    ),
     { signal: requestSignal() },
   )
   if (!placesResponse.ok)
@@ -119,7 +119,9 @@ export const fetchEmploymentData = async (
     [2019, 2020, 2021, 2022, 2023, 2024].map(async (year) => {
       try {
         const response = await fetch(
-          `https://api.census.gov/data/${year}/acs/acs5/profile?get=DP03_0004E&for=place:${placeCode}&in=state:${stateFips}${key}`,
+          apiUrl(
+            `/api/census/${year}/acs/acs5/profile?get=DP03_0004E&for=place:${placeCode}&in=state:${stateFips}`,
+          ),
           { signal: requestSignal() },
         )
         if (!response.ok) return null
@@ -139,11 +141,15 @@ export const fetchEmploymentData = async (
   try {
     const [detailedIndustryResponse, professionalResponse] = await Promise.all([
       fetch(
-        `https://api.census.gov/data/2024/acs/acs5?get=NAME,C24030_001E,C24030_013E,C24030_018E,C24030_019E,C24030_020E,C24030_022E,C24030_023E,C24030_040E,C24030_045E,C24030_046E,C24030_047E,C24030_049E,C24030_050E&for=place:${placeCode}&in=state:${stateFips}${key}`,
+        apiUrl(
+          `/api/census/2024/acs/acs5?get=NAME,C24030_001E,C24030_013E,C24030_018E,C24030_019E,C24030_020E,C24030_022E,C24030_023E,C24030_040E,C24030_045E,C24030_046E,C24030_047E,C24030_049E,C24030_050E&for=place:${placeCode}&in=state:${stateFips}`,
+        ),
         { signal: requestSignal() },
       ),
       fetch(
-        `https://api.census.gov/data/2024/acs/acs5?get=NAME,${professionalVariables.map(([, variable]) => variable).join(',')}&for=place:${placeCode}&in=state:${stateFips}${key}`,
+        apiUrl(
+          `/api/census/2024/acs/acs5?get=NAME,${professionalVariables.map(([, variable]) => variable).join(',')}&for=place:${placeCode}&in=state:${stateFips}`,
+        ),
         { signal: requestSignal() },
       ),
     ])

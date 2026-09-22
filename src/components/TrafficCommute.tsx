@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, useMap } from 'react-leaflet'
@@ -51,7 +52,7 @@ const TrafficCommute = ({ city }: { city: City }) => {
   const status = useQuery({
     queryKey: ['traffic-status-v2'],
     queryFn: async ({ signal }) => {
-      const r = await fetch('/api/traffic-status', { signal })
+      const r = await fetch(apiUrl('/api/traffic-status'), { signal })
       if (!r.ok) throw new Error('Traffic service unavailable')
       return (await r.json()) as {
         configured: boolean
@@ -218,7 +219,7 @@ const TrafficCommute = ({ city }: { city: City }) => {
               <TileLayer
                 key={key}
                 className="traffic-flow-tiles"
-                url={`/api/traffic-tiles/{z}/{x}/{y}.png?${params}`}
+                url={apiUrl(`/api/traffic-tiles/{z}/{x}/{y}.png?${params}`)}
                 attribution={
                   mode === 'live'
                     ? 'Traffic &copy; <a href="https://www.tomtom.com/">TomTom</a>'

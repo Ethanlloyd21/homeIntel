@@ -1,3 +1,4 @@
+import { upstreamFetch } from './upstreamFetch.ts'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
 
@@ -250,7 +251,7 @@ export const gasPriceProxy = (apiKey: string): Plugin => {
         upstream.searchParams.set('sort[0][direction]', 'desc')
         upstream.searchParams.set('offset', '0')
         upstream.searchParams.set('length', '100')
-        const result = await fetch(upstream, {
+        const result = await upstreamFetch(upstream, {
           signal: AbortSignal.timeout(10_000),
         })
         if (!result.ok) throw new Error('EIA request failed')

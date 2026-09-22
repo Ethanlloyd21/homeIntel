@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 export type CommutePoint = {
   latitude: number
   longitude: number
@@ -66,14 +67,14 @@ export const fetchCommuteData = async (
     trafficParams.set('timeZone', schedule.timeZone)
   }
   const [routeResult, transitResult] = await Promise.allSettled([
-    fetch(`/api/traffic-route?${trafficParams}`, { signal }).then(
+    fetch(apiUrl(`/api/traffic-route?${trafficParams}`), { signal }).then(
       async (response) => {
         if (!response.ok)
           throw new Error(await responseError(response, 'Routing unavailable.'))
         return (await response.json()) as TrafficRoute
       },
     ),
-    fetch(`/api/transit-options?${params}`, { signal }).then(
+    fetch(apiUrl(`/api/transit-options?${params}`), { signal }).then(
       async (response) => {
         if (!response.ok)
           throw new Error(

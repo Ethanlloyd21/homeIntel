@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import { useQuery } from '@tanstack/react-query'
 import type { City } from 'data/cities'
 
@@ -24,7 +25,9 @@ export const useGasPriceQuery = (city: City) =>
     queryKey: ['gas-price', city.name, city.state],
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams({ city: city.name, state: city.state })
-      const response = await fetch(`/api/gas-price?${params}`, { signal })
+      const response = await fetch(apiUrl(`/api/gas-price?${params}`), {
+        signal,
+      })
       if (!response.ok) throw new Error('Regular gas price unavailable')
       return (await response.json()) as GasPrice
     },

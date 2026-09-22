@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import type { City } from 'data/cities'
 
 type ScorecardSchool = {
@@ -78,7 +79,9 @@ const distanceInMiles = (
 export const fetchNearbyColleges = async (city: City, signal: AbortSignal) => {
   if (city.country !== 'United States') return []
   const response = await fetch(
-    `/api/nearby-colleges?city=${encodeURIComponent(city.name)}&state=${encodeURIComponent(city.state)}`,
+    apiUrl(
+      `/api/nearby-colleges?city=${encodeURIComponent(city.name)}&state=${encodeURIComponent(city.state)}`,
+    ),
     { signal: AbortSignal.any([signal, AbortSignal.timeout(18_000)]) },
   )
   if (!response.ok) throw new Error('Unable to load nearby colleges.')

@@ -30,6 +30,12 @@ vite.config.d.ts
 *.cer
 credentials.json
 secrets.json
+# AWS credentials and generated Amplify artifacts are local only.
+.aws/
+.amplify/
+amplify_outputs.json
+amplify_outputs.*.json
+cdk.out/
 
 # Logs and diagnostic output
 *.log

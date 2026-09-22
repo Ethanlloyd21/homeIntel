@@ -101,11 +101,15 @@ New here? Read the **[User Guide](UserGuide.md)** for a task-by-task walkthrough
 - Lucide React
 - ESLint and Prettier
 
+## AWS deployment
+
+See [Deploy with Amplify Gen 2](docs/amplify-deployment.md) for the included backend, build configuration, secrets, and Hosting setup. Provider keys stay server-side, including Census.
+
 ## Getting started
 
 ### Requirements
 
-- Node.js 22 or newer
+- Node.js 24
 - npm
 - A free U.S. Census Data API key
 
@@ -118,7 +122,7 @@ npm install
 Copy `.env.example` to `.env` and provide the Census and Data.gov keys:
 
 ```env
-VITE_CENSUS_API_KEY=your_census_api_key
+CENSUS_API_KEY=your_census_api_key
 DATA_GOV_API_KEY=your_data_gov_api_key
 ```
 
@@ -653,7 +657,7 @@ The major layers are:
 4. **Aggregation hooks (`src/hooks/useCityIntel.ts`, `src/hooks/useDecision.ts`)** sit between the query hooks and the pages. `useCityIntel` assembles one bundle of facts per city; `useDecision` runs the simulation, the regret assessment, and the brief for a destination measured against the origin. Every Decide page reads from these, which is why their numbers always agree.
 5. **TanStack Query hooks (`src/hooks`)** own asynchronous server state. Hooks define cache keys, stale times, cancellation, and query-enabling conditions.
 6. **Services (`src/services`)** split into two kinds. Network services build request parameters, call endpoints, validate response shapes, and normalize records. Calculation services — `lifeSimulator`, `regret`, `climate`, `dayInLife`, `cityBrief`, `testDrive`, and `movePlan` — are pure synchronous functions with no network or React dependencies, which is what makes them unit-testable in isolation.
-7. **Vite integration proxies (`vite.config.ts`)** protect server-only keys, avoid browser CORS restrictions, combine upstream sources, apply rate limits, and implement fallbacks. These endpoints run in Vite development and preview servers.
+7. **Shared integration proxies (`server/apiPlugins.ts`)** protect server-only keys, avoid browser CORS restrictions, combine upstream sources, apply rate limits, and implement fallbacks. These endpoints run in Vite development/preview servers and in the Amplify Lambda backend.
 8. **Local normalized datasets (`public/data`)** provide Zillow market history and Census population estimates without repeatedly downloading large source files in the browser.
 9. **Error boundary (`src/components/ErrorBoundary.tsx`)** catches render faults, reports what failed, and keeps the saved profile and shortlist intact instead of blanking the page.
 
@@ -701,7 +705,7 @@ The Vite configuration currently exposes these application-facing endpoints:
 | `/api/transit-options`           | Finds mapped bus, train, subway, and tram stops near both commute endpoints   |
 | `/api/place-search`              | Geocodes a street address or landmark for the Neighbourhoods home/work pins   |
 
-These Vite middleware functions are appropriate for local development and preview. A production static host does not execute `vite.config.ts` middleware. Production deployment must recreate the `/api/*` handlers as serverless functions, edge functions, or routes in a Node server and keep their response contracts unchanged.
+The shared handlers in `server/apiPlugins.ts` run in local Vite development/preview and in the Amplify Gen 2 Lambda backend. Amplify Hosting serves the static frontend while API Gateway routes production API requests to Lambda. See [the deployment guide](docs/amplify-deployment.md).
 
 ### Caching and failure behavior
 
@@ -853,7 +857,7 @@ Every feature follows the same four-layer shape, so a new one is easy to place:
 1. A **component or page** renders it.
 2. A **hook** in `src/hooks` owns its query key, cancellation, and stale time.
 3. A **service** in `src/services` normalizes the data, or calculates the result.
-4. Where a server is needed, a **proxy** in `vite.config.ts` handles keys, CORS, caching, and fallbacks.
+4. Where a server is needed, a **proxy** in `server/apiPlugins.ts` handles keys, CORS, caching, and fallbacks.
 
 Calculation services are the exception to step 2: they take no network calls at
 all, which is what lets the test suite exercise them directly.
@@ -863,7 +867,7 @@ The K-12 feature is a representative example of the full four layers:
 - `src/components/NearbySchools.tsx` owns grade tabs, school search, pagination, card presentation, profile summaries, and expandable details.
 - `src/hooks/useNearbySchoolsQuery.ts` owns the TanStack Query key, cancellation signal, enablement, and seven-day stale time.
 - `src/services/schools.ts` normalizes CCD records, calculates distance and staffing ratio, classifies grade bands, and preserves statewide online schools with missing staffing data.
-- `vite.config.ts` implements `/api/nearby-schools`, state/FIPS resolution, upstream request headers, per-process state caching, exact-city filtering, coordinate fallback, and statewide virtual filtering.
+- `server/apiPlugins.ts` implements `/api/nearby-schools`, state/FIPS resolution, upstream request headers, per-process state caching, exact-city filtering, coordinate fallback, and statewide virtual filtering.
 
 ```text
 homeIntel/
@@ -997,17 +1001,17 @@ homeIntel/
 
 `.env` is ignored by Git. Never commit Census, Data.gov, BEA, or TomTom keys.
 
-Variables prefixed with `VITE_` are included in browser code. FBI requests use a same-origin server proxy and the `DATA_GOV_API_KEY` server-only variable. For a static public deployment, implement the equivalent endpoint as a serverless function. Census requests still need a production proxy so that key is not exposed to browser users.
+Only the public API URL and Ko-fi URL are allowed into browser configuration. FBI requests use a server proxy and the `DATA_GOV_API_KEY` server-only variable. The Amplify backend includes these endpoints and a Census proxy. Census keys are no longer included in browser code.
 
 Zillow, Open-Meteo, OpenStreetMap, and FEMA requests used here do not require private application keys.
 
 BLS LAUS/QCEW, Census QWI, USAspending, Wikidata, and the HIFLD hospital feature service do not require private application keys. `BEA_API_KEY` is optional and enables county real-GDP data.
 
-`TOMTOM_API_KEY` is optional and remains server-side. It enables live traffic-aware travel time and typical rush-hour sampling. Without it, the commute planner automatically uses a clearly labeled OSRM baseline route. Both commute endpoints must be recreated alongside the other Vite proxies for a production static deployment.
+`TOMTOM_API_KEY` is optional and remains server-side. It enables live traffic-aware travel time and typical rush-hour sampling. Without it, the commute planner automatically uses a clearly labeled OSRM baseline route. Both commute endpoints are included in the Amplify Gen 2 backend.
 
 The Urban Institute Education Data Portal / CCD school integration does not require an API key. Its proxy exists for response filtering, caching, request compatibility, and production control rather than secret management.
 
-The Open-Meteo historical archive and OpenStreetMap Nominatim do not require keys. The Nominatim proxy exists to attach an identifying `User-Agent`, enforce the one-request-per-second usage policy, and cache results — obligations that cannot be met from browser code alone. A production deployment must recreate `/api/place-search` with those same limits intact.
+The Open-Meteo historical archive and OpenStreetMap Nominatim do not require keys. The Nominatim proxy exists to attach an identifying `User-Agent`, enforce the one-request-per-second usage policy, and cache results — obligations that cannot be met from browser code alone. The Amplify backend preserves these limits with a DynamoDB lease and seven-day cache.
 
 The household profile, shortlist, and progress are stored only in the browser's `localStorage`. ReloIntel has no account system, no server-side user database, and sends no household information to any third party or AI service.
 
@@ -1015,7 +1019,7 @@ The household profile, shortlist, and progress are stored only in the browser's 
 
 ### Census data says unavailable
 
-- Confirm `.env` contains `VITE_CENSUS_API_KEY`.
+- Confirm `.env` contains `CENSUS_API_KEY`.
 - Restart Vite after editing `.env`.
 - Confirm the selected location is in the United States.
 - Verify the browser can reach `api.census.gov`.
@@ -1070,7 +1074,7 @@ npm run data:update
 - The first school request for a state can take longer because its open, regular 2024 CCD records are downloaded and cached. No school request is made until the K-12 section is opened.
 - Local staffing-ranked tabs require active regular schools with coordinates, enrollment, and teacher FTE.
 - The Online tab includes active regular public schools reported as fully virtual. Private programs and records missing the CCD virtual flag do not appear.
-- A production static host must recreate `/api/nearby-schools` as a serverless or server endpoint.
+- The Amplify Gen 2 backend includes `/api/nearby-schools`.
 
 ### Regret factors say "not assessed"
 
@@ -1085,7 +1089,7 @@ npm run data:update
 - Queries run only at three characters or more.
 - Requests are deliberately limited to one per second, so results can lag a fast typist by a second.
 - Nominatim coverage varies. Try a nearby landmark or major intersection instead of an exact street number.
-- A production static host must recreate `/api/place-search`, including the rate limit and `User-Agent`.
+- The Amplify Gen 2 backend includes `/api/place-search` with a shared rate limit and identifying `User-Agent`.
 
 ### Day in Your Life shows no commute
 

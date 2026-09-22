@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import type { City } from 'data/cities'
 import { stateFipsByName } from 'data/stateFips'
 
@@ -121,14 +122,6 @@ export const fetchHousingData = async (city: City, signal: AbortSignal) => {
     throw new Error('Housing data is currently available for U.S. cities only.')
   }
 
-  const apiKey = import.meta.env.VITE_CENSUS_API_KEY
-  if (!apiKey) {
-    throw new Error(
-      'Add VITE_CENSUS_API_KEY to .env to load Census housing data.',
-    )
-  }
-
-  const key = `&key=${encodeURIComponent(apiKey)}`
   const requestSignal = () =>
     AbortSignal.any([signal, AbortSignal.timeout(12_000)])
   const stateCode = stateFipsByName[city.state]
@@ -139,7 +132,9 @@ export const fetchHousingData = async (city: City, signal: AbortSignal) => {
     { signal: requestSignal() },
   )
   const placesResponsePromise = fetch(
-    `https://api.census.gov/data/2024/acs/acs5?get=${variables}&for=place:*&in=state:${stateCode}${key}`,
+    apiUrl(
+      `/api/census/2024/acs/acs5?get=${variables}&for=place:*&in=state:${stateCode}`,
+    ),
     { signal: requestSignal() },
   )
   const [zillowResponse, placesResponse] = await Promise.all([

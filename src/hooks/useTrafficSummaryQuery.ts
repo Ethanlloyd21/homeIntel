@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import { useQuery } from '@tanstack/react-query'
 import type { City } from 'data/cities'
 export type TrafficSummary = {
@@ -15,7 +16,9 @@ export const useTrafficSummaryQuery = (city: City) =>
         lat: String(city.latitude),
         lon: String(city.longitude),
       })
-      const response = await fetch(`/api/traffic-summary?${params}`, { signal })
+      const response = await fetch(apiUrl(`/api/traffic-summary?${params}`), {
+        signal,
+      })
       if (!response.ok) throw new Error('Current traffic summary unavailable')
       return (await response.json()) as TrafficSummary
     },

@@ -6,7 +6,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules'] },
+  { ignores: ['dist', 'node_modules', '.amplify', 'cdk.out'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -27,7 +27,13 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.mjs', 'tests/**/*.mjs'],
+    files: [
+      'scripts/**/*.mjs',
+      'tests/**/*.mjs',
+      'amplify/**/*.ts',
+      'server/**/*.ts',
+      'vite.config.ts',
+    ],
     languageOptions: {
       globals: globals.node,
     },

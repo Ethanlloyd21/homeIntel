@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import type { City } from 'data/cities'
 
 type Binding = Record<string, { value: string } | undefined>
@@ -232,9 +233,9 @@ export const fetchMajorEmployers = async (
     longitude: String(city.longitude),
   })
   const endpoint = {
-    Wikidata: '/api/major-employers',
-    USAspending: '/api/federal-contractors',
-    HIFLD: '/api/major-hospitals',
+    Wikidata: apiUrl('/api/major-employers'),
+    USAspending: apiUrl('/api/federal-contractors'),
+    HIFLD: apiUrl('/api/major-hospitals'),
   }[source]
   const response = await fetch(`${endpoint}?${params}`, {
     signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]),

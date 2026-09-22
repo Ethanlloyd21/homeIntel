@@ -1,3 +1,4 @@
+import { apiUrl } from '#api'
 import { useQuery } from '@tanstack/react-query'
 import { Crosshair, MapPin, X } from 'lucide-react'
 import { useState } from 'react'
@@ -18,7 +19,9 @@ const fetchPlaces = async (
   signal: AbortSignal,
 ) => {
   const params = new URLSearchParams({ q: query, near, city, state })
-  const response = await fetch(`/api/place-search?${params}`, { signal })
+  const response = await fetch(apiUrl(`/api/place-search?${params}`), {
+    signal,
+  })
   if (!response.ok) throw new Error('Place search is unavailable.')
   const payload = (await response.json()) as { places: PlaceResult[] }
   return payload.places
