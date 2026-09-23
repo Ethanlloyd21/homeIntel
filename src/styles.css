@@ -5164,6 +5164,47 @@ footer > span {
 :root[data-theme='dark'] .college-card {
   background: var(--soft);
 }
+@media (max-width: 900px) {
+  .college-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .college-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .college-card {
+    padding: 16px;
+    gap: 12px;
+  }
+  .college-card:hover {
+    transform: none;
+  }
+  .college-logo {
+    flex-basis: 46px;
+    width: 46px;
+    height: 46px;
+  }
+  .college-logo img {
+    width: 32px;
+    height: 32px;
+  }
+  .college-card h4 {
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
+  .college-card p {
+    margin: 10px 0 14px;
+  }
+  .college-card-footer {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+  .college-empty {
+    padding: 22px 16px;
+  }
+}
 .chart-years {
   display: flex;
   justify-content: space-between;
