@@ -105,6 +105,113 @@ New here? Read the **[User Guide](UserGuide.md)** for a task-by-task walkthrough
 
 See [Deploy with Amplify Gen 2](docs/amplify-deployment.md) for the included backend, build configuration, secrets, and Hosting setup. Provider keys stay server-side, including Census.
 
+### Production architecture
+
+The React/Vite frontend is a static application served by Amplify Hosting at
+[relointel.serverless-samurai.com](https://relointel.serverless-samurai.com).
+The backend is defined with Amplify Gen 2 and AWS CDK in
+[`amplify/backend.ts`](amplify/backend.ts). Browser requests to protected-provider
+integrations go directly to the API Gateway URL generated for that environment.
+
+```mermaid
+flowchart TD
+    GitHub[GitHub main branch] --> Build[Amplify build and deployment]
+    Build --> Hosting[Amplify Hosting: dist assets and custom domain]
+    Build --> CF[CloudFormation: Gen 2 backend stacks]
+    Hosting --> Browser[Browser: React and TypeScript]
+    Browser --> State[Zustand and localStorage: household and move plan]
+    Browser --> Query[TanStack Query and service modules]
+    Query --> Public[Browser-safe public APIs and static datasets]
+    Query --> Gateway[API Gateway HTTP API: GET /api/*]
+    CF --> Gateway
+    CF --> Lambda[Lambda: shared API handlers]
+    Gateway --> Lambda
+    Lambda --> Providers[Census, TomTom, Data.gov and other providers]
+    Lambda <--> Dynamo[DynamoDB: response cache and Nominatim lease]
+    Secrets[SSM Parameter Store: encrypted provider secrets] --> Lambda
+    Lambda --> Logs[CloudWatch Logs]
+```
+
+The browser performs the deterministic relocation calculations. Zustand persists
+household preferences and move plans on the device; TanStack Query manages fetched
+data. AWS stores cached API results, not a user-profile database. There is currently
+no Cognito sign-in or AppSync/Amplify Data layer.
+
+### AWS resources used
+
+| Resource | Responsibility and configuration |
+| --- | --- |
+| **Amplify Hosting** | Builds the GitHub branch, serves `dist`, and hosts the custom domain over HTTPS. SPA rewrite rules are supplied in `amplify/hosting-rewrites.json` and configured in the console. |
+| **Amplify Gen 2 / CloudFormation** | Defines and deploys the function, API, cache table, and their permissions. Production branch and developer sandbox use separate backend stacks. |
+| **API Gateway HTTP API** | Public, read-only `GET /api/{proxy+}` route to Lambda. CORS permits GET from any origin. Configured throttle: 25 requests/second, burst 50; this is not authentication or a spending cap. |
+| **AWS Lambda** | The `relointel-api` function runs Node.js 22 with 1,024 MB memory and a 30-second timeout. `server/lambdaAdapter.ts` adapts the shared middleware to API Gateway JSON and binary responses. |
+| **DynamoDB** | On-demand `ApiCache` table, partition key `id`, TTL attribute `expiresAt`. Shares cacheable successful responses across function instances and coordinates Nominatim searches with a conditional-write lease. Cache entries over 350 KB are skipped; address results are cached for seven days. The disposable table has a destroy removal policy. |
+| **Systems Manager Parameter Store** | Stores provider keys as encrypted `SecureString` parameters referenced through Amplify `secret(...)`. Production and sandbox secrets are configured separately. |
+| **IAM** | Amplify's deployment service role provisions backend resources. Lambda's execution role provides runtime access to secrets, its cache table, and logs without embedding AWS access keys in code. |
+| **CloudWatch Logs** | Captures Lambda runtime output for diagnosing backend failures. Amplify build logs separately show installation, deployment, and frontend build failures. |
+| **CDK deployment assets** | CDK uses its bootstrap asset storage in S3 to publish backend bundles. This is deployment infrastructure, not an application file-upload bucket. |
+
+Production is deployed in **`us-west-2`**, Amplify app **`d26htn554hrql9`**, branch
+**`main`**. The developer sandbox identifier is **`lloyd`**. These identifiers are
+not credentials; API URLs and resource names are generated per deployment.
+
+### Request flow and configuration
+
+1. Amplify Hosting serves the frontend and checked-in `public/data` snapshots.
+2. Frontend service modules call `src/utils/api.ts`, which prefixes `/api/*` with
+   the environment's public API URL. Vite reads `VITE_API_BASE_URL` when explicitly
+   set, otherwise `amplify_outputs.json.custom.apiUrl`.
+3. API Gateway invokes Lambda. The handler checks the shared cache where applicable,
+   validates and proxies the request, and returns normalized JSON or binary traffic
+   tiles. Warm instances also retain provider-specific in-memory caches.
+4. Lambda resolves provider secrets server-side. Upstream calls using
+   `upstreamFetch` share a 25-second request deadline, leaving time to return a
+   response before the function timeout. Missing or failing sources remain visibly
+   unavailable rather than being replaced with invented data.
+
+Local `npm run dev` and `npm run preview` use the same integration handlers as Vite
+middleware. Without a configured API URL, requests use same-origin `/api/*`. A
+generated sandbox output file makes the frontend target the sandbox instead.
+
+Required secrets are `CENSUS_API_KEY` and `DATA_GOV_API_KEY`. Optional integrations
+need **both** a secret and a non-secret build flag before redeployment:
+
+| Integration | Amplify secret | Hosting build variable |
+| --- | --- | --- |
+| Live traffic and routing | `TOMTOM_API_KEY` | `ENABLE_TOMTOM=true` |
+| Historical/typical traffic map | `ARCGIS_API_KEY` | `ENABLE_ARCGIS=true` |
+| County GDP | `BEA_API_KEY` | `ENABLE_BEA=true` |
+| Dedicated energy-data credential | `EIA_API_KEY` | `ENABLE_EIA=true` |
+
+Adding a provider key only to Hosting environment variables does not wire it into
+Lambda. Use Amplify secrets plus the matching flag. As verified on September 23,
+2026, production live TomTom traffic is enabled; historical ArcGIS traffic is not
+configured. Do not place provider keys in `VITE_` variables or commit credentials.
+Only the public API URL and Ko-fi URL are allowed into the frontend bundle.
+
+### GitHub CI/CD and sandbox workflow
+
+[`amplify.yml`](amplify.yml) runs the production pipeline in this order:
+
+1. Install Node.js 24 and locked dependencies with `npm ci`; verify native esbuild.
+2. Run `ampx pipeline-deploy` for the Amplify app and branch, generating backend outputs.
+3. Type-check the backend and run the test suite.
+4. Build the frontend, scan its bundle for configured secrets, and publish `dist`.
+
+The build uses Node.js 24; the deployed Lambda runtime is Node.js 22. Dataset refresh
+scripts are separate from this pipeline, so refreshed datasets must be committed.
+
+For a one-time sandbox deployment using an existing local AWS profile:
+
+```powershell
+npx.cmd ampx sandbox --profile relointel --once
+```
+
+Omit `--once` to watch backend changes. Sandbox deployments do not deploy the
+production branch or push GitHub commits. Set sandbox secrets separately, and set
+any optional `ENABLE_*` flags in the local shell before running the sandbox CLI.
+Keep `.env`, `.aws`, `.amplify`, and generated `amplify_outputs.json` out of Git.
+
 ## Getting started
 
 ### Requirements
@@ -213,7 +320,7 @@ The **Day & time** controls request a citywide historical traffic map through Ar
 
 The Environment current-traffic card uses `/api/traffic-summary`, sampling up to five unique roads near the selected city centre through TomTom Flow Segment Data. It reports average delay relative to free flow for that small sample, explicitly not a citywide congestion index. The Neighborhood home/work pins continue to use the existing traffic-aware routing and baseline fallback.
 
-Production hosts must recreate the traffic tile, status, summary, and routing proxies. Missing live data is shown as unavailable. See [Environment and Risk data notes](docs/environment-risk-data.md) for weather and hazard methodology.
+The Amplify Lambda backend includes the traffic tile, status, summary, and routing proxies. Missing live data is shown as unavailable. See [Environment and Risk data notes](docs/environment-risk-data.md) for weather and hazard methodology.
 
 ### Zillow Research
 
@@ -367,7 +474,7 @@ The employment refactor uses bounded requests and layered caching:
 - LAUS area metadata and fallback flat files are shared across requests for the lifetime of the server process. A failed initial download clears its promise so a later request can retry.
 - Employer queries retry once in TanStack Query. A loading indicator remains visible while slower sources continue, but already-returned source data is usable immediately.
 
-The proxy's in-memory caches are process-local and reset when Vite or the production server restarts. Browsers may continue using a fresh response according to its `Cache-Control` header; use a hard reload when testing a forced refresh. A production implementation should preserve the same response contracts, timeout behavior, and cache lifetimes when moving the handlers to serverless or edge infrastructure.
+The proxy's in-memory caches are process-local and reset when Vite restarts or a Lambda instance is replaced. Production also uses the DynamoDB shared cache for eligible responses. Browsers may continue using a fresh response according to its `Cache-Control` header; a hard reload does not invalidate the server caches.
 
 ### Public K-12 and statewide online schools
 
@@ -602,11 +709,11 @@ Three rules shape the architecture:
 
 - **Remote server state lives in TanStack Query.** Zustand holds only user and session state; API responses are never copied into it.
 - **Calculations are pure and separate from React.** Every score, cost, verdict, and itinerary comes from a synchronous function that takes data in and returns a result, with no network or React dependency. That is what makes them testable and auditable.
-- **The browser never downloads state-sized upstream responses.** Vite middleware adds compatible request headers, handles failures, filters the response, and sends only the relevant records on.
+- **Large upstream responses are filtered server-side.** Shared middleware in local Vite and production Lambda adds compatible request headers, handles failures, filters the response, and sends only the relevant records on.
 
 ![ReloIntel architecture diagram](docs/homeintel-architecture.svg)
 
-The diagram can be edited in diagrams.net using [`docs/homeintel-architecture.drawio`](docs/homeintel-architecture.drawio). The SVG is committed separately so GitHub can render the architecture without requiring draw.io. It shows the data-fetching layers; the text diagram below is the current and more complete view, including the profile store and the calculation services.
+The diagram can be edited in diagrams.net using [`docs/homeintel-architecture.drawio`](docs/homeintel-architecture.drawio). The SVG illustrates the earlier data-fetching layers; use the [production architecture](#production-architecture) diagram above for the current AWS deployment. The text diagram below includes the profile store and calculation services.
 
 ```text
 User interface
@@ -641,12 +748,12 @@ User interface
                         |                                           |
           +-------------+------------------+                        |
           |                                |                        |
-    Browser-safe APIs              Same-origin /api/*                |
-    and local JSON files           Vite server proxies               |
+    Browser-safe APIs              /api/* integration requests        |
+    and local JSON files           Vite locally; API Gateway/Lambda  |
           |                                |                        |
     Open-Meteo forecast             BLS, BEA, FBI,                   |
-    and archive, Census,            USAspending, Wikidata,           |
-    FEMA, Zillow snapshots          HIFLD, CCD, TomTom, Nominatim    |
+    and archive, FEMA,              Census, USAspending, Wikidata,   |
+    Zillow snapshots                HIFLD, CCD, TomTom, Nominatim    |
 ```
 
 The major layers are:
@@ -671,7 +778,7 @@ The major layers are:
 | Address search           | OpenStreetMap Nominatim                     | `/api/place-search`                          | No               | Biased toward the selected city      | Rate-limited to one request per second and cached for seven days   |
 | Map                      | OpenStreetMap tiles                         | React Leaflet                                | No               | Selected coordinates                 | Map attribution remains visible                                    |
 | Housing market           | Zillow Research                             | Local normalized JSON                        | No               | Zillow city/region                   | ACS housing values are used when Zillow has no match               |
-| Demographics and housing | Census ACS five-year                        | Browser service                              | Census key       | U.S. place                           | Variables are normalized into snapshot cards and charts            |
+| Demographics and housing | Census ACS five-year                        | `/api/census/*` server proxy                  | Server Census key | U.S. place                          | Variables are normalized into snapshot cards and charts            |
 | Population               | Census Vintage 2025                         | Local normalized JSON                        | No               | U.S. incorporated place              | Current-year value uses the documented average-change calculation  |
 | Current labor market     | BLS LAUS                                    | `/api/current-economy`                       | No               | U.S. city area                       | BLS API first; official five-year flat files on quota/failure      |
 | County jobs and wages    | BLS QCEW                                    | `/api/current-economy`                       | No               | Selected city’s county               | Checks candidate quarters concurrently and selects the newest      |
@@ -1044,6 +1151,8 @@ npm run data:update
 
 ### Live traffic or transit options are unavailable
 
+- In production, configure the Amplify secret `TOMTOM_API_KEY`, set `ENABLE_TOMTOM=true` for the deployed branch, and rebuild. Check `/api/traffic-status` on that environment's API URL for `configured: true`.
+- Historical map tiles separately require `ARCGIS_API_KEY` and `ENABLE_ARCGIS=true`; a TomTom key alone does not enable them.
 - Add `TOMTOM_API_KEY` to `.env`, then restart Vite to enable live and historical traffic-aware routing.
 - Without a TomTom key, **Baseline routing** is expected and still provides road distance, route geometry, and a non-live duration.
 - Select Start or Destination before clicking the map. The highlighted control shows which point the next click will move.
