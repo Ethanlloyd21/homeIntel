@@ -1,6 +1,6 @@
-# CityViewIntel
+# MyCityIntel
 
-CityViewIntel is a React and TypeScript relocation-decision application. It helps someone considering a move research a city, simulate what living there would actually cost them, understand where they would be most likely to regret the move, and turn the answer into an executable plan.
+MyCityIntel is a React and TypeScript relocation-decision application. It helps someone considering a move research a city, simulate what living there would actually cost them, understand where they would be most likely to regret the move, and turn the answer into an executable plan.
 
 The application is organised around two jobs:
 
@@ -65,7 +65,7 @@ New here? Read the **[User Guide](UserGuide.md)** for a task-by-task walkthrough
 - FEMA National Risk Index profile and individual hazard scores
 - Housing, People, Employment, Risk, and Environment pages
 - Housing and demographic visualizations
-- Data-driven CityViewIntel Briefs for Housing and People
+- Data-driven MyCityIntel Briefs for Housing and People
 - Side-by-side city comparison interface
 - Lightweight Overview queries that avoid loading detail-only employment and demographic requests
 
@@ -75,7 +75,7 @@ New here? Read the **[User Guide](UserGuide.md)** for a task-by-task walkthrough
 - Landing page sets the whole move up front: where you live now and where you are considering, before entering the app
 - Sidebar grouped into Research and Decide, with a "Your move" card showing where you are moving from and to
 - Either leg can be changed in place from that card, cleared on its own, or both reset at once
-- Clicking the CityViewIntel wordmark starts over: it clears the selected cities and returns to the landing search, while keeping the household profile, shortlist, and saved progress
+- Clicking the MyCityIntel wordmark starts over: it clears the selected cities and returns to the landing search, while keeping the household profile, shortlist, and saved progress
 - First-visit quick-start guide plus accessible field and confidence tooltips for mouse, keyboard, and touch users
 - Source provenance attached to individual statements rather than to a page footnote
 - Selected cities and the household profile survive a reload, so page URLs can be shared and revisited
@@ -108,7 +108,7 @@ See [Deploy with Amplify Gen 2](docs/amplify-deployment.md) for the included bac
 ### Production architecture
 
 The React/Vite frontend is a static application served by Amplify Hosting at
-[CityViewIntel.com](https://CityViewIntel.com).
+[MyCityIntel.com](https://MyCityIntel.com).
 The backend is defined with Amplify Gen 2 and AWS CDK in
 [`amplify/backend.ts`](amplify/backend.ts). Browser requests to protected-provider
 integrations go directly to the API Gateway URL generated for that environment.
@@ -144,7 +144,7 @@ no Cognito sign-in or AppSync/Amplify Data layer.
 | **Amplify Hosting** | Builds the GitHub branch, serves `dist`, and hosts the custom domain over HTTPS. SPA rewrite rules are supplied in `amplify/hosting-rewrites.json` and configured in the console. |
 | **Amplify Gen 2 / CloudFormation** | Defines and deploys the function, API, cache table, and their permissions. Production branch and developer sandbox use separate backend stacks. |
 | **API Gateway HTTP API** | Public, read-only `GET /api/{proxy+}` route to Lambda. CORS permits GET from any origin. Configured throttle: 25 requests/second, burst 50; this is not authentication or a spending cap. |
-| **AWS Lambda** | The `cityviewintel-api` function runs Node.js 22 with 1,024 MB memory and a 30-second timeout. `server/lambdaAdapter.ts` adapts the shared middleware to API Gateway JSON and binary responses. |
+| **AWS Lambda** | The `mycityintel-api` function runs Node.js 22 with 1,024 MB memory and a 30-second timeout. `server/lambdaAdapter.ts` adapts the shared middleware to API Gateway JSON and binary responses. |
 | **DynamoDB** | On-demand `ApiCache` table, partition key `id`, TTL attribute `expiresAt`. Shares cacheable successful responses across function instances and coordinates Nominatim searches with a conditional-write lease. Cache entries over 350 KB are skipped; address results are cached for seven days. The disposable table has a destroy removal policy. |
 | **Systems Manager Parameter Store** | Stores provider keys as encrypted `SecureString` parameters referenced through Amplify `secret(...)`. Production and sandbox secrets are configured separately. |
 | **IAM** | Amplify's deployment service role provisions backend resources. Lambda's execution role provides runtime access to secrets, its cache table, and logs without embedding AWS access keys in code. |
@@ -204,7 +204,7 @@ scripts are separate from this pipeline, so refreshed datasets must be committed
 For a one-time sandbox deployment using an existing local AWS profile:
 
 ```powershell
-npx.cmd ampx sandbox --profile cityviewintel --once
+npx.cmd ampx sandbox --profile mycityintel --once
 ```
 
 Omit `--once` to watch backend changes. Sandbox deployments do not deploy the
@@ -278,7 +278,7 @@ The weather request uses the selected coordinates and includes temperature, appa
 
 The Day in Your Life page and the climate-mismatch regret factor use the
 Open-Meteo historical archive, which returns observed daily weather for the
-nearest reanalysis grid cell. CityViewIntel requests three years of daily maximum
+nearest reanalysis grid cell. MyCityIntel requests three years of daily maximum
 and minimum temperature, precipitation, snowfall, weather code, sunrise,
 sunset, and daylight duration.
 
@@ -291,7 +291,7 @@ Day in Your Life scenarios are built from, so the sunrise, sunset, and
 temperatures shown for a scenario are real recorded values and the page names
 the date they came from.
 
-Because the comfort band is a user preference, CityViewIntel recalculates the
+Because the comfort band is a user preference, MyCityIntel recalculates the
 profile locally when the band changes instead of refetching several years of
 daily weather.
 
@@ -339,7 +339,7 @@ Source: <https://www.zillow.com/research/data/>
 
 ### Census ACS 2020–2024
 
-The ACS five-year detailed tables provide data for all U.S. places. CityViewIntel uses them for:
+The ACS five-year detailed tables provide data for all U.S. places. MyCityIntel uses them for:
 
 - Population fallback and 2019 comparison
 - Median household income
@@ -381,7 +381,7 @@ The official Census Vintage 2025 incorporated-place table supplies point estimat
 public/data/census-population-2025.json
 ```
 
-CityViewIntel calculates the current-year value with an ordinary least-squares linear trend fitted to all three official annual population levels:
+MyCityIntel calculates the current-year value with an ordinary least-squares linear trend fitted to all three official annual population levels:
 
 ```text
 mean year = average(2023, 2024, 2025)
@@ -390,7 +390,7 @@ slope = sum((year - mean year) * (population - mean population)) / sum((year - m
 population 2026 = mean population + slope * (2026 - mean year)
 ```
 
-The 2026 result is a CityViewIntel calculation, not an official Census estimate. The interface labels it accordingly. If the selected location does not match an incorporated place in the Vintage 2025 table, the application keeps the 2024 ACS value and explains that the 2025 city estimate was unavailable.
+The 2026 result is a MyCityIntel calculation, not an official Census estimate. The interface labels it accordingly. If the selected location does not match an incorporated place in the Vintage 2025 table, the application keeps the 2024 ACS value and explains that the 2025 city estimate was unavailable.
 
 The People chart compares the 2019 ACS estimate with the calculated current-year value. These are different Census series, so the comparison is useful for broad context but should not be treated as a precise official time series.
 
@@ -401,7 +401,7 @@ Source: <https://www.census.gov/newsroom/press-kits/2026/vintage-2025-city-town-
 ### FBI Crime Data Explorer
 
 Reported violent crime comes from the FBI's Crime Data Explorer through the
-`/api/fbi-crime` proxy, which keeps the Data.gov key server-side. CityViewIntel
+`/api/fbi-crime` proxy, which keeps the Data.gov key server-side. MyCityIntel
 averages the 2023 monthly state offence rate and divides it by the national
 average, producing an index where **100 is the US average**.
 
@@ -417,7 +417,7 @@ though the source is authoritative, and the regret factor that uses it carries a
 
 ### FEMA National Risk Index
 
-The Risk Profile uses FEMA's December 2025 National Risk Index Census-tract layer. The selected city's longitude and latitude identify the containing tract. CityViewIntel displays:
+The Risk Profile uses FEMA's December 2025 National Risk Index Census-tract layer. The selected city's longitude and latitude identify the containing tract. MyCityIntel displays:
 
 - Composite Expected Annual Loss score and rating
 - Highest individual natural-hazard Expected Annual Loss scores
@@ -437,7 +437,7 @@ The Employment page combines several public labor and economic sources:
 - Census Quarterly Workforce Indicators (QWI) for county hires and separations
 - BEA Regional data for county real GDP when `BEA_API_KEY` is configured
 
-The server first requests LAUS through the BLS Public Data API. That unauthenticated API has a daily request quota. If the API is unavailable, rate-limited, or returns empty series, CityViewIntel resolves the selected city's LAUS area code dynamically and reads the official BLS five-year downloadable files:
+The server first requests LAUS through the BLS Public Data API. That unauthenticated API has a daily request quota. If the API is unavailable, rate-limited, or returns empty series, MyCityIntel resolves the selected city's LAUS area code dynamically and reads the official BLS five-year downloadable files:
 
 ```text
 la.data.0.CurrentU15-19
@@ -447,7 +447,7 @@ la.data.0.CurrentU25-29
 
 These files are downloaded once per server process and cached in memory. The fallback is not tied to San Diego or Dallas; it works for any U.S. city represented in the BLS LAUS area file. The chart uses monthly annual averages and marks an incomplete current year as `YTD`. If reported LAUS data does not yet reach the current year, the chart extends the latest employment value using the newest available QCEW covered-job growth rate and marks the result `est.`.
 
-The Current unemployment card always displays the observation period and geography. A value such as June 2026 is a reported monthly LAUS rate, not a CityViewIntel forecast. After a single FCC coordinate-to-county lookup, LAUS, QCEW, QWI, and optional BEA work starts concurrently. QCEW and QWI candidate quarters are also requested concurrently and the newest available observation is selected in configured order. Individual provider failures degrade to unavailable cards instead of failing the combined response.
+The Current unemployment card always displays the observation period and geography. A value such as June 2026 is a reported monthly LAUS rate, not a MyCityIntel forecast. After a single FCC coordinate-to-county lookup, LAUS, QCEW, QWI, and optional BEA work starts concurrently. QCEW and QWI candidate quarters are also requested concurrently and the newest available observation is selected in configured order. Individual provider failures degrade to unavailable cards instead of failing the combined response.
 
 ### Regional employment landscape
 
@@ -516,7 +516,7 @@ The profile is held in `src/store/useProfileStore.ts`, persisted to
 The **origin city** is the most important single setting. Four regret factors —
 housing-cost shock, salary adjustment, climate mismatch, and distance from a
 support network — describe a _change_, so they can only be measured once
-CityViewIntel knows where the household is moving from. Until it is set, those
+MyCityIntel knows where the household is moving from. Until it is set, those
 factors are reported as unassessed rather than guessed at.
 
 A profile saved by an older build is migrated forward. Fields that did not exist
@@ -526,7 +526,7 @@ move so the salary comparison starts at zero rather than inventing a pay rise.
 
 ## Life Simulator
 
-The Life Simulator turns CityViewIntel's city data into an editable household planning scenario. Select a city, open **Life simulator** in the sidebar, and follow the quick-start guide:
+The Life Simulator turns MyCityIntel's city data into an editable household planning scenario. Select a city, open **Life simulator** in the sidebar, and follow the quick-start guide:
 
 1. Enter income now and after the move, household size, a rent-or-buy plan, an effective tax assumption, commute details, and recurring expenses.
 2. Review gross monthly income, itemized modeled costs, disposable income, and total housing exposure. Each cost row can be expanded to show its assumption.
@@ -577,7 +577,7 @@ Household consensus calculates each person's weighted score independently, avera
 
 The regret engine in `src/services/regret.ts` replaces a single opaque score with
 ten factors that are each measured, weighted, and explained separately. It is the
-part of CityViewIntel that answers "why might I regret this?" rather than "how does
+part of MyCityIntel that answers "why might I regret this?" rather than "how does
 this city rank?".
 
 | Factor                        | Weight | What it measures                                                                   |
@@ -666,7 +666,7 @@ address and a workplace and recomputes from those points.
 - **Hazard risk** is re-queried for the census tract containing the pinned home, and the page states the difference against the city-centre tract.
 - **Commute** is a routed trip between the two pinned points in current traffic, and it becomes the commute the rest of the application uses.
 - **Schools** are re-measured from the pinned point using each school's own coordinates.
-- **Housing** deliberately stays a city-level figure. CityViewIntel does not model block-level prices and says so on the card rather than implying a precision it does not have.
+- **Housing** deliberately stays a city-level figure. MyCityIntel does not model block-level prices and says so on the card rather than implying a precision it does not have.
 
 Two cities can be compared side by side, which is the point: North Park against
 Plano, not San Diego against Dallas.
@@ -692,7 +692,7 @@ Confidence describes the quality and geographic precision of the source, not whe
 
 - **High** is good source confidence: a recent authoritative value is available at a relevant city or tract geography. The value may still be a survey or model estimate.
 - **Medium** is useful but less precise: the value may use broader geography, an older observation, or a fallback dataset.
-- **Estimated** means CityViewIntel is applying a disclosed planning fallback because a more precise city value is unavailable.
+- **Estimated** means MyCityIntel is applying a disclosed planning fallback because a more precise city value is unavailable.
 - **Loading** means the source request is still in progress and the rating may change.
 - **Unavailable** means no verified value was returned and the category should be independently confirmed.
 
@@ -711,7 +711,7 @@ Three rules shape the architecture:
 - **Calculations are pure and separate from React.** Every score, cost, verdict, and itinerary comes from a synchronous function that takes data in and returns a result, with no network or React dependency. That is what makes them testable and auditable.
 - **Large upstream responses are filtered server-side.** Shared middleware in local Vite and production Lambda adds compatible request headers, handles failures, filters the response, and sends only the relevant records on.
 
-![CityViewIntel architecture diagram](docs/homeintel-architecture.svg)
+![MyCityIntel architecture diagram](docs/homeintel-architecture.svg)
 
 The diagram can be edited in diagrams.net using [`docs/homeintel-architecture.drawio`](docs/homeintel-architecture.drawio). The SVG illustrates the earlier data-fetching layers; use the [production architecture](#production-architecture) diagram above for the current AWS deployment. The text diagram below includes the profile store and calculation services.
 
@@ -760,7 +760,7 @@ The major layers are:
 
 1. **Pages and components (`src/pages`, `src/components`)** render the dashboard, charts, cards, maps, sector tabs, pagination, and responsive navigation.
 2. **Session state (`src/store/useAppStore.ts`)** stores what the user is currently looking at: the selected city, comparison city, active page, theme, and mobile-navigation state. The selected cities are mirrored to `localStorage` so a page URL such as `/decision-brief` still works after a reload.
-3. **Household profile (`src/store/useProfileStore.ts`)** stores what the user has told CityViewIntel about themselves, persisted through Zustand's `persist` middleware with a forward migration for fields added by later builds.
+3. **Household profile (`src/store/useProfileStore.ts`)** stores what the user has told MyCityIntel about themselves, persisted through Zustand's `persist` middleware with a forward migration for fields added by later builds.
 4. **Aggregation hooks (`src/hooks/useCityIntel.ts`, `src/hooks/useDecision.ts`)** sit between the query hooks and the pages. `useCityIntel` assembles one bundle of facts per city; `useDecision` runs the simulation, the regret assessment, and the brief for a destination measured against the origin. Every Decide page reads from these, which is why their numbers always agree.
 5. **TanStack Query hooks (`src/hooks`)** own asynchronous server state. Hooks define cache keys, stale times, cancellation, and query-enabling conditions.
 6. **Services (`src/services`)** split into two kinds. Network services build request parameters, call endpoints, validate response shapes, and normalize records. Calculation services — `lifeSimulator`, `regret`, `climate`, `dayInLife`, `cityBrief`, `testDrive`, and `movePlan` — are pure synchronous functions with no network or React dependencies, which is what makes them unit-testable in isolation.
@@ -836,31 +836,31 @@ The shared handlers in `server/apiPlugins.ts` run in local Vite development/prev
 
 ### Derived data versus reported data
 
-CityViewIntel distinguishes source observations from application calculations:
+MyCityIntel distinguishes source observations from application calculations:
 
 - `YTD` identifies a reported annual average based on fewer than 12 published months.
 - `est.` identifies a current-year employment value extended with the latest available QCEW growth rate.
 - Current-year population is calculated from the documented recent Census annual-change method.
-- Weather comfort is a CityViewIntel scale derived from several Open-Meteo variables.
+- Weather comfort is a MyCityIntel scale derived from several Open-Meteo variables.
 - FEMA scores are normalized comparative risk indicators, not probabilities.
 - Federal contract obligations describe regional contract activity and are not local payroll or employee estimates.
 - K-12 student-to-teacher ratios are calculated from CCD enrollment and teacher FTE; they are not class-size or academic-quality ratings.
-- Life Simulator costs, deal-breakers, fit, housing exposure, and consensus are deterministic CityViewIntel calculations based on visible source values and user assumptions.
-- Regret factors, their weights, and the thresholds that turn a measurement into a Low/Moderate/Elevated/High level are CityViewIntel's own editorial judgement, documented in `src/services/regret.ts`. They are a structured way to surface trade-offs, not an empirical prediction of whether a specific household will regret a move.
+- Life Simulator costs, deal-breakers, fit, housing exposure, and consensus are deterministic MyCityIntel calculations based on visible source values and user assumptions.
+- Regret factors, their weights, and the thresholds that turn a measurement into a Low/Moderate/Elevated/High level are MyCityIntel's own editorial judgement, documented in `src/services/regret.ts`. They are a structured way to surface trade-offs, not an empirical prediction of whether a specific household will regret a move.
 - The overall regret score is the weighted mean of the factors that could be assessed. Unavailable factors are excluded, and the reported coverage says how many of the nine contributed.
 - Comfortable days a year are counted against the household's own temperature band, so the figure changes when that band changes and is not comparable to any published climate statistic.
 - Day in Your Life scenarios are assembled from a single real observed day whose date is shown. They describe that day, not a typical one.
 - The Decision Brief verdict is a documented function of the fit score, the regret score, and the number of failed deal-breakers. No text in the brief is model-generated.
 - Move-budget lines are heuristics scaled by household size, modeled housing cost, and distance. They are starting figures to be replaced with real quotes, not estimates of what a specific move will cost.
 - Support-network distance and hospital distance are straight-line distances between points, not routed travel.
-- The effective tax percentage is supplied by the user. CityViewIntel does not infer a tax return, filing status, deductions, or legal tax liability.
+- The effective tax percentage is supplied by the user. MyCityIntel does not infer a tax return, filing status, deductions, or legal tax liability.
 - Life Simulator confidence labels describe source quality and precision, not whether a city has a favorable result.
 - Traffic condition is calculated from the percentage difference between the traffic-aware time and free-flow time: under 8% is Light, 8–19% Moderate, 20–39% Heavy, and 40% or more Severe.
 - Rush-hour results compare six disclosed weekday departure samples rather than claiming to identify every possible slowdown minute.
 
 ### Zustand
 
-CityViewIntel uses two stores with a deliberate split.
+MyCityIntel uses two stores with a deliberate split.
 
 `src/store/useAppStore.ts` holds **what the user is looking at**:
 
@@ -875,7 +875,7 @@ with clearing the origin city so the wordmark resets the whole route. Neither
 touches the household profile, shortlist, anchors, or progress — those are the
 user's work, not a selection.
 
-`src/store/useProfileStore.ts` holds **what the user has told CityViewIntel about
+`src/store/useProfileStore.ts` holds **what the user has told MyCityIntel about
 themselves** and is persisted through Zustand's `persist` middleware:
 
 - Household inputs and the comfort band
@@ -924,7 +924,7 @@ The shared `QueryClient` is configured in `src/main.tsx`.
 
 ### Radix UI
 
-CityViewIntel uses unstyled Radix primitives for accessible interactive controls
+MyCityIntel uses unstyled Radix primitives for accessible interactive controls
 while retaining the project's custom visual design. The Explore/Compare
 navigation uses Radix Tabs, and the Housing chart's Home value/Rent selector
 uses Radix Toggle Group. Radix supplies keyboard navigation, ARIA behavior, and
@@ -933,7 +933,7 @@ interaction state through `data-state` attributes.
 The K-12 grade selector uses Radix Tabs. Each school card uses Radix Collapsible for its View details control, including keyboard and screen-reader interaction states.
 
 The header theme control uses Radix Switch. The selected light or dark mode is
-saved in `localStorage`; on a first visit, CityViewIntel follows the operating
+saved in `localStorage`; on a first visit, MyCityIntel follows the operating
 system's `prefers-color-scheme` setting. Dark mode uses a dedicated AI-dashboard
 theme with blue-black surfaces, violet/cyan accents, translucent cards, and
 subtle ambient glow while preserving accessible contrast.
@@ -1060,7 +1060,7 @@ homeIntel/
 1. On the landing page the user sets the move: where they live now (optional) and the city they are considering. Either can also be set later, or a city can be picked straight from the command palette.
 2. Open-Meteo returns matching locations. The origin is written to the profile store immediately; the destination is held locally until the user submits, because writing it would leave the landing page before they could fill in the origin. `useAppStore` then stores the selection and mirrors it to `localStorage`.
 3. TanStack Query hooks load weather, housing, Census, employment, FEMA, climate, college, and K-12 data as needed.
-4. The Overview combines the map, weather, city snapshot, housing indicators, risk profile, and economic engine. Category pages provide deeper visualizations and data-driven CityViewIntel Briefs.
+4. The Overview combines the map, weather, city snapshot, housing indicators, risk profile, and economic engine. Category pages provide deeper visualizations and data-driven MyCityIntel Briefs.
 5. The user describes their household once in the Life Simulator, and sets the city they live in now on the Decision Brief.
 6. `useCityIntel` bundles the city's facts; `useDecision` runs the cost simulation, the regret assessment, and the brief against the origin city.
 7. Every Decide page — Simulator, Day in Your Life, Decision Brief, Move Plan — renders from that same bundle, so editing one assumption updates all of them immediately.
@@ -1093,7 +1093,7 @@ homeIntel/
 - The Community fit dimension is a limited demographic proxy, not a measure of culture, belonging, compatibility, or quality of life.
 - Career matching searches the available Census industry labels; it does not measure job openings, occupation-level demand, licensing requirements, or an individual's likelihood of employment.
 - Readiness checklist completion records user progress only and does not verify that an external task was performed correctly.
-- Regret factor weights and level thresholds are CityViewIntel's editorial judgement. They surface trade-offs in a structured, inspectable way; they are not validated predictors of whether a household will actually regret a move.
+- Regret factor weights and level thresholds are MyCityIntel's editorial judgement. They surface trade-offs in a structured, inspectable way; they are not validated predictors of whether a household will actually regret a move.
 - The regret score is only as complete as its coverage. A low score with four unassessed factors is a weaker statement than a low score with all nine, which is why coverage is always displayed beside it.
 - The climate profile describes the nearest reanalysis grid cell over the last three years. Three years is short for climate, and a grid cell does not capture a valley, a coastline, or an urban heat island.
 - Comfortable-day counts depend entirely on the user's chosen temperature band and are not comparable between users or to any published statistic.
@@ -1120,7 +1120,7 @@ The Urban Institute Education Data Portal / CCD school integration does not requ
 
 The Open-Meteo historical archive and OpenStreetMap Nominatim do not require keys. The Nominatim proxy exists to attach an identifying `User-Agent`, enforce the one-request-per-second usage policy, and cache results — obligations that cannot be met from browser code alone. The Amplify backend preserves these limits with a DynamoDB lease and seven-day cache.
 
-The household profile, shortlist, and progress are stored only in the browser's `localStorage`. CityViewIntel has no account system, no server-side user database, and sends no household information to any third party or AI service.
+The household profile, shortlist, and progress are stored only in the browser's `localStorage`. MyCityIntel has no account system, no server-side user database, and sends no household information to any third party or AI service.
 
 ## Troubleshooting
 
@@ -1191,7 +1191,7 @@ npm run data:update
 - Commute shock needs a routed commute. Pin a home point and a workplace on Neighbourhoods.
 - Climate mismatch needs the historical archive, which takes a few seconds on a new city.
 - Healthcare access needs a matched HIFLD hospital; some areas return none.
-- This is working as intended: CityViewIntel reports what it could not measure instead of scoring it as zero risk.
+- This is working as intended: MyCityIntel reports what it could not measure instead of scoring it as zero risk.
 
 ### Address search returns nothing
 
@@ -1257,7 +1257,7 @@ The landing-page images are stored locally in `src/assets/images` and sourced fr
 
 ## License
 
-CityViewIntel's original source code is available under the [MIT License](LICENSE).
+MyCityIntel's original source code is available under the [MIT License](LICENSE).
 
 The MIT License applies to the project software only. Zillow, Census, FEMA,
 OpenStreetMap, Open-Meteo, Pexels, and other third-party data or assets remain

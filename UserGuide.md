@@ -1,6 +1,6 @@
-# CityViewIntel User Guide
+# MyCityIntel User Guide
 
-This guide teaches you how to use CityViewIntel to decide whether to move to a city.
+This guide teaches you how to use MyCityIntel to decide whether to move to a city.
 
 It is written for the person making the decision, not for developers. If you want
 to know how the application is built, which datasets it uses, or how to deploy it,
@@ -10,8 +10,8 @@ read the [README](README.md) instead.
 
 ## Contents
 
-1. [What CityViewIntel does](#what-cityviewintel-does)
-2. [What CityViewIntel will not do](#what-cityviewintel-will-not-do)
+1. [What MyCityIntel does](#what-mycityintel-does)
+2. [What MyCityIntel will not do](#what-mycityintel-will-not-do)
 3. [Your first ten minutes](#your-first-ten-minutes)
 4. [Finding your way around](#finding-your-way-around)
 5. [Step 1 — Research a city](#step-1--research-a-city)
@@ -29,10 +29,10 @@ read the [README](README.md) instead.
 
 ---
 
-## What CityViewIntel does
+## What MyCityIntel does
 
 Most city-comparison tools tell you what a city _is_: median rent, population,
-crime rate. CityViewIntel tries to tell you what living there would be like **for
+crime rate. MyCityIntel tries to tell you what living there would be like **for
 you**, and where you would be most likely to regret the move.
 
 It does five things:
@@ -51,7 +51,7 @@ entered yourself. **No AI writes any number, score, or verdict in this
 application.** Hover the small ⓘ icon next to any statement to see exactly where
 it came from.
 
-## What CityViewIntel will not do
+## What MyCityIntel will not do
 
 Being clear about this up front will save you disappointment:
 
@@ -71,7 +71,7 @@ If you do nothing else, do this. It produces a genuinely useful answer.
 1. **Set your move on the opening screen.** Fill in **where you live now** and **where you're thinking of moving**, then press the button. Setting both takes a few extra seconds and unlocks four of the ten regret factors straight away — do it now rather than later.
 2. **Open _Life simulator_ in the left sidebar.** Fill in your real numbers: what you earn now, what you would earn there, how many people are in your household, whether you would rent or buy, and your recurring costs. This takes about three minutes and you only ever do it once.
 3. **Open _Decision brief_.** If you set both cities on the opening screen, this is already complete. Read the verdict and the regret check, and expand any factor to see the evidence behind it.
-4. **Scroll to "Questions to answer on the ground."** Those are the things CityViewIntel cannot verify for you. Take them with you.
+4. **Scroll to "Questions to answer on the ground."** Those are the things MyCityIntel cannot verify for you. Take them with you.
 
 That is the core loop. Everything below adds precision to it.
 
@@ -128,7 +128,7 @@ If **Moving from** says _Not set_, several comparisons are switched off — see
 
 ### Starting over
 
-Click the **cityviewintel** wordmark at the top of the sidebar (or in the footer) at
+Click the **mycityintel** wordmark at the top of the sidebar (or in the footer) at
 any time. It clears where you are moving from, where you are moving to, and any
 comparison city, and returns you to the landing search.
 
@@ -157,7 +157,7 @@ way to work once you are familiar with the application.
 ### Light and dark mode
 
 Use the sun/moon toggle in the top-right, or the command palette. Your choice is
-remembered. On a first visit CityViewIntel follows your operating system setting.
+remembered. On a first visit MyCityIntel follows your operating system setting.
 
 ---
 
@@ -201,7 +201,7 @@ parts together for you.
 
 ## Step 2 — Describe your household
 
-Open **Life simulator**. This is where you tell CityViewIntel about yourself, and it
+Open **Life simulator**. This is where you tell MyCityIntel about yourself, and it
 is the single highest-value thing you can do in the application. You do it once;
 every other page then uses it.
 
@@ -242,14 +242,14 @@ you need.
 Each rule then shows a clear pass or fail with the actual value beside it.
 
 Three rules — commute, hospital distance, and comfortable weather — only appear
-once CityViewIntel can actually measure them. That is deliberate: it will not check a
+once MyCityIntel can actually measure them. That is deliberate: it will not check a
 commute rule against a guess. Pin a workplace (Step 6) and the commute rule
 appears.
 
 ### Priorities and a partner
 
 **Household consensus** lets you and a partner set priority weights separately
-across affordability, career, safety, and community. CityViewIntel scores the city
+across affordability, career, safety, and community. MyCityIntel scores the city
 through each person's priorities independently and reports both scores plus an
 alignment percentage — so a compromise is visible instead of hidden inside one
 averaged number.
@@ -325,14 +325,14 @@ expand its evidence.
 | Distance from support network | How hard it becomes to see the people you rely on                 |
 | Reported crime                | How the state's violent-crime rate compares to the US average     |
 
-**Pay attention to the unassessed panel.** If CityViewIntel could not measure a
+**Pay attention to the unassessed panel.** If MyCityIntel could not measure a
 factor, it says so and explains what is missing rather than scoring it as zero
 risk. A low regret score with four factors unassessed is a much weaker statement
 than a low score with all nine. The header always tells you the count.
 
 ### Questions to answer on the ground
 
-Specific things CityViewIntel cannot verify — insurance quotes, actual tax bills,
+Specific things MyCityIntel cannot verify — insurance quotes, actual tax bills,
 school waitlists, what the commute is really like at 5:30 PM. Take this list with
 you.
 
@@ -397,7 +397,7 @@ not a bug. Move on to Step 6.
 
 ## Step 6 — Pin the actual neighbourhood
 
-Open **Neighbourhoods**. This is where CityViewIntel stops talking about "the city"
+Open **Neighbourhoods**. This is where MyCityIntel stops talking about "the city"
 and starts talking about a specific block.
 
 City averages hide the decision. Hazard risk, commute time, and hospital access
@@ -430,7 +430,7 @@ difference shows up in your insurance premium.
 Add a second city to compare two specific addresses side by side — North Park
 against Plano, rather than San Diego against Dallas.
 
-**Note:** CityViewIntel deliberately does not pretend to know block-level house
+**Note:** MyCityIntel deliberately does not pretend to know block-level house
 prices. Housing figures stay city-level, and the page tells you so rather than
 implying precision it does not have.
 
@@ -467,7 +467,7 @@ travel, one month of overlapping housing, and setup costs — scaled to your
 household size and the distance involved.
 
 **Every figure is editable.** These are starting numbers, not quotes. As real
-quotes arrive, type them in. The total updates, and CityViewIntel tells you how many
+quotes arrive, type them in. The total updates, and MyCityIntel tells you how many
 months of gross income the move represents.
 
 ### The 90-day timeline
@@ -493,7 +493,7 @@ held.
 
 ## Reading the numbers honestly
 
-CityViewIntel is built to be candid about its own limits. Learning to read these
+MyCityIntel is built to be candid about its own limits. Learning to read these
 signals is what separates a useful answer from a falsely confident one.
 
 ### Confidence labels
@@ -505,7 +505,7 @@ well. A "High" confidence label on a bad number still means the number is bad.
 | --------------- | ------------------------------------------------------------------------------ |
 | **High**        | A recent authoritative value at a relevant city or tract level                 |
 | **Medium**      | Useful but less precise — broader geography, older data, or a fallback         |
-| **Estimated**   | CityViewIntel is applying a disclosed planning estimate; a real value is missing   |
+| **Estimated**   | MyCityIntel is applying a disclosed planning estimate; a real value is missing   |
 | **Loading**     | Still fetching; the rating may change                                          |
 | **Unavailable** | Nothing verified was returned. Confirm this independently before relying on it |
 
@@ -523,15 +523,15 @@ much more meaningful.
 ### Where the numbers come from
 
 Small ⓘ icons appear next to statements throughout the application. Hover, tap,
-or keyboard-focus them for the source. Nothing in CityViewIntel is unsourced.
+or keyboard-focus them for the source. Nothing in MyCityIntel is unsourced.
 
 ### Things that are genuinely estimates
 
 - **Cost of living** is a state-level price index. It cannot capture your neighbourhood.
-- **Taxes** use the percentage _you_ entered. CityViewIntel does not calculate tax.
+- **Taxes** use the percentage _you_ entered. MyCityIntel does not calculate tax.
 - **Hazard reserve, move budget, and utility costs** are transparent planning formulas, not quotes.
 - **The "community" score** uses education levels as a rough proxy. It says nothing about culture or belonging.
-- **Regret weights and thresholds** are CityViewIntel's editorial judgement about what tends to matter. They are a structured way to think, not a validated prediction.
+- **Regret weights and thresholds** are MyCityIntel's editorial judgement about what tends to matter. They are a structured way to think, not a validated prediction.
 - **Hospital and support-network distances** are straight-line, not driving distances.
 - **Climate** describes a weather grid cell over three years. Three years is short, and a grid cell will not capture a valley or a coastline.
 
@@ -547,7 +547,7 @@ or keyboard-focus them for the source. Nothing in CityViewIntel is unsourced.
 | `Esc`                    | Close the palette                               |
 | `Tab`                    | Move between controls, including the ⓘ tooltips |
 
-Everything in CityViewIntel is reachable by keyboard. Tooltips open on focus as well
+Everything in MyCityIntel is reachable by keyboard. Tooltips open on focus as well
 as on hover, so you do not need a mouse to see a source.
 
 ---
@@ -559,7 +559,7 @@ your pinned addresses, your checklist progress — is stored **only in your own
 browser**, using `localStorage`.
 
 - There is no account and no sign-in.
-- Nothing about your household is sent to any server run by CityViewIntel.
+- Nothing about your household is sent to any server run by MyCityIntel.
 - Nothing is sent to any AI service.
 - No one else can see your profile.
 
@@ -567,7 +567,7 @@ The practical consequences: your data stays on **this browser on this device**.
 It will not follow you to your phone, it will not survive clearing your browser
 data, and anyone else using the same browser profile can see it.
 
-CityViewIntel does contact public data providers (the Census Bureau, Open-Meteo,
+MyCityIntel does contact public data providers (the Census Bureau, Open-Meteo,
 OpenStreetMap, and others) to fetch information about the cities you look up.
 Those requests include the city or address you searched for, as any map or
 weather site would.
@@ -582,14 +582,14 @@ household profile, so they are far less useful until you have filled it in. It
 takes about three minutes and you only do it once.
 
 **Why do some regret factors say "not assessed"?**
-Because CityViewIntel could not measure them, and it would rather tell you than
+Because MyCityIntel could not measure them, and it would rather tell you than
 guess. Four need an origin city; commute shock needs a pinned workplace; climate
 needs the weather archive to finish loading; healthcare access needs a matched
 hospital. The panel tells you which and why.
 
 **Why does my commute say it has not been measured?**
 You have not pinned a home point and workplace on the Neighbourhoods page. Until
-then, CityViewIntel will use the distance you typed into the Life Simulator as a
+then, MyCityIntel will use the distance you typed into the Life Simulator as a
 rough estimate, or say nothing — but it will not present a guess as a measurement.
 
 **The comfortable-day count looks far too low.**
@@ -614,13 +614,13 @@ Decision Brief and open them in turn — the same household profile applies to a
 of them, so the verdicts are comparable.
 
 **How do I start over?**
-Click the **cityviewintel** wordmark in the sidebar. That clears the cities you
+Click the **mycityintel** wordmark in the sidebar. That clears the cities you
 selected and returns you to the landing search, while keeping your household
 profile, shortlist, and progress. To clear just one leg, use the × beside it in
 the **Your move** card.
 
 To erase everything including your household profile, clear your browser's site
-data for CityViewIntel.
+data for MyCityIntel.
 
 **Should I trust the verdict?**
 Treat it as a structured second opinion, not an answer. It is only as good as the

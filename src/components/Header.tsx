@@ -24,7 +24,7 @@ const Header = ({
 }) => {
   const landing = variant === 'landing'
   const coffeeUrl =
-    import.meta.env.VITE_KOFI_URL?.trim() || 'https://ko-fi.com/cityviewintel'
+    import.meta.env.VITE_KOFI_URL?.trim() || 'https://ko-fi.com/mycityintel'
   const hasCoffeeAccount = /^https:\/\/ko-fi\.com\/[a-z0-9_-]+\/?$/i.test(
     coffeeUrl,
   )
@@ -88,7 +88,7 @@ const Header = ({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Buy me a coffee on Ko-fi (opens in a new tab)"
-            title="Support CityViewIntel on Ko-fi (opens in a new tab)"
+            title="Support MyCityIntel on Ko-fi (opens in a new tab)"
           >
             <Coffee size={19} aria-hidden="true" />
             <span>Buy me a coffee</span>

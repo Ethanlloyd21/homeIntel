@@ -1,4 +1,4 @@
-# Deploy CityViewIntel with Amplify Gen 2
+# Deploy MyCityIntel with Amplify Gen 2
 
 The repository includes the backend, Hosting build specification, SPA rewrite
 configuration, and frontend API URL wiring. AWS resources have not been deployed
@@ -93,14 +93,14 @@ In **Hosting → Rewrites and redirects**, import the rules from
 configuration file: Amplify does not automatically apply it from the repository.
 It serves `index.html` for frontend routes while preserving assets and JSON files.
 
-For the production domain, use **Hosting → Custom domains**, add `CityViewIntel.com`
+For the production domain, use **Hosting → Custom domains**, add `MyCityIntel.com`
 and the desired branch, and complete Amplify's DNS verification steps. The frontend's
-canonical URL and social sharing metadata use `https://CityViewIntel.com/`.
+canonical URL and social sharing metadata use `https://MyCityIntel.com/`.
 
-The backend function and stack now use the `cityviewintel-api` name. When updating
+The backend function and stack now use the `mycityintel-api` name. When updating
 an existing deployment, deploy the backend and rebuild the frontend together so
 the generated API URL in `amplify_outputs.json` matches the deployed backend.
-The local AWS profile commands below use `cityviewintel`; substitute your existing
+The local AWS profile commands below use `mycityintel`; substitute your existing
 profile name if you already configured one. Renaming the app does not rename local
 AWS credential profiles.
 
@@ -122,11 +122,11 @@ The Gen 2 project and CLI dependencies are already set up. Do not run
 yourself, open PowerShell in the project folder and run:
 
 ```powershell
-npx.cmd ampx configure profile --name cityviewintel
+npx.cmd ampx configure profile --name mycityintel
 ```
 
 Follow the prompts for your access key ID, secret access key, and AWS region.
-The `cityviewintel` profile is stored under your Windows user directory's `.aws` folder, outside
+The `mycityintel` profile is stored under your Windows user directory's `.aws` folder, outside
 this repository. If your profile already exists, use `aws configure --profile
 PROFILE_NAME` to update it. Local credentials are only needed for local AWS CLI
 or sandbox work; connecting GitHub to Amplify uses the console's service role.
@@ -151,9 +151,9 @@ npm run check:bundle-secrets
 ```
 
 To test with an AWS sandbox, authenticate using an AWS profile/SSO outside this
-repository, set sandbox secrets with `npx.cmd ampx sandbox secret set CENSUS_API_KEY --profile cityviewintel`
-and `npx.cmd ampx sandbox secret set DATA_GOV_API_KEY --profile cityviewintel`, then run
-`npm.cmd run sandbox -- --profile cityviewintel`. Sandbox secrets are separate from
+repository, set sandbox secrets with `npx.cmd ampx sandbox secret set CENSUS_API_KEY --profile mycityintel`
+and `npx.cmd ampx sandbox secret set DATA_GOV_API_KEY --profile mycityintel`, then run
+`npm.cmd run sandbox -- --profile mycityintel`. Sandbox secrets are separate from
 deployed branch secrets. Sandbox output makes Vite use the sandbox API URL.
 
 Never paste AWS credentials into project files, GitHub, or chat. Amplify's managed

@@ -1,12 +1,12 @@
-import cityViewIcon from '/assets/images/cityviewicon.svg'
+import myCityIcon from '/assets/images/mycityicon.svg'
 
 const mark = (
   <>
     <div className="brand-mark">
-      <img src={cityViewIcon} alt="" width={31} height={31} />
+      <img src={myCityIcon} alt="" width={31} height={31} />
     </div>
     <span>
-      CityView<span>Intel</span>
+      MyCity<span>Intel</span>
     </span>
   </>
 )
@@ -25,7 +25,7 @@ const Brand = ({ onReset }: { onReset?: () => void }) => {
       className="brand brand-button"
       onClick={onReset}
       title="Start over — clears the cities you selected"
-      aria-label="CityViewIntel home. Start over and clear the selected cities."
+      aria-label="MyCityIntel home. Start over and clear the selected cities."
     >
       {mark}
     </button>

@@ -109,7 +109,7 @@ const WeatherCard = ({
                   Outdoor comfort{' '}
                   <HelpTip
                     label="About outdoor comfort"
-                    text="CityViewIntel estimate based on apparent temperature, humidity, wind, precipitation, and storm conditions."
+                    text="MyCityIntel estimate based on apparent temperature, humidity, wind, precipitation, and storm conditions."
                   />
                 </span>
                 <b>

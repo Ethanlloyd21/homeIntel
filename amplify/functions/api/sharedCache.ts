@@ -70,7 +70,7 @@ export const loadPlaces: PlaceSearchLoader = async (params) => {
       `https://nominatim.openstreetmap.org/search?${params}`,
       {
         headers: {
-          'User-Agent': 'CityViewIntel/0.1 (relocation research tool)',
+          'User-Agent': 'MyCityIntel/0.1 (relocation research tool)',
           'Accept-Language': 'en',
         },
         signal: AbortSignal.timeout(10_000),

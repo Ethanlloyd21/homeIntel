@@ -1,7 +1,7 @@
 import HelpTip from 'components/HelpTip'
 
 /**
- * Every derived number in CityViewIntel carries its provenance. This is the one
+ * Every derived number in MyCityIntel carries its provenance. This is the one
  * place that renders it, so the wording stays identical across pages.
  */
 const SourceChip = ({
