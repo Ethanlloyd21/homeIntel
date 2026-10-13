@@ -1,17 +1,10 @@
-import {
-  BarChart3,
-  ClipboardCheck,
-  Compass,
-  Gauge,
-  Route,
-  ShieldCheck,
-} from 'lucide-react'
+import { BarChart3, Compass, Route } from 'lucide-react'
 import { Tabs } from 'radix-ui'
 import { useEffect, useState } from 'react'
 import Brand from 'components/Brand'
 import CommandPalette from 'components/CommandPalette'
 import Header from 'components/Header'
-import LandingAtlas from 'components/LandingAtlas'
+import LandingPage from 'components/LandingPage'
 import SearchBox from 'components/SearchBox'
 import Sidebar from 'components/Sidebar'
 import BriefPage from 'pages/BriefPage'
@@ -22,40 +15,9 @@ import LifeSimulatorPage from 'pages/LifeSimulatorPage'
 import MovePlanPage from 'pages/MovePlanPage'
 import NeighborhoodPage from 'pages/NeighborhoodPage'
 import OverviewPage from 'pages/OverviewPage'
-import { useAppStore, viewFromPath } from 'store/useAppStore'
+import { useAppStore } from 'store/useAppStore'
 import { useProfileStore } from 'store/useProfileStore'
-
-const sources = [
-  'Census',
-  'FEMA',
-  'Zillow',
-  'BEA',
-  'BLS',
-  'NCES',
-  'HIFLD',
-  'Open-Meteo',
-]
-
-const steps = [
-  {
-    icon: Gauge,
-    title: 'Simulate the money',
-    body: 'Taxes, housing, utilities, transport, childcare, healthcare and a hazard reserve — itemised, with the formula behind every line.',
-    tools: ['Life simulator', 'Day in your life'],
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Check for regret',
-    body: 'Ten explainable factors, from housing shock and salary adjustment to climate mismatch, reported crime, and distance from the people you rely on.',
-    tools: ['Regret check', 'Decision brief'],
-  },
-  {
-    icon: ClipboardCheck,
-    title: 'Plan the move',
-    body: 'A research-trip itinerary for the hard season, a real move budget, and a 90-day timeline you can tick off.',
-    tools: ['Move plan'],
-  },
-]
+import { applyMetadata } from 'utils/seo'
 
 const decideViews = new Set([
   'Simulator',
@@ -88,11 +50,18 @@ const App = () => {
 
   useEffect(() => {
     const handlePopState = () => {
-      useAppStore.setState({ view: viewFromPath(window.location.pathname) })
+      useAppStore.getState().syncLocation()
     }
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
+
+  useEffect(() => {
+    applyMetadata(
+      window.location.pathname,
+      city ? `${city.name}, ${city.state}` : undefined,
+    )
+  }, [view, city])
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -117,82 +86,12 @@ const App = () => {
 
   if (!city) {
     return (
-      <div className="app-shell location-entry landing-observatory">
-        <main>
-          <Header
-            onMenu={() => undefined}
-            theme={theme}
-            onThemeChange={setTheme}
-            onOpenPalette={() => setPaletteOpen(true)}
-            variant="landing"
-          />
-          <div className="page-content landing-page">
-            <LandingAtlas onStart={selectCity} />
-
-            <div className="landing-sources">
-              <span>
-                <ShieldCheck size={13} aria-hidden="true" /> Built on public
-                data
-              </span>
-              <ul>
-                {sources.map((source) => (
-                  <li key={source}>{source}</li>
-                ))}
-              </ul>
-            </div>
-
-            <section className="landing-steps">
-              <div className="landing-section-head">
-                <p className="eyebrow">FROM POSSIBILITY TO A PLAN</p>
-                <h3>A new place. The whole picture.</h3>
-              </div>
-              <ol>
-                {steps.map(({ icon: Icon, title, body, tools }, index) => (
-                  <li key={title}>
-                    <span className="landing-step-index">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <span className="landing-step-icon" aria-hidden="true">
-                      <Icon size={19} />
-                    </span>
-                    <h4>{title}</h4>
-                    <p>{body}</p>
-                    <div className="landing-step-tools">
-                      {tools.map((tool) => (
-                        <span key={tool}>{tool}</span>
-                      ))}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </section>
-
-            <footer className="landing-footer">
-              <Brand />
-              <p className="photo-credit">
-                U.S. map boundaries via{' '}
-                <a
-                  href="https://github.com/topojson/us-atlas"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  U.S. Atlas
-                </a>
-                .
-              </p>
-              <span className="footer-copyright">
-                <a
-                  href="https://lloydmarcelino.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  lloydmarcelino.com
-                </a>{' '}
-                &copy; 2026
-              </span>
-            </footer>
-          </div>
-        </main>
+      <LandingPage
+        selectCity={selectCity}
+        theme={theme}
+        setTheme={setTheme}
+        onOpenPalette={() => setPaletteOpen(true)}
+      >
         {paletteOpen && (
           <CommandPalette
             onClose={() => setPaletteOpen(false)}
@@ -202,7 +101,7 @@ const App = () => {
             onThemeChange={setTheme}
           />
         )}
-      </div>
+      </LandingPage>
     )
   }
 

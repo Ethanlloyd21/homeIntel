@@ -86,7 +86,12 @@ const legacy = <T>(key: string, fallback: T): T => {
  */
 const legacyInputs = (): LifeInputs => {
   const inputs = legacy('homeintel-life-inputs', defaultLifeInputs)
-  const saved = localStorage.getItem('homeintel-life-inputs')
+  let saved: string | null = null
+  try {
+    saved = localStorage.getItem('homeintel-life-inputs')
+  } catch {
+    /* Server rendering or blocked storage uses defaults. */
+  }
   if (saved && !saved.includes('currentAnnualIncome')) {
     return { ...inputs, currentAnnualIncome: inputs.annualIncome }
   }

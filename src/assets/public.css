@@ -1,0 +1,161 @@
+/* Public research content reuses the application's theme without changing its layouts. */
+.public-research-links {
+  margin: 40px 0;
+  padding: 28px 0;
+  border-top: 1px solid var(--line);
+}
+.public-research-links h2 {
+  margin: 8px 0 12px;
+  font-size: 24px;
+  letter-spacing: -0.6px;
+}
+.public-research-links p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+.public-research-links nav,
+.public-resource-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 20px;
+}
+.public-research-links a,
+.public-page a,
+.public-header a {
+  color: var(--ink);
+  text-underline-offset: 4px;
+}
+.public-site .public-header {
+  height: auto;
+  min-height: 76px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px clamp(16px, 4vw, 56px);
+}
+.public-header > a {
+  text-decoration: none;
+}
+.public-header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  font-size: 14px;
+}
+.public-page {
+  max-width: 1060px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 36px clamp(16px, 4vw, 56px) 56px;
+}
+.public-page h1 {
+  font-size: clamp(30px, 5vw, 48px);
+  letter-spacing: -1.2px;
+  line-height: 1.15;
+  margin: 16px 0 20px;
+}
+.public-page h2 {
+  font-size: 25px;
+  margin: 0 0 16px;
+}
+.public-page h3 {
+  font-size: 18px;
+  margin-top: 24px;
+}
+.public-page p,
+.public-page li {
+  line-height: 1.75;
+  color: var(--muted);
+}
+.public-page .public-lead {
+  font-size: 18px;
+  max-width: 760px;
+}
+.public-page > section {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.public-breadcrumbs {
+  margin-bottom: 32px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.public-page .public-cta {
+  display: inline-flex;
+  margin-top: 12px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--surface);
+  font-weight: 600;
+  text-decoration: none;
+}
+.public-metrics,
+.public-city-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 24px 0;
+}
+.public-metrics > div,
+.public-city-card {
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 14px;
+}
+.public-metrics dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.public-metrics dd {
+  margin: 12px 0;
+  font-size: 30px;
+  font-weight: 700;
+}
+.public-metrics small,
+.public-page .public-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+.public-city-card {
+  text-decoration: none;
+}
+.public-city-card:hover {
+  border-color: var(--coral);
+}
+.public-city-card span {
+  font-size: 13px;
+}
+.public-tool-list,
+.public-source-list {
+  padding-left: 22px;
+}
+.public-tool-list li,
+.public-source-list li {
+  margin: 12px 0;
+}
+.public-site a:focus-visible,
+.public-research-links a:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 5px;
+  border-radius: 3px;
+}
+.public-site footer {
+  flex-wrap: wrap;
+}
+@media (max-width: 600px) {
+  .public-metrics,
+  .public-city-grid {
+    grid-template-columns: 1fr;
+  }
+  .public-header .brand {
+    font-size: 18px;
+  }
+  .public-header nav {
+    font-size: 13px;
+  }
+}

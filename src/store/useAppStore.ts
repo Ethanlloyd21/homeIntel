@@ -1,5 +1,8 @@
 import { create } from 'zustand'
-import type { City } from 'data/cities'
+import { cityFromGeocoding, type City } from 'data/cities'
+import { cityFromSearch, viewFromPath, workspacePath } from 'utils/routes'
+
+export { viewFromPath } from 'utils/routes'
 
 type AppState = {
   view: string
@@ -15,31 +18,13 @@ type AppState = {
   resetSelection: () => void
   setMobileNavOpen: (open: boolean) => void
   setTheme: (theme: 'light' | 'dark') => void
+  syncLocation: () => void
 }
 
-const viewPaths: Record<string, string> = {
-  Overview: '/overview',
-  Housing: '/housing',
-  People: '/people',
-  Employment: '/employment',
-  Risk: '/risk',
-  Environment: '/environment',
-  Neighborhoods: '/neighborhoods',
-  Simulator: '/life-simulator',
-  DayInLife: '/day-in-the-life',
-  Brief: '/decision-brief',
-  MovePlan: '/move-plan',
-  Compare: '/compare-cities',
-}
-
-export const viewFromPath = (pathname: string) => {
-  const entry = Object.entries(viewPaths).find(([, path]) => path === pathname)
-  return entry?.[0] ?? 'Overview'
-}
-
-const updatePath = (view: string) => {
-  const path = viewPaths[view] ?? '/overview'
-  if (window.location.pathname !== path) window.history.pushState({}, '', path)
+const updatePath = (view: string, city: City | null) => {
+  const path = workspacePath(view, city)
+  if (`${window.location.pathname}${window.location.search}` !== path)
+    window.history.pushState({}, '', path)
 }
 
 /**
@@ -75,6 +60,11 @@ const saveSelectedCities = (city: City | null, comparisonCity: City | null) => {
 }
 
 const savedCities = loadSelectedCities()
+const linkedCity = cityFromSearch(window.location.search)
+const initialCity = linkedCity
+  ? cityFromGeocoding(linkedCity)
+  : savedCities.city
+if (linkedCity) saveSelectedCities(initialCity, savedCities.comparisonCity)
 
 const savedTheme = localStorage.getItem('homeintel-theme')
 const initialTheme =
@@ -87,19 +77,19 @@ const initialTheme =
 document.documentElement.dataset.theme = initialTheme
 document.documentElement.style.colorScheme = initialTheme
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   view: viewFromPath(window.location.pathname),
-  city: savedCities.city,
+  city: initialCity,
   comparisonCity: savedCities.comparisonCity,
   mobileNavOpen: false,
   theme: initialTheme,
   setView: (view) => {
-    updatePath(view)
+    updatePath(view, get().city)
     set({ view })
   },
   selectCity: (city) =>
     set((state) => {
-      updatePath(state.view)
+      updatePath(state.view, city)
       saveSelectedCities(city, state.comparisonCity)
       return { city }
     }),
@@ -125,6 +115,17 @@ export const useAppStore = create<AppState>((set) => ({
     })
   },
   setMobileNavOpen: (mobileNavOpen) => set({ mobileNavOpen }),
+  syncLocation: () => {
+    const linked = cityFromSearch(window.location.search)
+    const city =
+      window.location.pathname === '/'
+        ? null
+        : linked
+          ? cityFromGeocoding(linked)
+          : get().city
+    saveSelectedCities(city, get().comparisonCity)
+    set({ view: viewFromPath(window.location.pathname), city })
+  },
   setTheme: (theme) => {
     localStorage.setItem('homeintel-theme', theme)
     document.documentElement.dataset.theme = theme

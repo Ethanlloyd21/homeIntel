@@ -1,7 +1,207 @@
 [
   {
-    "source": "</^[^.]+$|\\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|avif)$)([^.]+$)/>",
-    "target": "/index.html",
+    "source": "/cities",
+    "target": "/cities/",
+    "status": "301"
+  },
+  {
+    "source": "/cities/",
+    "target": "/cities/index.html",
     "status": "200"
+  },
+  {
+    "source": "/about",
+    "target": "/about/",
+    "status": "301"
+  },
+  {
+    "source": "/about/",
+    "target": "/about/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/cities/austin-texas",
+    "target": "/cities/austin-texas/",
+    "status": "301"
+  },
+  {
+    "source": "/cities/austin-texas/",
+    "target": "/cities/austin-texas/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/cities/chicago-illinois",
+    "target": "/cities/chicago-illinois/",
+    "status": "301"
+  },
+  {
+    "source": "/cities/chicago-illinois/",
+    "target": "/cities/chicago-illinois/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/cities/denver-colorado",
+    "target": "/cities/denver-colorado/",
+    "status": "301"
+  },
+  {
+    "source": "/cities/denver-colorado/",
+    "target": "/cities/denver-colorado/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/cities/raleigh-north-carolina",
+    "target": "/cities/raleigh-north-carolina/",
+    "status": "301"
+  },
+  {
+    "source": "/cities/raleigh-north-carolina/",
+    "target": "/cities/raleigh-north-carolina/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/cities/san-francisco-california",
+    "target": "/cities/san-francisco-california/",
+    "status": "301"
+  },
+  {
+    "source": "/cities/san-francisco-california/",
+    "target": "/cities/san-francisco-california/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/cities/seattle-washington",
+    "target": "/cities/seattle-washington/",
+    "status": "301"
+  },
+  {
+    "source": "/cities/seattle-washington/",
+    "target": "/cities/seattle-washington/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/overview/",
+    "target": "/overview",
+    "status": "301"
+  },
+  {
+    "source": "/overview",
+    "target": "/overview/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/housing/",
+    "target": "/housing",
+    "status": "301"
+  },
+  {
+    "source": "/housing",
+    "target": "/housing/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/people/",
+    "target": "/people",
+    "status": "301"
+  },
+  {
+    "source": "/people",
+    "target": "/people/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/employment/",
+    "target": "/employment",
+    "status": "301"
+  },
+  {
+    "source": "/employment",
+    "target": "/employment/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/risk/",
+    "target": "/risk",
+    "status": "301"
+  },
+  {
+    "source": "/risk",
+    "target": "/risk/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/environment/",
+    "target": "/environment",
+    "status": "301"
+  },
+  {
+    "source": "/environment",
+    "target": "/environment/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/neighborhoods/",
+    "target": "/neighborhoods",
+    "status": "301"
+  },
+  {
+    "source": "/neighborhoods",
+    "target": "/neighborhoods/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/life-simulator/",
+    "target": "/life-simulator",
+    "status": "301"
+  },
+  {
+    "source": "/life-simulator",
+    "target": "/life-simulator/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/day-in-the-life/",
+    "target": "/day-in-the-life",
+    "status": "301"
+  },
+  {
+    "source": "/day-in-the-life",
+    "target": "/day-in-the-life/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/decision-brief/",
+    "target": "/decision-brief",
+    "status": "301"
+  },
+  {
+    "source": "/decision-brief",
+    "target": "/decision-brief/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/move-plan/",
+    "target": "/move-plan",
+    "status": "301"
+  },
+  {
+    "source": "/move-plan",
+    "target": "/move-plan/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/compare-cities/",
+    "target": "/compare-cities",
+    "status": "301"
+  },
+  {
+    "source": "/compare-cities",
+    "target": "/compare-cities/index.html",
+    "status": "200"
+  },
+  {
+    "source": "/<*>",
+    "target": "/404.html",
+    "status": "404"
   }
 ]

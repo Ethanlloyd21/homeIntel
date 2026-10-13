@@ -117,7 +117,9 @@ const LandingAtlas = ({ onStart }: { onStart: (city: City) => void }) => {
   const [example, setExample] = useState(0)
   const [mode, setMode] = useState<'housing' | 'life' | 'move'>('housing')
   const [paused, setPaused] = useState(
-    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   )
   const [showExample, setShowExample] = useState(true)
   const sample = landingRoutes[example]
@@ -158,13 +160,13 @@ const LandingAtlas = ({ onStart }: { onStart: (city: City) => void }) => {
       <div className="atlas-intro">
         <div>
           <p className="landing-eyebrow">
-            <span className="landing-signal" aria-hidden="true" /> THE AMERICAN
-            POSSIBILITY ATLAS
+            <span className="landing-signal" aria-hidden="true" /> YOUR NEXT
+            CHAPTER STARTS HERE
           </p>
           <h1 id="atlas-title">
-            Same you.
+            Find your city.
             <br />
-            <span>A whole new</span> somewhere.
+            <span>Change your</span> life.
           </h1>
         </div>
         <div className="atlas-intro-aside">

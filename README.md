@@ -105,6 +105,11 @@ New here? Read the **[User Guide](UserGuide.md)** for a task-by-task walkthrough
 
 See [Deploy with Amplify Gen 2](docs/amplify-deployment.md) for the included backend, build configuration, secrets, and Hosting setup. Provider keys stay server-side, including Census.
 
+See [Search and AI discovery](docs/seo.md) for prerendered public city guides,
+route-specific metadata, structured data, sitemap, crawler configuration, and the
+required Amplify Hosting rewrite update. The existing interactive workspace keeps
+household inputs on the device and is excluded from search indexing.
+
 ### Production architecture
 
 The React/Vite frontend is a static application served by Amplify Hosting at

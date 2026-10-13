@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.ts --configLoader native",
-    "build": "tsc -b && vite build --config vite.config.ts --configLoader native",
+    "build": "tsc -b && vite build --config vite.config.ts --configLoader native && node scripts/prerender.mjs && node scripts/check-seo.mjs",
     "preview": "vite preview --config vite.config.ts --configLoader native",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -19,6 +19,7 @@
     "validate:with-data": "node scripts/validate-homeintel.mjs",
     "typecheck:backend": "tsc --project amplify/tsconfig.json",
     "check:bundle-secrets": "node scripts/check-bundle-secrets.mjs",
+    "check:seo": "node scripts/check-seo.mjs",
     "sandbox": "ampx sandbox"
   },
   "dependencies": {

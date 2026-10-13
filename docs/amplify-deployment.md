@@ -91,11 +91,15 @@ proxy rewrite is needed. Local development uses same-origin `/api/*` by default.
 In **Hosting → Rewrites and redirects**, import the rules from
 [`amplify/hosting-rewrites.json`](../amplify/hosting-rewrites.json). This is a console
 configuration file: Amplify does not automatically apply it from the repository.
-It serves `index.html` for frontend routes while preserving assets and JSON files.
+It serves each prerendered public page and workspace shell while preserving assets
+and JSON files. Replace the previous global SPA rewrite with the current file; it
+would otherwise hide the public guide HTML and sitemap. Unknown paths use the
+custom 404 page. See [Search and AI discovery](seo.md) for route and indexing checks.
 
 For the production domain, use **Hosting → Custom domains**, add `MyCityIntel.com`
 and the desired branch, and complete Amplify's DNS verification steps. The frontend's
-canonical URL and social sharing metadata use `https://MyCityIntel.com/`.
+canonical URL and social sharing metadata use `https://mycityintel.com/` and the
+individual public page URLs.
 
 The backend function and stack now use the `mycityintel-api` name. When updating
 an existing deployment, deploy the backend and rebuild the frontend together so
