@@ -32,4 +32,4 @@ for (const args of checks) {
   if (result.status !== 0) process.exit(result.status ?? 1)
 }
 
-console.log('\nReloIntel data update and validation completed successfully.')
+console.log('\nCityViewIntel data update and validation completed successfully.')

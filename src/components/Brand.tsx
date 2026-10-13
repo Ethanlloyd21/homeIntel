@@ -1,12 +1,12 @@
-import reloIcon from '/assets/images/reloicon.svg'
+import cityViewIcon from '/assets/images/cityviewicon.svg'
 
 const mark = (
   <>
     <div className="brand-mark">
-      <img src={reloIcon} alt="" width={31} height={31} />
+      <img src={cityViewIcon} alt="" width={31} height={31} />
     </div>
     <span>
-      Relo<span>Intel</span>
+      CityView<span>Intel</span>
     </span>
   </>
 )
@@ -25,7 +25,7 @@ const Brand = ({ onReset }: { onReset?: () => void }) => {
       className="brand brand-button"
       onClick={onReset}
       title="Start over — clears the cities you selected"
-      aria-label="ReloIntel home. Start over and clear the selected cities."
+      aria-label="CityViewIntel home. Start over and clear the selected cities."
     >
       {mark}
     </button>

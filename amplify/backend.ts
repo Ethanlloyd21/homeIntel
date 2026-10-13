@@ -11,7 +11,7 @@ import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb'
 import { api } from './functions/api/resource.js'
 
 const backend = defineBackend({ api })
-const stack = backend.createStack('relointel-api')
+const stack = backend.createStack('cityviewintel-api')
 const cache = new Table(Stack.of(backend.api.resources.lambda), 'ApiCache', {
   partitionKey: { name: 'id', type: AttributeType.STRING },
   billingMode: BillingMode.PAY_PER_REQUEST,

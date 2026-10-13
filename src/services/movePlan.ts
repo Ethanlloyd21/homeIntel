@@ -15,7 +15,7 @@ export type MoveBudgetLine = {
   label: string
   amount: number
   note: string
-  /** True when ReloIntel derived the figure rather than the user entering it. */
+  /** True when CityViewIntel derived the figure rather than the user entering it. */
   derived: boolean
 }
 

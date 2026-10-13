@@ -2,7 +2,7 @@ import type {
   APIGatewayProxyEventV2,
   APIGatewayProxyStructuredResultV2,
 } from 'aws-lambda'
-import { env } from '$amplify/env/relointel-api'
+import { env } from '$amplify/env/cityviewintel-api'
 import { createApiPlugins } from '../../../server/apiPlugins.ts'
 import { createLambdaHandler } from '../../../server/lambdaAdapter.ts'
 import { withRequestDeadline } from '../../../server/upstreamFetch.ts'

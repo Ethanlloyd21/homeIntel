@@ -8,7 +8,7 @@ const optionalSecrets = {
 } as const
 
 export const api = defineFunction({
-  name: 'relointel-api',
+  name: 'cityviewintel-api',
   entry: './handler.ts',
   runtime: 22,
   timeoutSeconds: 30,
